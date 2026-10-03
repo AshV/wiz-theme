@@ -1,0 +1,310 @@
+---
+/**
+ * DislikeFeedbackModal — Optional structured feedback modal when a quote is disliked.
+ *
+ * Captures actionable quality signals:
+ * - Wrong author attribution
+ * - Typos or grammar issues
+ * - Misquoted / Inaccurate content
+ * - Low quality / Offensive content
+ * - Optional custom details note
+ */
+---
+
+<div
+  id="dislike-feedback-modal"
+  class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="dislike-modal-title"
+  style="display: none;"
+>
+  <!-- Backdrop -->
+  <div
+    id="dislike-modal-backdrop"
+    class="fixed inset-0 bg-black/60 backdrop-blur-xl transition-opacity duration-300 opacity-0"
+  ></div>
+
+  <!-- Modal Container -->
+  <div
+    id="dislike-modal-card"
+    class="relative z-10 rounded-[28px] sm:rounded-[36px] p-5 sm:p-7 max-w-[460px] w-full border shadow-[0_25px_70px_rgba(0,0,0,0.85)] backdrop-blur-2xl transition-all duration-300 scale-95 opacity-0 my-auto text-white overflow-hidden"
+    style="background: var(--quote-modal-bg, rgba(26, 24, 48, 0.96)); border-color: var(--quote-border, rgba(255,255,255,0.25)); box-shadow: 0 25px 70px rgba(0,0,0,0.85), var(--quote-modal-glow, 0 0 50px rgba(244,63,94,0.2));"
+  >
+    <!-- Dynamic Ambient Mood Glow Overlay -->
+    <div class="absolute inset-0 pointer-events-none opacity-40 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_top,var(--quote-glow)_0%,transparent_65%)]"></div>
+
+    <!-- Header -->
+    <div class="relative z-10 flex items-start justify-between gap-3 pb-4 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-400 shadow-sm shrink-0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+          </svg>
+        </div>
+        <div>
+          <h3 id="dislike-modal-title" class="text-base sm:text-lg font-bold text-white tracking-wide leading-tight">
+            Help Us Curate Wisdom
+          </h3>
+          <p class="text-xs text-white/60 mt-0.5">
+            What felt off? <span class="text-rose-300/80 font-medium">(Optional)</span>
+          </p>
+        </div>
+      </div>
+      <button
+        id="dislike-modal-close"
+        type="button"
+        class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center transition-all text-white/70 hover:text-white cursor-pointer border border-white/10 shrink-0"
+        aria-label="Close feedback modal"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Quote Preview Excerpt -->
+    <div class="mt-4 p-3 rounded-2xl bg-white/5 border border-white/10 text-xs sm:text-sm">
+      <p id="dislike-quote-text" class="italic text-white/80 line-clamp-2 leading-relaxed">
+        “...”
+      </p>
+      <div id="dislike-quote-author" class="text-right text-[11px] font-medium text-amber-300/90 mt-1">
+        — Author
+      </div>
+    </div>
+
+    <!-- Reason Selection Chips -->
+    <div class="mt-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-2">
+        Select a reason:
+      </label>
+      <div id="dislike-reasons-grid" class="grid grid-cols-2 gap-2 text-xs">
+        <button
+          type="button"
+          data-reason="wrong_author"
+          class="dislike-reason-chip text-left px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer flex items-center gap-2 select-none"
+        >
+          <span class="text-base leading-none">👤</span>
+          <span class="truncate font-medium">Wrong Author</span>
+        </button>
+
+        <button
+          type="button"
+          data-reason="typo"
+          class="dislike-reason-chip text-left px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer flex items-center gap-2 select-none"
+        >
+          <span class="text-base leading-none">✍️</span>
+          <span class="truncate font-medium">Typo / Grammar</span>
+        </button>
+
+        <button
+          type="button"
+          data-reason="inaccurate"
+          class="dislike-reason-chip text-left px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer flex items-center gap-2 select-none"
+        >
+          <span class="text-base leading-none">📜</span>
+          <span class="truncate font-medium">Misquoted</span>
+        </button>
+
+        <button
+          type="button"
+          data-reason="low_quality"
+          class="dislike-reason-chip text-left px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer flex items-center gap-2 select-none"
+        >
+          <span class="text-base leading-none">📉</span>
+          <span class="truncate font-medium">Low Quality</span>
+        </button>
+
+        <button
+          type="button"
+          data-reason="offensive"
+          class="dislike-reason-chip text-left px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer flex items-center gap-2 select-none"
+        >
+          <span class="text-base leading-none">🚫</span>
+          <span class="truncate font-medium">Inappropriate</span>
+        </button>
+
+        <button
+          type="button"
+          data-reason="other"
+          class="dislike-reason-chip text-left px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer flex items-center gap-2 select-none"
+        >
+          <span class="text-base leading-none">💭</span>
+          <span class="truncate font-medium">Other</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Optional Note Input -->
+    <div class="mt-4">
+      <label for="dislike-note-input" class="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-1.5">
+        Additional details (optional):
+      </label>
+      <textarea
+        id="dislike-note-input"
+        rows="2"
+        maxlength="300"
+        placeholder="E.g. Correct author name, source, or typo details..."
+        class="w-full px-3 py-2 text-xs sm:text-sm rounded-xl bg-black/40 border border-white/15 focus:border-rose-400/60 focus:outline-none focus:ring-1 focus:ring-rose-400/40 text-white placeholder-white/30 resize-none transition-all"
+      ></textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-5 flex items-center justify-between gap-3 pt-2">
+      <button
+        id="dislike-skip-btn"
+        type="button"
+        class="text-xs text-white/50 hover:text-white px-3 py-2 transition-colors cursor-pointer"
+      >
+        Skip / Keep Dislike
+      </button>
+
+      <button
+        id="dislike-submit-btn"
+        type="button"
+        class="px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-md shadow-rose-500/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+      >
+        Submit Feedback
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { submitDislikeReason } from '../utils/firebaseStats';
+
+  function initDislikeModal() {
+    const modal = document.getElementById('dislike-feedback-modal');
+    const backdrop = document.getElementById('dislike-modal-backdrop');
+    const card = document.getElementById('dislike-modal-card');
+    const closeBtn = document.getElementById('dislike-modal-close');
+    const skipBtn = document.getElementById('dislike-skip-btn');
+    const submitBtn = document.getElementById('dislike-submit-btn');
+    const quoteText = document.getElementById('dislike-quote-text');
+    const quoteAuthor = document.getElementById('dislike-quote-author');
+    const noteInput = document.getElementById('dislike-note-input') as HTMLTextAreaElement | null;
+    const chips = Array.from(document.querySelectorAll('.dislike-reason-chip'));
+
+    if (!modal) return;
+
+    let currentQuoteId = '';
+    let selectedReason = '';
+
+    function openModal(quoteId: string, content?: string, author?: string) {
+      currentQuoteId = quoteId;
+      selectedReason = '';
+      if (noteInput) noteInput.value = '';
+
+      // Harmonize theme with current active quote's mood
+      const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+      if (activeSlide && (window as any).applyQuoteThemeToModals) {
+        (window as any).applyQuoteThemeToModals((activeSlide as HTMLElement).dataset?.mood || 'reflective');
+      }
+
+      if (quoteText && content) {
+        quoteText.textContent = `“${content}”`;
+      }
+      if (quoteAuthor && author) {
+        quoteAuthor.textContent = `— ${author}`;
+      }
+
+      // Reset chips
+      chips.forEach((c) => {
+        c.classList.remove('bg-rose-500/25', 'border-rose-400/60', 'text-rose-200');
+        c.classList.add('bg-white/5', 'border-white/10', 'text-white');
+      });
+
+      modal!.style.display = 'flex';
+      requestAnimationFrame(() => {
+        backdrop?.classList.remove('opacity-0');
+        backdrop?.classList.add('opacity-100');
+        card?.classList.remove('scale-95', 'opacity-0');
+        card?.classList.add('scale-100', 'opacity-100');
+      });
+    }
+
+    function closeModal() {
+      if (!modal) return;
+      backdrop?.classList.remove('opacity-100');
+      backdrop?.classList.add('opacity-0');
+      card?.classList.remove('scale-100', 'opacity-100');
+      card?.classList.add('scale-95', 'opacity-0');
+
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 250);
+    }
+
+    // Attach chip selection
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const reason = chip.getAttribute('data-reason') || '';
+        if (selectedReason === reason) {
+          selectedReason = '';
+          chip.classList.remove('bg-rose-500/25', 'border-rose-400/60', 'text-rose-200');
+          chip.classList.add('bg-white/5', 'border-white/10');
+        } else {
+          selectedReason = reason;
+          chips.forEach((c) => {
+            c.classList.remove('bg-rose-500/25', 'border-rose-400/60', 'text-rose-200');
+            c.classList.add('bg-white/5', 'border-white/10');
+          });
+          chip.classList.remove('bg-white/5', 'border-white/10');
+          chip.classList.add('bg-rose-500/25', 'border-rose-400/60', 'text-rose-200');
+        }
+      });
+    });
+
+    async function handleSubmit() {
+      if (!currentQuoteId) {
+        closeModal();
+        return;
+      }
+
+      const note = noteInput?.value?.trim() || '';
+      const reasonToSubmit = selectedReason || (note ? 'other' : '');
+
+      if (reasonToSubmit) {
+        if (submitBtn) (submitBtn as HTMLButtonElement).disabled = true;
+        await submitDislikeReason({
+          quoteId: currentQuoteId,
+          reason: reasonToSubmit,
+          note,
+        });
+        if (submitBtn) (submitBtn as HTMLButtonElement).disabled = false;
+
+        if (typeof (window as any).showToast === 'function') {
+          (window as any).showToast('Thank you! Your feedback helps us maintain quote quality.', 3000);
+        }
+      }
+
+      closeModal();
+    }
+
+    closeBtn?.addEventListener('click', closeModal);
+    skipBtn?.addEventListener('click', closeModal);
+    submitBtn?.addEventListener('click', handleSubmit);
+
+    backdrop?.addEventListener('click', closeModal);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.style.display !== 'none') {
+        closeModal();
+      }
+    });
+
+    window.addEventListener('wisdom:close-modals', closeModal);
+
+    // Expose global controller
+    (window as any).openDislikeModal = openModal;
+    (window as any).closeDislikeModal = closeModal;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDislikeModal);
+  } else {
+    initDislikeModal();
+  }
+  document.addEventListener('astro:page-load', initDislikeModal);
+</script>

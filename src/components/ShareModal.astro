@@ -1,0 +1,952 @@
+---
+/**
+ * ShareModal — Share overlay with 9:16 (1080×1920) HD quote card pre-generation and native file sharing.
+ *
+ * Key Capabilities:
+ * 1. Background Pre-Generation: Canvas 2D renders 1080×1920 9:16 quote card in ~15ms in background
+ * 2. In-Memory Cache: Pre-rendered { blob, file, dataUrl, objectUrl } stored per quote ID
+ * 3. Native Web Share API with Files: Opens OS native share sheet directly with PNG attached (Instagram Stories, WhatsApp, etc.)
+ * 4. Clipboard Image Copy: navigator.clipboard.write allows instant pasting on desktop without downloading
+ * 5. Instant PNG Download: 1080×1920 PNG saved directly from pre-generated blob
+ * 6. Live 9:16 Card Preview: Visual card thumbnail showing the ready-to-share graphic
+ */
+---
+
+<div
+  id="share-modal"
+  class="fixed inset-0 z-50 hidden flex flex-col items-center justify-center p-3 sm:p-5 md:p-6 overflow-y-auto"
+  style="display: none;"
+>
+  <!-- Backdrop -->
+  <div id="share-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-xl transition-opacity"></div>
+
+  <!-- Modal Content Card: Enhanced height, spacious padding, and responsive 9:16 showcase -->
+  <div
+    class="relative z-10 rounded-[32px] sm:rounded-[40px] p-6 sm:p-8 md:p-9 my-auto mx-auto max-w-[480px] sm:max-w-[510px] w-full max-h-[94vh] flex flex-col justify-between animate-slide-up border backdrop-blur-2xl overflow-y-auto transition-colors duration-300"
+    style="background: var(--quote-modal-bg, rgba(26, 24, 48, 0.96)); border-color: var(--quote-border, rgba(255,255,255,0.25)); box-shadow: 0 25px 70px rgba(0,0,0,0.85), var(--quote-modal-glow, 0 0 60px rgba(168,85,247,0.25));"
+  >
+    <!-- Dynamic Ambient Mood Glow Overlay -->
+    <div class="absolute inset-0 pointer-events-none opacity-45 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_top,var(--quote-glow)_0%,transparent_65%)]"></div>
+
+    <!-- Header -->
+    <div class="relative z-10 flex items-center justify-between pb-4 sm:pb-5 border-b border-white/10 shrink-0">
+      <div class="flex items-center gap-3.5">
+        <div
+          class="w-11 h-11 rounded-2xl border flex items-center justify-center shadow-md shrink-0 transition-all duration-300"
+          style="background: var(--quote-badge-bg, rgba(251,191,36,0.15)); border-color: var(--quote-border, rgba(251,191,36,0.35)); color: var(--quote-accent, #fbbf24); box-shadow: 0 0 20px var(--quote-glow-soft, rgba(251,191,36,0.15));"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-white tracking-wide leading-tight">Share Quote Card</h3>
+          <div class="flex items-center gap-2 mt-1 text-xs text-white/55 font-medium">
+            <span>9:16 Story & Reel</span>
+            <span class="w-1 h-1 rounded-full bg-white/30"></span>
+            <span class="font-semibold transition-colors duration-300" style="color: var(--quote-accent, #fbbf24);">Ultra-HD Keepsake</span>
+          </div>
+        </div>
+      </div>
+      <button
+        id="share-close-btn"
+        class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center transition-all text-white/70 hover:text-white cursor-pointer border border-white/10 shrink-0"
+        aria-label="Close share modal"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Visual Card Preview (Hero) with expanded height & locked 9:16 ratio -->
+    <div class="relative z-10 py-3 sm:py-4 px-2 flex flex-col items-center justify-center flex-1 my-auto">
+      <div
+        class="relative rounded-[24px] sm:rounded-[30px] shadow-[0_25px_60px_-10px_rgba(0,0,0,0.95)] border-2 border-white/30 bg-black/70 flex items-center justify-center p-0.5 group"
+        style="height: clamp(300px, 45vh, 460px); aspect-ratio: 9 / 16; width: auto; max-width: 75vw;"
+      >
+        <!-- Ambient multi-layered luminous glow behind preview card -->
+        <div id="share-preview-glow" class="absolute -inset-8 rounded-full blur-3xl opacity-80 pointer-events-none transition-all duration-700" style="background: radial-gradient(circle, var(--quote-glow, rgba(168,85,247,0.4)) 0%, transparent 70%);"></div>
+
+        <img
+          id="share-preview-image"
+          src=""
+          alt="Quote Card Preview"
+          class="w-full h-full object-contain transition-all duration-500 opacity-0 relative z-10 rounded-[22px] sm:rounded-[28px]"
+        />
+
+        <!-- Catchy In-Progress State during image generation -->
+        <div id="share-preview-loader" class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/85 backdrop-blur-md p-5 text-center transition-all duration-300 z-20 rounded-[22px] sm:rounded-[28px]">
+          <!-- Radiant Multi-Colored Glowing Spinner -->
+          <div class="relative w-12 h-12 flex items-center justify-center">
+            <div class="absolute inset-0 rounded-full border-2 border-white/10"></div>
+            <div class="w-12 h-12 rounded-full border-2 border-transparent border-t-amber-400 border-r-pink-500 border-b-purple-500 animate-spin"></div>
+            <div class="absolute w-2.5 h-2.5 rounded-full bg-gradient-to-r from-amber-300 to-pink-400 animate-ping"></div>
+          </div>
+
+          <!-- Catchy In-Progress Message with smooth fade -->
+          <div class="flex flex-col items-center gap-2 px-2">
+            <span id="share-loader-status" class="text-xs sm:text-sm font-semibold text-amber-200/95 tracking-wide leading-snug transition-all duration-300 text-center min-h-[2.4rem] flex items-center justify-center">
+              ✦ Weaving timeless wisdom...
+            </span>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] text-white/70 tracking-wider uppercase font-semibold">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Ultra-HD 2160×3840</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Container with generous padding and margins -->
+    <div class="relative z-10 flex flex-col gap-3.5 sm:gap-4 pt-4 sm:pt-5 pb-1 border-t border-white/10 shrink-0">
+      <!-- 1. Primary Action: Share Image (Pill-shaped) -->
+      <button
+        id="share-image-btn"
+        class="w-full min-h-[54px] sm:min-h-[58px] py-4 px-8 rounded-full text-white font-bold text-base sm:text-lg flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer shadow-lg active:scale-[0.98] leading-normal tracking-wide border border-white/25"
+        style="background: linear-gradient(135deg, var(--quote-accent, #8b5cf6), var(--quote-accent-dark, #ec4899)); box-shadow: 0 10px 25px var(--quote-glow-soft, rgba(139,92,246,0.4));"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+          <polyline points="16 6 12 2 8 6" />
+          <line x1="12" y1="2" x2="12" y2="15" />
+        </svg>
+        <span>Share Image</span>
+      </button>
+
+      <!-- 2. Secondary Quick Actions Row: Copy Image | Save PNG | Copy Link -->
+      <div class="grid grid-cols-3 gap-3 sm:gap-3.5 px-0.5">
+        <!-- Copy Image to Clipboard -->
+        <button
+          id="copy-image-btn"
+          class="flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-2xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-white/30 active:scale-95 transition-all text-white/90 hover:text-white cursor-pointer shadow-md shadow-black/20 group"
+          title="Copy image to clipboard"
+        >
+          <div class="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-400/25 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-purple-300">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </div>
+          <span class="text-xs font-medium leading-tight text-center">Copy Image</span>
+        </button>
+
+        <!-- Save PNG -->
+        <button
+          id="download-image-btn"
+          class="flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-2xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-white/30 active:scale-95 transition-all text-white/90 hover:text-white cursor-pointer shadow-md shadow-black/20 group"
+          title="Download PNG image"
+        >
+          <div class="w-8 h-8 rounded-xl bg-pink-500/20 border border-pink-400/25 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-pink-300">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </div>
+          <span class="text-xs font-medium leading-tight text-center">Save PNG</span>
+        </button>
+
+        <!-- Copy Link -->
+        <button
+          id="share-link-btn"
+          class="flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-2xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-white/30 active:scale-95 transition-all text-white/90 hover:text-white cursor-pointer shadow-md shadow-black/20 group"
+          title="Share or copy quote link"
+        >
+          <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/25 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-amber-300">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+          </div>
+          <span class="text-xs font-medium leading-tight text-center">Copy Link</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  // ── High-Performance Canvas 2D 9:16 Quote Card Generator ──
+  // Renders a stunning 2160×3840 Ultra-HD 9:16 Story/Reel card (2x supersampling for razor sharpness)
+  // matching the exact visual style, colors, and live ambient background shown on screen.
+  function renderQuoteCard9x16(quote) {
+    const width = 1080;
+    const height = 1920;
+    const scale = 2; // 2x supersampling for ultra-crisp Retina and 4K display sharpness
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Scale canvas context so all internal layout coordinates remain standard 1080×1920
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    if ('textRendering' in ctx) {
+      ctx.textRendering = 'geometricPrecision';
+    }
+
+    const content = quote.content || '';
+    const author = quote.author || 'Anonymous';
+    const mood = quote.mood || 'reflective';
+    const category = quote.category || 'Wisdom';
+    const sourceWork = quote.sourceWork || '';
+
+    // Helper: Rounded Rectangle Fallback
+    function drawRoundRect(c, x, y, w, h, r) {
+      if (typeof c.roundRect === 'function') {
+        c.roundRect(x, y, w, h, r);
+      } else {
+        c.moveTo(x + r, y);
+        c.arcTo(x + w, y, x + w, y + h, r);
+        c.arcTo(x + w, y + h, x, y + h, r);
+        c.arcTo(x, y + h, x, y, r);
+        c.arcTo(x, y, x + w, y, r);
+      }
+    }
+
+    // ── 1. Live Screen Background Canvas Snapshot ──
+    const ambientCanvas = document.getElementById('ambient-canvas');
+    let hasDrawnCanvas = false;
+
+    if (ambientCanvas && ambientCanvas.width > 0 && ambientCanvas.height > 0) {
+      try {
+        const cw = ambientCanvas.width;
+        const ch = ambientCanvas.height;
+        const targetRatio = width / height; // 1080 / 1920 = 0.5625
+        const srcRatio = cw / ch;
+
+        let sx = 0, sy = 0, sw = cw, sh = ch;
+        if (srcRatio > targetRatio) {
+          sw = ch * targetRatio;
+          sx = (cw - sw) / 2;
+        } else {
+          sh = cw / targetRatio;
+          sy = (ch - sh) / 2;
+        }
+
+        ctx.drawImage(ambientCanvas, sx, sy, sw, sh, 0, 0, width, height);
+        hasDrawnCanvas = true;
+      } catch (err) {
+        console.warn('Live canvas snapshot fallback:', err);
+      }
+    }
+
+    // Fallback if ambient-canvas was not yet painted:
+    if (!hasDrawnCanvas) {
+      const activePalette = (window.wisdomBackground && window.wisdomBackground.getCurrentPalette && window.wisdomBackground.getCurrentPalette()) || null;
+      const bgTop = activePalette ? `rgb(${activePalette.bgTop.join(',')})` : '#0b0f19';
+      const bgMid = activePalette ? `rgb(${activePalette.bgMid.join(',')})` : '#1e1b4b';
+      const bgBottom = activePalette ? `rgb(${activePalette.bgBottom.join(',')})` : '#05070e';
+
+      const baseGrad = ctx.createLinearGradient(0, 0, 0, height);
+      baseGrad.addColorStop(0, bgTop);
+      baseGrad.addColorStop(0.5, bgMid);
+      baseGrad.addColorStop(1, bgBottom);
+      ctx.fillStyle = baseGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      if (activePalette && activePalette.colors) {
+        const c1 = activePalette.colors[0];
+        const r1 = ctx.createRadialGradient(width * 0.35, height * 0.35, 0, width * 0.35, height * 0.35, width * 0.7);
+        r1.addColorStop(0, `rgba(${c1[0]}, ${c1[1]}, ${c1[2]}, 0.28)`);
+        r1.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = r1;
+        ctx.fillRect(0, 0, width, height);
+      }
+    }
+
+    // ── 2. Atmospheric Soft Light Bloom Overlays (Matching Screen Glows) ──
+    const activePalette = (window.wisdomBackground && window.wisdomBackground.getCurrentPalette && window.wisdomBackground.getCurrentPalette()) || null;
+    const glow1 = activePalette?.glow1 || 'rgba(123, 44, 191, 0.45)';
+    const glow2 = activePalette?.glow2 || 'rgba(0, 245, 212, 0.40)';
+    const glowCenter = activePalette?.glowCenter || 'rgba(167, 139, 250, 0.25)';
+
+    // Glow 1: Top-Left
+    const g1 = ctx.createRadialGradient(width * 0.05, height * 0.05, 0, width * 0.05, height * 0.05, width * 0.85);
+    g1.addColorStop(0, glow1);
+    g1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = g1;
+    ctx.fillRect(0, 0, width, height);
+
+    // Glow 2: Bottom-Right
+    const g2 = ctx.createRadialGradient(width * 0.95, height * 0.95, 0, width * 0.95, height * 0.95, width * 0.90);
+    g2.addColorStop(0, glow2);
+    g2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = g2;
+    ctx.fillRect(0, 0, width, height);
+
+    // Glow Center: Soft ambient illumination
+    const gc = ctx.createRadialGradient(width * 0.5, height * 0.48, 0, width * 0.5, height * 0.48, width * 0.65);
+    gc.addColorStop(0, glowCenter);
+    gc.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = gc;
+    ctx.fillRect(0, 0, width, height);
+
+    // ── 3. Screen Vignette (from-black/88 via-black/45 to-black/72) ──
+    const vignette = ctx.createLinearGradient(0, height, 0, 0); // bottom to top
+    vignette.addColorStop(0, 'rgba(0, 0, 0, 0.88)');    // bottom: protects branding
+    vignette.addColorStop(0.35, 'rgba(0, 0, 0, 0.48)');
+    vignette.addColorStop(0.65, 'rgba(0, 0, 0, 0.40)');
+    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.72)');    // top: protects header
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, width, height);
+
+    // ── 4. Editorial Inner Border Frame (Inset 48px, rounded 32px) ──
+    const inset = 48;
+    const radius = 32;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    drawRoundRect(ctx, inset, inset, width - inset * 2, height - inset * 2, radius);
+    ctx.stroke();
+
+    // ── 5. Top Brand & Taxonomy Badge ──
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+    ctx.font = '700 17px "Inter", -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '6px';
+    ctx.fillText('WISDOM', width / 2, 130);
+    ctx.restore();
+
+    if (category) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.48)';
+      ctx.font = '500 14px "Inter", -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '3px';
+      ctx.fillText(category.toUpperCase(), width / 2, 168);
+      ctx.restore();
+    }
+
+    // ── 6. Large Adaptive Typography Engine ──
+    const len = content.length;
+    let fontSize = 72;
+    let lineHeight = 104;
+
+    if (len < 65) {
+      fontSize = 90;
+      lineHeight = 126;
+    } else if (len < 120) {
+      fontSize = 78;
+      lineHeight = 110;
+    } else if (len < 190) {
+      fontSize = 66;
+      lineHeight = 94;
+    } else if (len < 270) {
+      fontSize = 54;
+      lineHeight = 78;
+    } else {
+      fontSize = 44;
+      lineHeight = 64;
+    }
+
+    ctx.font = `400 ${fontSize}px "Playfair Display", "Cormorant Garamond", Georgia, serif`;
+    const maxTextWidth = 880;
+    const words = content.split(/\s+/);
+    const lines = [];
+    let curLine = '';
+
+    for (let i = 0; i < words.length; i++) {
+      const test = curLine ? curLine + ' ' + words[i] : words[i];
+      const m = ctx.measureText(test);
+      if (m.width > maxTextWidth && curLine) {
+        lines.push(curLine);
+        curLine = words[i];
+      } else {
+        curLine = test;
+      }
+    }
+    if (curLine) lines.push(curLine);
+
+    const quoteMarkHeight = 72;
+    const quoteMarkGap = 24;
+    const totalQuoteTextHeight = lines.length * lineHeight;
+    const authorGap = Math.max(52, Math.round(lineHeight * 0.65));
+    const authorHeight = 48;
+    const sourceWorkHeight = sourceWork ? 38 : 0;
+    const sourceWorkGap = sourceWork ? 18 : 0;
+    const totalBlockHeight = quoteMarkHeight + quoteMarkGap + totalQuoteTextHeight + authorGap + authorHeight + sourceWorkGap + sourceWorkHeight;
+
+    // Center quote block comfortably in 9:16 viewport
+    let blockStartY = (height - totalBlockHeight) / 2;
+    if (blockStartY < 240) blockStartY = 240;
+
+    // Decorative Quotation Mark (Playfair Display, crisp translucent white)
+    const quoteMarkY = blockStartY + (quoteMarkHeight / 2);
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.40)';
+    ctx.font = 'italic 400 100px "Playfair Display", Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('“', width / 2, quoteMarkY);
+    ctx.restore();
+
+    // Quote Text Lines: Two-Pass Rendering for Ultra-Sharp Foreground Letterforms
+    const quoteStartY = blockStartY + quoteMarkHeight + quoteMarkGap;
+    const quoteFontStr = `400 ${fontSize}px "Playfair Display", "Cormorant Garamond", Georgia, serif`;
+
+    // Pass 1: Cinematic drop shadow underneath (protects contrast on bright blooms)
+    ctx.save();
+    ctx.font = quoteFontStr;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.60)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.92)';
+    ctx.shadowBlur = 24;
+    ctx.shadowOffsetY = 6;
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], width / 2, quoteStartY + (i * lineHeight) + (lineHeight / 2));
+    }
+    ctx.restore();
+
+    // Pass 2: Razor-sharp, pure white foreground text (Zero shadow blur on glyph edges)
+    ctx.save();
+    ctx.font = quoteFontStr;
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], width / 2, quoteStartY + (i * lineHeight) + (lineHeight / 2));
+    }
+    ctx.restore();
+
+    // Author Attribution: Two-Pass Rendering for Crisp Italic Serif
+    const authorY = quoteStartY + totalQuoteTextHeight + authorGap;
+    const authorFontStr = 'italic 400 44px "Cormorant Garamond", "Playfair Display", Georgia, serif';
+
+    // Pass 1: Depth shadow
+    ctx.save();
+    ctx.font = authorFontStr;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.50)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 4;
+    ctx.fillText(`— ${author}`, width / 2, authorY);
+    ctx.restore();
+
+    // Pass 2: Sharp foreground
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+    ctx.font = authorFontStr;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillText(`— ${author}`, width / 2, authorY);
+    ctx.restore();
+
+    // Source Work Attribution (italic, below author)
+    if (sourceWork) {
+      const sourceY = authorY + (authorHeight / 2) + sourceWorkGap + (sourceWorkHeight / 2);
+      const sourceFontStr = 'italic 400 30px "Cormorant Garamond", "Playfair Display", Georgia, serif';
+
+      // Pass 1: depth shadow
+      ctx.save();
+      ctx.font = sourceFontStr;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '1px';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.80)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 3;
+      ctx.fillText(sourceWork, width / 2, sourceY);
+      ctx.restore();
+
+      // Pass 2: sharp foreground
+      ctx.save();
+      ctx.font = sourceFontStr;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '1px';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.fillText(sourceWork, width / 2, sourceY);
+      ctx.restore();
+    }
+
+    // ── 7. Footer Domain Watermark with Direct Quote URL (Without "/quote") ──
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.60)';
+    ctx.font = '500 20px "Inter", -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
+    const watermarkText = quote.id
+      ? `ashishvishwakarma.com/wisdom/${quote.id.toLowerCase()}`
+      : 'ashishvishwakarma.com/wisdom';
+    ctx.fillText(watermarkText, width / 2, height - 90);
+    ctx.restore();
+
+    return canvas;
+  }
+
+  // Backwards-compatible alias
+  const renderQuoteCard4x5 = renderQuoteCard9x16;
+
+  // ── In-Memory Pre-Rendered Cache ──
+  window.quoteCardCache = window.quoteCardCache || new Map();
+  window.quoteCardPromises = window.quoteCardPromises || new Map();
+
+  // ── Background Quote Image Pre-Generation Engine ──
+  window.prepareQuoteCardImage = async function(slideOrData, forceFresh = false, isOpeningModal = false) {
+    if (!slideOrData) return null;
+
+    let id = '';
+    let slug = '';
+    let content = '';
+    let author = '';
+    let mood = '';
+    let category = '';
+    let sourceWork = '';
+
+    if (slideOrData instanceof HTMLElement) {
+      id = slideOrData.dataset.quoteId || '';
+      slug = slideOrData.dataset.quoteSlug || id;
+      content = slideOrData.dataset.content || (slideOrData.querySelector('.quote-text')?.textContent.trim() || '');
+      author = slideOrData.dataset.author || (slideOrData.querySelector('.author-name-text')?.textContent.trim() || '');
+      mood = slideOrData.dataset.mood || 'reflective';
+      category = slideOrData.dataset.category || (slideOrData.querySelector('.glass.rounded-full')?.textContent.trim() || 'Wisdom');
+      sourceWork = slideOrData.dataset.sourceWork || '';
+    } else {
+      id = slideOrData.id || '';
+      slug = slideOrData.slug || id;
+      content = slideOrData.content || '';
+      author = slideOrData.author || '';
+      mood = slideOrData.mood || 'reflective';
+      category = slideOrData.category || 'Wisdom';
+      sourceWork = slideOrData.sourceWork || '';
+    }
+
+    if (!id || !content) return null;
+
+    // Return if already prepared in cache and fresh generation not requested
+    if (!forceFresh && window.quoteCardCache.has(id)) {
+      return window.quoteCardCache.get(id);
+    }
+
+    // Return active promise if already generating
+    if (!forceFresh && window.quoteCardPromises.has(id)) {
+      return window.quoteCardPromises.get(id);
+    }
+
+    const genPromise = (async () => {
+      try {
+        // Ensure web fonts are completely loaded so Playfair, Cormorant & Inter render pin-sharp
+        if (document.fonts) {
+          try {
+            await Promise.all([
+              document.fonts.load('400 78px "Playfair Display"'),
+              document.fonts.load('italic 400 100px "Playfair Display"'),
+              document.fonts.load('italic 400 44px "Cormorant Garamond"'),
+              document.fonts.load('500 20px "Inter"'),
+              document.fonts.load('700 17px "Inter"'),
+              document.fonts.ready,
+            ]);
+          } catch (_) {
+            if (document.fonts.ready) await document.fonts.ready;
+          }
+        }
+
+        const canvas = renderQuoteCard9x16({ id, content, author, mood, category, slug, sourceWork });
+        if (!canvas) return null;
+
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+        if (!blob) return null;
+
+        const file = new File([blob], `wisdom-${id}-9x16.png`, { type: 'image/png' });
+        const objectUrl = URL.createObjectURL(blob);
+
+        const entry = {
+          id,
+          slug,
+          content,
+          author,
+          mood,
+          category,
+          sourceWork,
+          blob,
+          file,
+          objectUrl,
+          get dataUrl() {
+            return this.objectUrl;
+          },
+          width: 2160,
+          height: 3840,
+        };
+
+        window.quoteCardCache.set(id, entry);
+
+        // If the modal was opened with loader active, provide a smooth window for the user to experience the generation messages
+        if (isOpeningModal) {
+          await new Promise((resolve) => setTimeout(resolve, 850));
+        }
+
+        // Update modal UI if currently active quote matches
+        if (window._currentActiveQuoteId === id) {
+          updateModalPreviewUI(entry);
+        }
+
+        return entry;
+      } catch (err) {
+        console.warn('Quote card generation error:', err);
+        return null;
+      } finally {
+        window.quoteCardPromises.delete(id);
+      }
+    })();
+
+    window.quoteCardPromises.set(id, genPromise);
+    return genPromise;
+  };
+
+  // Catchy in-progress messages during image generation
+  const IN_PROGRESS_MESSAGES = [
+    '✦ Weaving timeless wisdom...',
+    '✦ Harmonizing typography & aura...',
+    '✦ Painting luminous gradient atmosphere...',
+    '✦ Rendering ultra-HD story card...',
+    '✦ Adding sacred geometry accents...',
+    '✦ Perfecting your keepsake...',
+  ];
+
+  let progressInterval = null;
+  let currentMsgIndex = 0;
+
+  function startProgressMessages() {
+    stopProgressMessages();
+    const statusEl = document.getElementById('share-loader-status');
+    currentMsgIndex = 0;
+    if (statusEl) {
+      statusEl.textContent = IN_PROGRESS_MESSAGES[0];
+      statusEl.style.opacity = '1';
+    }
+
+    progressInterval = setInterval(() => {
+      const el = document.getElementById('share-loader-status');
+      if (!el) return;
+      el.style.opacity = '0';
+      setTimeout(() => {
+        currentMsgIndex = (currentMsgIndex + 1) % IN_PROGRESS_MESSAGES.length;
+        el.textContent = IN_PROGRESS_MESSAGES[currentMsgIndex];
+        el.style.opacity = '1';
+      }, 180);
+    }, 850);
+  }
+
+  function stopProgressMessages() {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+  }
+
+  // Helper: Update modal preview when image is ready
+  function updateModalPreviewUI(entry) {
+    const previewImg = document.getElementById('share-preview-image');
+    const previewLoader = document.getElementById('share-preview-loader');
+
+    if (previewImg && entry && entry.objectUrl) {
+      stopProgressMessages();
+      previewImg.src = entry.objectUrl;
+      previewImg.classList.remove('opacity-0');
+      if (previewLoader) previewLoader.classList.add('opacity-0', 'pointer-events-none');
+    }
+  }
+
+  // ── Share Modal Controller ──
+  function setupShareModal() {
+    const modal = document.getElementById('share-modal');
+    const backdrop = document.getElementById('share-backdrop');
+    const closeBtn = document.getElementById('share-close-btn');
+    const linkBtn = document.getElementById('share-link-btn');
+    const imageBtn = document.getElementById('share-image-btn');
+    const copyImageBtn = document.getElementById('copy-image-btn');
+    const downloadImageBtn = document.getElementById('download-image-btn');
+
+    let currentQuoteId = '';
+    let currentQuoteSlug = '';
+    let currentQuoteText = '';
+    let currentAuthor = '';
+    let currentMood = '';
+    let currentCategory = '';
+    let currentSourceWork = '';
+
+    function closeModal() {
+      stopProgressMessages();
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+      }
+      if (window.wisdomBackground && typeof window.wisdomBackground.start === 'function') {
+        window.wisdomBackground.start();
+      }
+    }
+
+    window.closeShareModal = closeModal;
+    window.addEventListener('wisdom:close-modals', closeModal);
+
+    if (backdrop) backdrop.addEventListener('click', closeModal);
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    // ESC key closes modal
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal && modal.style.display !== 'none') {
+        closeModal();
+      }
+    });
+
+    // Update share context whenever active slide changes
+    window.updateShareContext = function(slide, isOpeningModal = false) {
+      if (!slide) return;
+      currentQuoteId = slide.dataset.quoteId || '';
+      currentQuoteSlug = slide.dataset.quoteSlug || currentQuoteId;
+      currentMood = slide.dataset.mood || 'reflective';
+      currentCategory = slide.dataset.category || (slide.querySelector('.glass.rounded-full')?.textContent.trim() || 'Wisdom');
+      currentQuoteText = slide.dataset.content || (slide.querySelector('.quote-text')?.textContent.trim() || '');
+      currentAuthor = slide.dataset.author || (slide.querySelector('.author-name-text')?.textContent.trim() || '');
+      currentSourceWork = slide.dataset.sourceWork || '';
+
+      window._currentActiveQuoteId = currentQuoteId;
+
+      if (window.applyQuoteThemeToModals) {
+        window.applyQuoteThemeToModals(currentMood);
+      }
+
+      // Reset preview state
+      const previewImg = document.getElementById('share-preview-image');
+      const previewLoader = document.getElementById('share-preview-loader');
+
+      if (isOpeningModal) {
+        if (window.wisdomBackground && typeof window.wisdomBackground.stop === 'function') {
+          window.wisdomBackground.stop();
+        }
+        if (previewImg) previewImg.classList.add('opacity-0');
+        if (previewLoader) previewLoader.classList.remove('opacity-0', 'pointer-events-none');
+        startProgressMessages();
+
+        // Always force-regenerate when opening the modal so the card captures
+        // the *current* ambient canvas background (not a stale cached snapshot
+        // that was rendered while a different slide was visible).
+        window.prepareQuoteCardImage(slide, true, true);
+        return;
+      }
+
+      if (window.quoteCardCache.has(currentQuoteId)) {
+        updateModalPreviewUI(window.quoteCardCache.get(currentQuoteId));
+      } else {
+        if (previewImg) previewImg.classList.add('opacity-0');
+        if (previewLoader) previewLoader.classList.remove('opacity-0', 'pointer-events-none');
+        startProgressMessages();
+        // Immediately trigger background preparation
+        window.prepareQuoteCardImage(slide, false);
+      }
+    };
+
+    // Helper: Ensure quote card is ready
+    async function ensureQuoteEntry() {
+      if (window.quoteCardCache.has(currentQuoteId)) {
+        return window.quoteCardCache.get(currentQuoteId);
+      }
+      const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+      if (activeSlide && activeSlide.dataset.quoteId === currentQuoteId) {
+        return await window.prepareQuoteCardImage(activeSlide, true);
+      }
+      return await window.prepareQuoteCardImage({
+        id: currentQuoteId,
+        slug: currentQuoteSlug,
+        content: currentQuoteText,
+        author: currentAuthor,
+        mood: currentMood,
+        category: currentCategory,
+        sourceWork: currentSourceWork,
+      }, true);
+    }
+
+    // Helper: Instant PNG download
+    function triggerDownload(entry) {
+      if (!entry) return;
+      const link = document.createElement('a');
+      link.download = `wisdom-${entry.id}-9x16.png`;
+      link.href = entry.objectUrl || entry.dataUrl;
+      link.click();
+      if (window.showToast) window.showToast('Quote image saved! ✓');
+    }
+
+    // 1. Primary: Native Share Image (Web Share API with Files)
+    if (imageBtn) {
+      imageBtn.onclick = async () => {
+        const entry = await ensureQuoteEntry();
+        if (!entry) {
+          if (window.showToast) window.showToast('Could not prepare image');
+          return;
+        }
+
+        const origin = window.location.origin.includes('localhost') ? window.location.origin : 'https://www.ashishvishwakarma.com';
+        const quoteSlug = currentQuoteSlug || currentQuoteId;
+        const url = `${origin}/wisdom/quote/${quoteSlug}/`;
+        const shareData = {
+          title: `"${currentQuoteText}" — ${currentAuthor}`,
+          text: url,
+          files: [entry.file],
+        };
+
+        // If native file sharing is supported (iOS, Android, macOS Safari)
+        if (navigator.canShare && navigator.canShare({ files: [entry.file] })) {
+          try {
+            await navigator.share(shareData);
+            if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+              window.firebaseStats.recordShare(currentQuoteId, 'image');
+            }
+            closeModal();
+            return;
+          } catch (err) {
+            if (err.name === 'AbortError') return; // User simply dismissed share sheet
+            console.warn('Native share failed, falling back:', err);
+          }
+        }
+
+        // Desktop / Unsupported Fallback: Copy Image to Clipboard
+        if (navigator.clipboard && window.ClipboardItem) {
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': entry.blob })
+            ]);
+            if (window.showToast) window.showToast('Image copied to clipboard! Paste anywhere (Ctrl+V) ✓');
+            if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+              window.firebaseStats.recordShare(currentQuoteId, 'copy');
+            }
+            closeModal();
+            return;
+          } catch (clipErr) {
+            console.warn('Clipboard write failed:', clipErr);
+          }
+        }
+
+        // Final Fallback: Direct Download
+        triggerDownload(entry);
+        if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+          window.firebaseStats.recordShare(currentQuoteId, 'download');
+        }
+        closeModal();
+      };
+    }
+
+    // 2. Quick Action: Copy Image to Clipboard
+    if (copyImageBtn) {
+      copyImageBtn.onclick = async () => {
+        const entry = await ensureQuoteEntry();
+        if (!entry) return;
+
+        if (navigator.clipboard && window.ClipboardItem) {
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': entry.blob })
+            ]);
+            if (window.showToast) window.showToast('9:16 Quote Card copied to clipboard! Paste anywhere (Ctrl+V) ✓');
+            if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+              window.firebaseStats.recordShare(currentQuoteId, 'copy');
+            }
+            closeModal();
+            return;
+          } catch (err) {
+            console.warn('Copy to clipboard failed:', err);
+          }
+        }
+
+        triggerDownload(entry);
+        if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+          window.firebaseStats.recordShare(currentQuoteId, 'download');
+        }
+        closeModal();
+      };
+    }
+
+    // 3. Quick Action: Download 1080×1920 PNG
+    if (downloadImageBtn) {
+      downloadImageBtn.onclick = async () => {
+        const entry = await ensureQuoteEntry();
+        if (entry) triggerDownload(entry);
+        if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+          window.firebaseStats.recordShare(currentQuoteId, 'download');
+        }
+        closeModal();
+      };
+    }
+
+    // 4. Quick Action: Share Link
+    if (linkBtn) {
+      linkBtn.onclick = async () => {
+        const origin = window.location.origin.includes('localhost') ? window.location.origin : 'https://www.ashishvishwakarma.com';
+        const quoteSlug = currentQuoteSlug || currentQuoteId;
+        const url = `${origin}/wisdom/quote/${quoteSlug}/`;
+        const shareData = {
+          title: `"${currentQuoteText}" — ${currentAuthor}`,
+          text: `"${currentQuoteText}" — ${currentAuthor}`,
+          url: url,
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+            if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+              window.firebaseStats.recordShare(currentQuoteId, 'link');
+            }
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              await copyToClipboard(url);
+              if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+                window.firebaseStats.recordShare(currentQuoteId, 'link');
+              }
+            }
+          }
+        } else {
+          await copyToClipboard(url);
+          if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+            window.firebaseStats.recordShare(currentQuoteId, 'link');
+          }
+        }
+        closeModal();
+      };
+    }
+
+    async function copyToClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        if (window.showToast) window.showToast('Link copied to clipboard ✓');
+      } catch {
+        if (window.showToast) window.showToast('Could not copy link');
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupShareModal);
+  } else {
+    setupShareModal();
+  }
+  document.addEventListener('astro:page-load', setupShareModal);
+</script>

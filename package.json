@@ -1,0 +1,44 @@
+{
+  "name": "wiz-theme",
+  "version": "1.0.0",
+  "description": "High-performance immersive quote reel theme for Astro with dynamic shaders, ambient audio, and editorial modals",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./components/*": "./src/components/*",
+    "./layouts/*": "./src/layouts/*",
+    "./styles/*": "./src/styles/*",
+    "./utils/*": "./src/utils/*",
+    "./data/*": "./src/data/*"
+  },
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev --root ./playground",
+    "build": "astro build --root ./playground",
+    "preview": "astro preview --root ./playground"
+  },
+  "peerDependencies": {
+    "astro": "^5.0.0 || ^7.0.0",
+    "tailwindcss": "^4.0.0"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0",
+    "html-to-image": "^1.11.13"
+  },
+  "devDependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.10",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.0.0"
+  },
+  "allowScripts": {
+    "esbuild": true
+  }
+}

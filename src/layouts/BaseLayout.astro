@@ -1,0 +1,980 @@
+---
+import '../styles/global.css';
+import GlobalBackground from '../components/GlobalBackground.astro';
+import ZenLoader from '../components/ZenLoader.astro';
+import { ClientRouter } from 'astro:transitions';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  ogType?: string;
+  keywords?: string[];
+  breadcrumbs?: Array<{ name: string; url: string }>;
+  robots?: string;
+}
+
+const {
+  title = 'Wisdom — Timeless Quotes, Reimagined',
+  description = 'Experience the world\'s greatest quotes as immersive, full-screen reels. Swipe through wisdom from Rumi, Seneca, Angelou, Shakespeare, and more.',
+  image = '/wisdom/og-image.jpg',
+  ogType = 'website',
+  keywords = [
+    'wisdom',
+    'quotes',
+    'timeless quotes',
+    'inspirational quotes',
+    'philosophy',
+    'stoicism',
+    'mindfulness',
+    'life quotes',
+    'rumi',
+    'marcus aurelius',
+    'seneca',
+    'maya angelou',
+    'steve jobs',
+    'albert einstein',
+    'quote reels',
+  ],
+  breadcrumbs = [],
+  robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+} = Astro.props;
+
+const siteUrl = Astro.site ? new URL(Astro.site).origin : (Astro.url.origin || "https://localhost:4321");
+const canonicalURL = new URL(Astro.url.pathname, siteUrl);
+const BASE = '/wisdom';
+const ogImageUrl = image.startsWith("http") ? image : new URL(image, siteUrl).toString();
+
+// Base WebSite Schema for Search Engines
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Wisdom',
+  url: 'https://www.ashishvishwakarma.com/wisdom/',
+  description: 'Timeless quotes, reimagined as immersive visual reels.',
+  author: {
+    '@type': 'Person',
+    name: 'Ashish Vishwakarma',
+    url: 'https://www.ashishvishwakarma.com',
+  },
+  inLanguage: 'en-US',
+};
+
+// Breadcrumbs Schema if provided
+const breadcrumbsSchema = breadcrumbs.length > 0 ? {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Wisdom',
+      item: 'https://www.ashishvishwakarma.com/wisdom/',
+    },
+    ...breadcrumbs.map((b, idx) => ({
+      '@type': 'ListItem',
+      position: idx + 2,
+      name: b.name,
+      item: new URL(b.url, Astro.site).toString(),
+    })),
+  ],
+} : null;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#13141f" />
+    <meta name="description" content={description} />
+    <meta name="keywords" content={keywords.join(', ')} />
+    <meta name="author" content="Ashish Vishwakarma" />
+    <meta name="robots" content={robots} />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
+    <meta property="og:site_name" content="Wisdom" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="675" />
+    <meta property="og:image:alt" content="Wisdom — Timeless Quotes, Reimagined" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content="Wisdom — Timeless Quotes, Reimagined" />
+
+    <link rel="canonical" href={canonicalURL} />
+    <link rel="icon" href={`${BASE}/favicon.ico`} sizes="any" />
+    <link rel="icon" type="image/svg+xml" href={`${BASE}/favicon.svg`} />
+    <link rel="icon" type="image/png" sizes="64x64" href={`${BASE}/icons/favicon-64.png`} />
+    <link rel="icon" type="image/png" sizes="32x32" href={`${BASE}/favicon.png`} />
+    <link rel="apple-touch-icon" sizes="180x180" href={`${BASE}/icons/apple-touch-icon.png`} />
+    <link rel="manifest" href={`${BASE}/manifest.webmanifest`} />
+    <meta name="application-name" content="Wisdom" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+    {breadcrumbsSchema && (
+      <script type="application/ld+json" set:html={JSON.stringify(breadcrumbsSchema)} />
+    )}
+
+    <!-- Google Fonts: Inter, Playfair Display, Cormorant Garamond -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <title>{title}</title>
+    <ClientRouter />
+  </head>
+  <body class="bg-surface text-text-primary overflow-hidden no-select">
+    <!-- Global Atmospheric Canvas & Fluid Aura -->
+    <GlobalBackground />
+
+    <!-- Ambient Zen Loading Indicator (Navigations & Async Operations) -->
+    <ZenLoader />
+
+    <!-- Page Content -->
+    <main>
+      <slot />
+    </main>
+
+    <!-- Heart Burst Overlay (global, reused by all slides) -->
+    <div
+      id="heart-burst-overlay"
+      class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+      style="display: none;"
+    >
+      <svg
+        width="120"
+        height="120"
+        viewBox="0 0 24 24"
+        fill="none"
+        class="animate-heart-burst"
+      >
+        <path
+          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+          fill="#ef4444"
+        />
+      </svg>
+    </div>
+
+    <!-- Toast Container -->
+    <div
+      id="toast-container"
+      class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] pointer-events-none"
+    ></div>
+
+    <!-- Offline Sanctuary Indicator Badge -->
+    <div
+      id="offline-sanctuary-badge"
+      class="fixed top-3.5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 -translate-y-6 transition-all duration-500 flex items-center gap-2 px-4 py-2 rounded-full glass border border-emerald-400/40 text-emerald-300 text-xs font-medium tracking-wide shadow-2xl backdrop-blur-md select-none"
+      role="status"
+      aria-live="polite"
+    >
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span>Offline Sanctuary Active</span>
+    </div>
+
+    <!-- Engagement-Gated PWA Install Toast -->
+    <div
+      id="pwa-install-toast"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] pointer-events-none opacity-0 translate-y-8 transition-all duration-500 w-[94vw] max-w-md rounded-2xl bg-neutral-900/95 border border-amber-300/30 px-4 py-3.5 shadow-2xl backdrop-blur-xl text-white flex items-center justify-between gap-3 select-none"
+      role="alert"
+    >
+      <div class="flex items-center gap-3 min-w-0">
+        <img src={`${BASE}/icons/icon-192.png`} alt="Wisdom" class="w-10 h-10 rounded-xl shadow-md shrink-0 border border-white/10" />
+        <div class="leading-tight truncate">
+          <div class="text-xs font-semibold text-white">Install Wisdom App</div>
+          <div class="text-[11px] text-white/60 truncate">Meditate anytime, even offline.</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          id="pwa-dismiss-btn"
+          type="button"
+          class="pill px-3.5 py-2.5 rounded-full text-white/50 hover:text-white text-xs font-medium transition-colors cursor-pointer"
+        >
+          Later
+        </button>
+        <button
+          id="pwa-install-btn"
+          type="button"
+          class="pill pill-lg px-5 py-2.5 rounded-full bg-amber-400 text-black text-xs font-semibold hover:bg-amber-300 active:scale-95 transition-all shadow-md cursor-pointer whitespace-nowrap"
+        >
+          Install
+        </button>
+      </div>
+    </div>
+
+
+
+    <script is:inline>
+      // ── Zen Chime Controller (Play-Once on Slide Arrival) ──
+      // Plays a single soothing Tibetan singing bowl / Zen chime once on arrival, then complete silence.
+      // Zero loop fatigue, zero continuous drone, pure peaceful contemplation.
+      // Guarantees: Currently playing chime is ALWAYS strictly different from the last 2 played chimes.
+      class ZenChimeEngine {
+        constructor() {
+          this.enabled = false;
+          this.audioEl = new Audio();
+          this.audioEl.preload = 'auto';
+          this.audioEl.volume = 0.55;
+          this.currentMood = 'reflective';
+          this.lastChimeTime = 0;
+          this.pendingTimer = null;
+          this.base = '/wisdom';
+          this.recentChimes = [];
+          this.allChimes = [
+            'chime-reflective',
+            'chime-reflective-alt',
+            'chime-serene',
+            'chime-serene-alt',
+            'chime-philosophical',
+            'chime-philosophical-alt',
+            'chime-motivational',
+            'chime-motivational-alt',
+            'chime-joyful',
+            'chime-joyful-alt',
+            'chime-bold',
+            'chime-bold-alt',
+            'chime-melancholic',
+            'chime-melancholic-alt',
+            'chime-romantic',
+            'chime-romantic-alt',
+            'zen-chime',
+            'chime-temple-bell',
+            'chime-crystal-bowl',
+            'chime-tingsha',
+            'chime-celestial',
+            'chime-bamboo',
+          ];
+
+          // Harmonic mood affinities for intelligent variety
+          this.moodAffinities = {
+            reflective: ['chime-reflective', 'chime-reflective-alt', 'zen-chime', 'chime-temple-bell'],
+            motivational: ['chime-motivational', 'chime-motivational-alt', 'chime-celestial', 'chime-crystal-bowl'],
+            serene: ['chime-serene', 'chime-serene-alt', 'chime-bamboo', 'zen-chime'],
+            bold: ['chime-bold', 'chime-bold-alt', 'chime-temple-bell', 'chime-tingsha'],
+            melancholic: ['chime-melancholic', 'chime-melancholic-alt', 'chime-crystal-bowl', 'chime-reflective-alt'],
+            joyful: ['chime-joyful', 'chime-joyful-alt', 'chime-celestial', 'chime-tingsha'],
+            philosophical: ['chime-philosophical', 'chime-philosophical-alt', 'chime-temple-bell', 'chime-reflective-alt'],
+            romantic: ['chime-romantic', 'chime-romantic-alt', 'chime-crystal-bowl', 'chime-celestial'],
+          };
+        }
+
+        isEnabled() {
+          try {
+            return localStorage.getItem('wisdom_chime_enabled') === 'true';
+          } catch {
+            return false;
+          }
+        }
+
+        init() {
+          this.enabled = this.isEnabled();
+          try {
+            const cached = sessionStorage.getItem('wisdom_recent_chimes');
+            if (cached) this.recentChimes = JSON.parse(cached);
+          } catch {
+            this.recentChimes = [];
+          }
+          this.updateUI();
+        }
+
+        setMood(mood) {
+          if (mood) this.currentMood = mood;
+        }
+
+        // Guarantees the selected chime is strictly different from the last 2 played
+        selectChime(preferredMood) {
+          const rawMood = preferredMood ? preferredMood.replace(/^chime-/, '') : 'reflective';
+          const affinities = this.moodAffinities[rawMood] || this.moodAffinities.reflective;
+
+          // 1. Pick from mood-compatible chimes that are NOT in the last 2 played
+          const moodEligible = affinities.filter(c => !this.recentChimes.includes(c));
+          if (moodEligible.length > 0) {
+            return moodEligible[Math.floor(Math.random() * moodEligible.length)];
+          }
+
+          // 2. Otherwise, select from the entire 22-chime library excluding the last 2 played
+          const allEligible = this.allChimes.filter(c => !this.recentChimes.includes(c));
+          if (allEligible.length === 0) return 'zen-chime';
+
+          return allEligible[Math.floor(Math.random() * allEligible.length)];
+        }
+
+        stopAll() {
+          if (this.pendingTimer) {
+            clearTimeout(this.pendingTimer);
+            this.pendingTimer = null;
+          }
+          try {
+            this.audioEl.pause();
+            this.audioEl.currentTime = 0;
+          } catch (e) {}
+        }
+
+        // Plays single peaceful chime after 1s of settling on a quote
+        playOnce(mood = 'reflective', delay = 1000) {
+          // Strict mute verification: use in-memory flag (localStorage read only on init/toggle)
+          if (!this.enabled) {
+            this.stopAll();
+            return;
+          }
+          this.currentMood = mood;
+
+          // Clear previous pending chime if user swipes through quickly
+          if (this.pendingTimer) {
+            clearTimeout(this.pendingTimer);
+            this.pendingTimer = null;
+          }
+
+          this.pendingTimer = setTimeout(() => {
+            this.pendingTimer = null;
+            // CRITICAL CHECK: In case user muted during the delay period!
+            // Use in-memory flag — toggle() and storage events both update this.enabled.
+            if (!this.enabled) {
+              this.stopAll();
+              return;
+            }
+
+            const chimeKey = this.selectChime(this.currentMood);
+
+            // Record in history (strictly keep only the last 2)
+            this.recentChimes.push(chimeKey);
+            if (this.recentChimes.length > 2) {
+              this.recentChimes.shift();
+            }
+            try {
+              sessionStorage.setItem('wisdom_recent_chimes', JSON.stringify(this.recentChimes));
+            } catch {}
+
+            const chimeUrl = `${this.base}/media/audio/${chimeKey}.wav`;
+            try {
+              this.audioEl.pause();
+              this.audioEl.currentTime = 0;
+              this.audioEl.src = chimeUrl;
+              const p = this.audioEl.play();
+              if (p) p.catch(() => {});
+            } catch (e) {}
+          }, delay);
+        }
+
+        playZenBell() {
+          // Strictly respect global mute state (in-memory flag; updated by toggle & storage events).
+          if (!this.enabled) return;
+          const chimeUrl = `${this.base}/media/audio/zen-chime.wav`;
+          try {
+            const zenAudio = new Audio(chimeUrl);
+            zenAudio.volume = 0.65;
+            zenAudio.play().catch(() => {});
+          } catch (e) {}
+        }
+
+        toggle() {
+          const nextState = !this.isEnabled();
+          try {
+            localStorage.setItem('wisdom_chime_enabled', String(nextState));
+          } catch {}
+          this.enabled = nextState;
+
+          if (!nextState) {
+            this.stopAll();
+            if (window.showToast) window.showToast('Zen chime muted');
+          } else {
+            if (window.showToast) window.showToast('Zen chime enabled (plays on arrival)');
+            this.playOnce(this.currentMood, 0); // immediate preview when explicitly enabled
+          }
+          this.updateUI();
+          return nextState;
+        }
+
+        updateUI() {
+          const btn = document.getElementById('audio-toggle-btn');
+          if (!btn) return;
+          const circle = btn.querySelector('div');
+          // Read in-memory flag — kept in sync by init(), toggle(), and storage events.
+          const active = this.enabled;
+
+          if (active) {
+            btn.setAttribute('title', 'Chimes Active (Click to mute)');
+            btn.setAttribute('aria-label', 'Mute zen chime sound');
+            btn.classList.remove('text-white/50');
+            btn.classList.add('text-amber-300');
+            if (circle) {
+              circle.className = 'w-10 h-10 flex items-center justify-center transition-all duration-200 text-amber-300';
+              circle.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-300 drop-shadow-[0_2px_8px_rgba(252,211,77,0.7)] sm:w-[26px] sm:h-[26px]">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+              `;
+            }
+          } else {
+            btn.setAttribute('title', 'Chimes Muted (Click to enable)');
+            btn.setAttribute('aria-label', 'Enable zen chime sound');
+            btn.classList.remove('text-amber-300');
+            btn.classList.add('text-white/50');
+            if (circle) {
+              circle.className = 'w-10 h-10 flex items-center justify-center pointer-events-none text-white/75 group-hover:text-white transition-all duration-200';
+              circle.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/75 group-hover:text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] sm:w-[26px] sm:h-[26px]">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              `;
+            }
+          }
+        }
+      }
+
+      // Reuse existing instance on window across page navigations
+      if (!window.wisdomAudio) {
+        window.wisdomAudio = new ZenChimeEngine();
+      }
+
+      function syncChimeAudioUI() {
+        if (window.wisdomAudio) {
+          window.wisdomAudio.init();
+          window.wisdomAudio.updateUI();
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', syncChimeAudioUI);
+      } else {
+        syncChimeAudioUI();
+      }
+      document.addEventListener('astro:page-load', syncChimeAudioUI);
+
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'wisdom_chime_enabled') {
+          syncChimeAudioUI();
+          if (window.wisdomAudio && !window.wisdomAudio.isEnabled()) {
+            window.wisdomAudio.stopAll();
+          }
+        }
+      });
+
+      // ── Toast Utility ──
+      window.showToast = function(message, duration = 2500) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'glass rounded-2xl px-6 py-3.5 text-sm font-medium text-text-primary animate-toast-in leading-normal shadow-2xl';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.style.animation = 'toast-out 0.3s ease-in forwards';
+          setTimeout(() => toast.remove(), 300);
+        }, duration);
+      };
+
+      // ── Liked Quotes Store (Self-Contained Offline Favorites) ──
+      // Performance: _cache is a Set<id> lazily initialised on first has() call.
+      // Invalidated on every write so reads stay O(1) instead of O(n JSON parse).
+      window.likedQuotes = {
+        _key: 'liked_quotes',
+        _cache: null,
+        _getIdSet() {
+          if (this._cache === null) {
+            this._cache = new Set(
+              this.getAll()
+                .map(item => (typeof item === 'string' ? item : item?.id))
+                .filter(Boolean)
+            );
+          }
+          return this._cache;
+        },
+        getAll() {
+          try {
+            const data = JSON.parse(localStorage.getItem(this._key) || '[]');
+            return Array.isArray(data) ? data : [];
+          } catch {
+            return [];
+          }
+        },
+        has(id) {
+          if (!id) return false;
+          return this._getIdSet().has(id);
+        },
+        toggle(quoteOrId) {
+          const id = typeof quoteOrId === 'string' ? quoteOrId : quoteOrId?.id;
+          if (!id) return false;
+          let all = this.getAll();
+          const idx = all.findIndex(item => (typeof item === 'string' ? item === id : item?.id === id));
+          if (idx > -1) {
+            all.splice(idx, 1);
+            localStorage.setItem(this._key, JSON.stringify(all));
+            this._cache = null; // invalidate Set cache
+            return false; // unliked
+          } else {
+            let quoteObj = (typeof quoteOrId === 'object' && quoteOrId !== null) ? quoteOrId : null;
+            if (!quoteObj || !quoteObj.content) {
+              const slide = document.getElementById(`slide-${id}`) || document.querySelector(`[data-quote-id="${id}"]`);
+              if (slide) {
+                quoteObj = {
+                  id,
+                  content: slide.dataset.content || slide.querySelector('blockquote p')?.textContent?.trim() || '',
+                  author: slide.dataset.author || '',
+                  authorSlug: slide.dataset.authorSlug || '',
+                  category: slide.dataset.category || '',
+                  categorySlug: slide.dataset.categorySlug || '',
+                  mood: slide.dataset.mood || '',
+                  slug: slide.dataset.quoteSlug || id,
+                };
+              } else {
+                quoteObj = { id };
+              }
+            }
+            all.unshift(quoteObj);
+            localStorage.setItem(this._key, JSON.stringify(all));
+            this._cache = null; // invalidate Set cache
+            return true; // liked
+          }
+        }
+      };
+
+      // ── Disliked Quotes Store (Self-Contained Local Quality Signals) ──
+      window.dislikedQuotes = {
+        _key: 'wisdom_disliked_quotes',
+        _cache: null,
+        _getIdSet() {
+          if (this._cache === null) {
+            this._cache = new Set(this.getAll());
+          }
+          return this._cache;
+        },
+        getAll() {
+          try {
+            const data = JSON.parse(localStorage.getItem(this._key) || '[]');
+            return Array.isArray(data) ? data : [];
+          } catch {
+            return [];
+          }
+        },
+        has(id) {
+          if (!id) return false;
+          return this._getIdSet().has(id);
+        },
+        toggle(id) {
+          if (!id) return false;
+          let all = this.getAll();
+          const idx = all.indexOf(id);
+          if (idx > -1) {
+            all.splice(idx, 1);
+            localStorage.setItem(this._key, JSON.stringify(all));
+            this._cache = null;
+            return false; // un-disliked
+          } else {
+            all.push(id);
+            localStorage.setItem(this._key, JSON.stringify(all));
+            this._cache = null;
+            return true; // disliked
+          }
+        }
+      };
+
+      // ── Recent Viewed Quotes Store (Up to 500 Quotes FIFO Queue) ──
+      // Performance: _cache is a Set<id> lazily initialised; invalidated on writes.
+      window.recentQuotes = {
+        _key: 'wisdom_recent_quotes',
+        _max: 500,
+        _cache: null,
+        getAll() {
+          try {
+            const data = JSON.parse(localStorage.getItem(this._key) || '[]');
+            return Array.isArray(data) ? data : [];
+          } catch {
+            return [];
+          }
+        },
+        has(id) {
+          if (!id) return false;
+          if (this._cache === null) this._cache = new Set(this.getAll());
+          return this._cache.has(id);
+        },
+        add(id) {
+          if (!id) return;
+          try {
+            let list = this.getAll();
+            const idx = list.indexOf(id);
+            if (idx > -1) {
+              list.splice(idx, 1);
+            }
+            list.push(id);
+            if (list.length > this._max) {
+              list = list.slice(-this._max);
+            }
+            localStorage.setItem(this._key, JSON.stringify(list));
+            this._cache = null; // invalidate Set cache
+          } catch {}
+        },
+        clear() {
+          try { localStorage.removeItem(this._key); } catch {}
+          this._cache = null;
+        }
+      };
+
+      // ── Progressive Web App (PWA) & Offline Sanctuary Controller ──
+      (function() {
+        const BASE = '/wisdom';
+
+        // 1. Register Service Worker
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register(`${BASE}/sw.js`, { scope: `${BASE}/` })
+              .then((reg) => {
+                reg.update().catch(() => {});
+              })
+              .catch((err) => console.debug('SW reg failed', err));
+          });
+        }
+
+        // Global Modal & Drawer Closer
+        // Dismisses any open modals (Explore Drawer, Author Dossier, Quote Delve, Share Modal, etc.)
+        // so deep-linked quotes from notifications are immediately visible and unobstructed.
+        window.__wisdomCloseAllModals = function(immediate = true) {
+          try {
+            // 1. Explore Drawer
+            if (typeof window.closeExploreDrawer === 'function') {
+              window.closeExploreDrawer(immediate);
+            } else {
+              const drawer = document.getElementById('explore-drawer');
+              if (drawer) {
+                drawer.classList.remove('visible', 'pointer-events-auto', 'opacity-100');
+                drawer.classList.add('invisible', 'pointer-events-none', 'opacity-0');
+                const sheet = document.getElementById('explore-sheet');
+                if (sheet) {
+                  sheet.classList.remove('translate-y-0');
+                  sheet.classList.add('translate-y-full');
+                }
+              }
+            }
+
+            // 2. Author Dossier Modal
+            if (typeof window.closeAuthorDossierModal === 'function') {
+              window.closeAuthorDossierModal(immediate);
+            }
+            const authorModal = document.getElementById('author-context-modal');
+            if (authorModal && (!authorModal.classList.contains('opacity-0') || authorModal.style.display !== 'none')) {
+              authorModal.classList.remove('opacity-100', 'pointer-events-auto');
+              authorModal.classList.add('opacity-0', 'pointer-events-none');
+              authorModal.style.display = 'none';
+            }
+
+            // 3. Quote Delve Modal
+            if (typeof window.closeQuoteDelveModal === 'function') {
+              window.closeQuoteDelveModal(immediate);
+            }
+            const delveModal = document.getElementById('quote-delve-modal');
+            if (delveModal && (!delveModal.classList.contains('opacity-0') || delveModal.style.display !== 'none')) {
+              delveModal.classList.remove('opacity-100');
+              delveModal.classList.add('opacity-0', 'pointer-events-none');
+              delveModal.style.display = 'none';
+            }
+
+            // 4. Share Modal
+            if (typeof window.closeShareModal === 'function') {
+              window.closeShareModal();
+            }
+            const shareModal = document.getElementById('share-modal');
+            if (shareModal && (!shareModal.classList.contains('hidden') || shareModal.style.display !== 'none')) {
+              shareModal.style.display = 'none';
+              shareModal.classList.add('hidden');
+            }
+
+            // 5. Dislike Feedback Modal
+            if (typeof window.closeDislikeModal === 'function') {
+              window.closeDislikeModal();
+            }
+
+            // 5. Category Modal (if present)
+            const categoryModal = document.getElementById('category-context-modal');
+            if (categoryModal && (!categoryModal.classList.contains('opacity-0') || categoryModal.style.display !== 'none')) {
+              categoryModal.classList.remove('opacity-100', 'pointer-events-auto');
+              categoryModal.classList.add('opacity-0', 'pointer-events-none');
+              categoryModal.style.display = 'none';
+            }
+
+            // 6. Generic catch-all for any dialog elements with role="dialog"
+            document.querySelectorAll('[role="dialog"]').forEach((dlg) => {
+              dlg.classList.remove('opacity-100', 'pointer-events-auto');
+              dlg.classList.add('opacity-0', 'pointer-events-none', 'hidden');
+              dlg.style.display = 'none';
+            });
+
+            // 7. Ensure body scrolling is restored
+            document.body.style.overflow = '';
+
+            // 8. Fire custom event for any listeners
+            window.dispatchEvent(new CustomEvent('wisdom:close-modals', { detail: { immediate } }));
+          } catch (e) {
+            console.warn('[wisdom] Error closing modals:', e);
+          }
+        };
+
+
+
+        // 2. Offline Sanctuary Status Monitoring
+        function updateNetworkStatus() {
+          const badge = document.getElementById('offline-sanctuary-badge');
+          if (!badge) return;
+          if (!navigator.onLine) {
+            badge.classList.remove('opacity-0', '-translate-y-6', 'pointer-events-none');
+            badge.classList.add('opacity-100', 'translate-y-0');
+          } else {
+            badge.classList.remove('opacity-100', 'translate-y-0');
+            badge.classList.add('opacity-0', '-translate-y-6', 'pointer-events-none');
+          }
+        }
+        window.addEventListener('offline', updateNetworkStatus);
+        window.addEventListener('online', updateNetworkStatus);
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', updateNetworkStatus);
+        } else {
+          updateNetworkStatus();
+        }
+        document.addEventListener('astro:page-load', updateNetworkStatus);
+
+        // 2.5 Ensure orientation is unlocked across all standalone PWA devices
+        function unlockOrientation() {
+          if (window.screen && window.screen.orientation && typeof window.screen.orientation.unlock === 'function') {
+            try {
+              const res = window.screen.orientation.unlock();
+              if (res && typeof res.catch === 'function') res.catch(() => {});
+            } catch {
+              // Ignore if unsupported or already unrestricted
+            }
+          }
+        }
+        unlockOrientation();
+        window.addEventListener('orientationchange', unlockOrientation);
+        document.addEventListener('astro:page-load', unlockOrientation);
+
+        // 3. Mindful Engagement-Gated Install Prompt
+        let deferredPrompt = null;
+        let quotesViewed = 0;
+        let installPromptShown = false;
+        const SNOOZE_DAYS = 14;
+        const SNOOZE_KEY = 'wisdom_pwa_snooze_until';
+        const INSTALLED_KEY = 'wisdom_pwa_installed';
+
+        function isSnoozed() {
+          try {
+            const until = localStorage.getItem(SNOOZE_KEY);
+            return until && Date.now() < parseInt(until, 10);
+          } catch {
+            return false;
+          }
+        }
+
+        function isStandalone() {
+          return window.matchMedia('(display-mode: standalone)').matches ||
+                 window.matchMedia('(display-mode: fullscreen)').matches ||
+                 window.matchMedia('(display-mode: minimal-ui)').matches ||
+                 (window.navigator && window.navigator.standalone === true) ||
+                 (document.referrer && document.referrer.includes('android-app://'));
+        }
+
+        function isPWAInstalled() {
+          if (isStandalone()) return true;
+          try {
+            if (localStorage.getItem(INSTALLED_KEY) === 'true') return true;
+          } catch {}
+          return false;
+        }
+
+        function updateInstallUI() {
+          const drawerBtn = document.getElementById('pwa-drawer-install-btn');
+          const isInstalled = isPWAInstalled();
+          const hasPrompt = !!(deferredPrompt || window.__pwaInstallPrompt);
+          const shouldShow = hasPrompt && !isInstalled;
+
+          if (drawerBtn) {
+            if (shouldShow) {
+              drawerBtn.style.display = 'inline-flex';
+              drawerBtn.classList.remove('hidden');
+              drawerBtn.classList.add('inline-flex');
+            } else {
+              drawerBtn.style.display = 'none';
+              drawerBtn.classList.add('hidden');
+              drawerBtn.classList.remove('inline-flex');
+            }
+          }
+
+          if (isInstalled) {
+            hideInstallToast();
+          }
+        }
+        window.updatePwaInstallUI = updateInstallUI;
+
+        // Check platform installed apps API if available
+        if ('getInstalledRelatedApps' in navigator && typeof navigator.getInstalledRelatedApps === 'function') {
+          navigator.getInstalledRelatedApps().then((apps) => {
+            if (apps && apps.length > 0) {
+              try {
+                localStorage.setItem(INSTALLED_KEY, 'true');
+              } catch {}
+              updateInstallUI();
+            }
+          }).catch(() => {});
+        }
+
+        // React immediately if display mode transitions to standalone
+        try {
+          window.matchMedia('(display-mode: standalone)').addEventListener('change', () => {
+            updateInstallUI();
+          });
+        } catch {}
+
+        function showInstallToast() {
+          if (installPromptShown || isSnoozed() || isPWAInstalled() || !deferredPrompt) return;
+          const toast = document.getElementById('pwa-install-toast');
+          if (!toast) return;
+          installPromptShown = true;
+          toast.classList.remove('opacity-0', 'translate-y-8', 'pointer-events-none');
+          toast.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
+        }
+
+        function hideInstallToast() {
+          const toast = document.getElementById('pwa-install-toast');
+          if (!toast) return;
+          toast.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto');
+          toast.classList.add('opacity-0', 'translate-y-8', 'pointer-events-none');
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          window.__pwaInstallPrompt = e;
+
+          updateInstallUI();
+
+          // Trigger after 45s of meditation
+          setTimeout(() => {
+            showInstallToast();
+          }, 45000);
+        });
+
+        // Trigger after viewing 4+ quotes
+        window.addEventListener('quoteChange', () => {
+          quotesViewed++;
+          if (quotesViewed >= 4) {
+            showInstallToast();
+          }
+        });
+
+        function setupInstallButtons() {
+          const installBtn = document.getElementById('pwa-install-btn');
+          const dismissBtn = document.getElementById('pwa-dismiss-btn');
+          const drawerBtn = document.getElementById('pwa-drawer-install-btn');
+
+          if (installBtn) {
+            installBtn.onclick = async () => {
+              hideInstallToast();
+              const promptToUse = deferredPrompt || window.__pwaInstallPrompt;
+              if (promptToUse) {
+                promptToUse.prompt();
+                const choice = await promptToUse.userChoice;
+                if (choice && choice.outcome === 'accepted') {
+                  try {
+                    localStorage.setItem(INSTALLED_KEY, 'true');
+                  } catch {}
+                }
+                deferredPrompt = null;
+                window.__pwaInstallPrompt = null;
+                updateInstallUI();
+              }
+            };
+          }
+
+          if (dismissBtn) {
+            dismissBtn.onclick = () => {
+              hideInstallToast();
+              try {
+                const snoozeUntil = Date.now() + (SNOOZE_DAYS * 24 * 60 * 60 * 1000);
+                localStorage.setItem(SNOOZE_KEY, snoozeUntil.toString());
+              } catch {}
+            };
+          }
+
+          if (drawerBtn) {
+            drawerBtn.onclick = async () => {
+              const promptToUse = deferredPrompt || window.__pwaInstallPrompt;
+              if (promptToUse) {
+                promptToUse.prompt();
+                const choice = await promptToUse.userChoice;
+                if (choice && choice.outcome === 'accepted') {
+                  try {
+                    localStorage.setItem(INSTALLED_KEY, 'true');
+                  } catch {}
+                }
+                deferredPrompt = null;
+                window.__pwaInstallPrompt = null;
+                updateInstallUI();
+              }
+            };
+          }
+
+          updateInstallUI();
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setupInstallButtons);
+        } else {
+          setupInstallButtons();
+        }
+        document.addEventListener('astro:page-load', setupInstallButtons);
+
+        window.addEventListener('appinstalled', () => {
+          deferredPrompt = null;
+          window.__pwaInstallPrompt = null;
+          try {
+            localStorage.setItem(INSTALLED_KEY, 'true');
+          } catch {}
+          hideInstallToast();
+          updateInstallUI();
+        });
+      })();
+
+
+    </script>
+
+    <!-- Firebase RTDB Stats & Feedback Client Bridge -->
+    <script>
+      import {
+        recordQuoteView,
+        recordQuoteShare,
+        recordAuthorDossierView,
+        toggleQuoteLike,
+        toggleQuoteDislike,
+        submitDislikeReason,
+        fetchQuoteStats,
+        isFirebaseConfigured,
+      } from '../utils/firebaseStats';
+
+      (window as any).firebaseStats = {
+        recordView: recordQuoteView,
+        recordShare: recordQuoteShare,
+        recordAuthorDossierView: recordAuthorDossierView,
+        toggleLike: toggleQuoteLike,
+        toggleDislike: toggleQuoteDislike,
+        submitDislikeReason,
+        fetchStats: fetchQuoteStats,
+        isConfigured: isFirebaseConfigured,
+      };
+    </script>
+  </body>
+</html>

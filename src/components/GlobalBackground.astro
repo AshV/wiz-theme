@@ -1,0 +1,1248 @@
+---
+/**
+ * GlobalBackground — Atmospheric Canvas Architecture.
+ *
+ * Combines:
+ * 1. Living Fluid Gradient Mesh: Smooth, morphing multi-stop radial gradient pools
+ *    that breathe and drift continuously with organic fluidity.
+ * 2. 12 Pure Elegant Line Art Engines: Sacred geometry, celestial astrolabes, topographic
+ *    waves, harmonic Lissajous orbits, golden spirals, aurora ribbons, torus knots,
+ *    sacred lotus roses, hyperspace tunnels, terrain grids, and Metatron lattices.
+ * 3. 18 Vibrant Aesthetic Color Palettes: Multi-chromatic gradients with intelligent
+ *    last-2 exclusion to maximize randomness and eliminate visual monotony.
+ * 4. Distraction-Free: Zero harsh star dots or flashing sparks, ensuring pure quote legibility.
+ */
+---
+<div
+  data-astro-transition-persist="global-bg"
+  id="global-bg"
+  class="fixed inset-0 z-0 overflow-hidden pointer-events-none select-none"
+>
+  <!-- Dynamic Generative Visual Canvas -->
+  <canvas id="ambient-canvas" class="absolute inset-0 w-full h-full"></canvas>
+
+  <!-- Atmospheric Light Bloom Overlays -->
+  <div
+    id="mood-glow-1"
+    class="absolute -top-[15%] -left-[10%] w-[75vw] h-[75vw] rounded-full blur-[120px] opacity-60 transition-colors duration-1000 ease-out pointer-events-none"
+  ></div>
+  <div
+    id="mood-glow-2"
+    class="absolute -bottom-[15%] -right-[10%] w-[80vw] h-[80vw] rounded-full blur-[130px] opacity-55 transition-colors duration-1000 ease-out pointer-events-none"
+  ></div>
+  <div
+    id="mood-glow-center"
+    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[94vw] max-w-[850px] h-[55vh] max-h-[600px] rounded-[50%] blur-[110px] opacity-50 transition-colors duration-1000 ease-out pointer-events-none"
+  ></div>
+
+  <!-- Lighter Atmospheric Vignette (Guarantees Quote Legibility with Uplifting Ambiance) -->
+  <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-black/25 pointer-events-none transition-opacity duration-700"></div>
+</div>
+
+<script>
+  (function() {
+    let canvas = document.getElementById('ambient-canvas') as HTMLCanvasElement | null;
+    let ctx = canvas ? canvas.getContext('2d') : null;
+
+    function getCanvasAndContext() {
+      if (!canvas || !canvas.isConnected) {
+        canvas = document.getElementById('ambient-canvas') as HTMLCanvasElement | null;
+        if (canvas) {
+          ctx = canvas.getContext('2d');
+        }
+      }
+      return { canvas, ctx };
+    }
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let animId: number | null = null;
+    let isVisible = true;
+    let time = 0;
+
+    // ── 18 Curated, Breathtaking Color Palettes (Rich, Luminous, Ethereal) ──
+    const PALETTES = [
+      {
+        name: 'Midnight Aurora',
+        bgTop: [10, 8, 32],
+        bgMid: [14, 30, 48],
+        bgBottom: [5, 14, 24],
+        glow1: 'rgba(0, 245, 212, 0.45)',   // Electric Turquoise
+        glow2: 'rgba(123, 44, 191, 0.45)',  // Rich Violet
+        glowCenter: 'rgba(0, 187, 249, 0.25)',
+        colors: [[0, 245, 212], [155, 93, 229], [0, 187, 249], [254, 228, 64]],
+      },
+      {
+        name: 'Sunset Mirage',
+        bgTop: [34, 10, 26],
+        bgMid: [52, 18, 22],
+        bgBottom: [18, 6, 14],
+        glow1: 'rgba(255, 112, 166, 0.48)', // Rose Gold
+        glow2: 'rgba(255, 158, 0, 0.42)',   // Warm Saffron
+        glowCenter: 'rgba(239, 71, 111, 0.25)',
+        colors: [[255, 112, 166], [255, 158, 0], [239, 71, 111], [255, 209, 102]],
+      },
+      {
+        name: 'Cosmic Ultraviolet',
+        bgTop: [16, 5, 32],
+        bgMid: [32, 10, 56],
+        bgBottom: [8, 3, 18],
+        glow1: 'rgba(181, 23, 158, 0.48)',  // Vivid Magenta
+        glow2: 'rgba(76, 201, 240, 0.42)',  // Neon Blue
+        glowCenter: 'rgba(114, 9, 183, 0.3)',
+        colors: [[181, 23, 158], [114, 9, 183], [76, 201, 240], [247, 37, 133]],
+      },
+      {
+        name: 'Bioluminescent Lagoon',
+        bgTop: [4, 20, 32],
+        bgMid: [8, 36, 52],
+        bgBottom: [3, 14, 24],
+        glow1: 'rgba(6, 214, 160, 0.45)',   // Mint Jade
+        glow2: 'rgba(17, 138, 178, 0.48)',  // Deep Abyss Blue
+        glowCenter: 'rgba(112, 224, 239, 0.25)',
+        colors: [[6, 214, 160], [112, 224, 239], [17, 138, 178], [207, 250, 254]],
+      },
+      {
+        name: 'Galactic Stardust',
+        bgTop: [8, 8, 30],
+        bgMid: [14, 18, 48],
+        bgBottom: [4, 6, 20],
+        glow1: 'rgba(147, 51, 234, 0.48)',  // Electric Violet
+        glow2: 'rgba(56, 189, 248, 0.44)',  // Neon Sky Blue
+        glowCenter: 'rgba(192, 132, 252, 0.28)',
+        colors: [[147, 51, 234], [56, 189, 248], [192, 132, 252], [45, 212, 191]],
+      },
+      {
+        name: 'Ethereal Lavender Dream',
+        bgTop: [20, 12, 38],
+        bgMid: [34, 20, 54],
+        bgBottom: [12, 8, 24],
+        glow1: 'rgba(167, 139, 250, 0.48)', // Lilac
+        glow2: 'rgba(244, 114, 182, 0.42)', // Pink Quartz
+        glowCenter: 'rgba(192, 132, 252, 0.25)',
+        colors: [[167, 139, 250], [216, 180, 254], [244, 114, 182], [192, 132, 252]],
+      },
+      {
+        name: 'Emerald Enchantment',
+        bgTop: [6, 26, 18],
+        bgMid: [10, 44, 30],
+        bgBottom: [4, 18, 12],
+        glow1: 'rgba(16, 185, 129, 0.48)',  // Emerald
+        glow2: 'rgba(52, 211, 153, 0.42)',  // Mint
+        glowCenter: 'rgba(110, 231, 183, 0.25)',
+        colors: [[16, 185, 129], [110, 231, 183], [52, 211, 153], [253, 224, 71]],
+      },
+      {
+        name: 'Crimson Nebula',
+        bgTop: [34, 6, 12],
+        bgMid: [54, 12, 18],
+        bgBottom: [18, 4, 8],
+        glow1: 'rgba(239, 68, 68, 0.48)',   // Fiery Crimson
+        glow2: 'rgba(236, 72, 153, 0.42)',  // Fuchsia
+        glowCenter: 'rgba(244, 63, 94, 0.28)',
+        colors: [[239, 68, 68], [244, 63, 94], [236, 72, 153], [251, 113, 133]],
+      },
+      {
+        name: 'Deep Cobalt Cosmos',
+        bgTop: [6, 14, 36],
+        bgMid: [10, 24, 56],
+        bgBottom: [4, 8, 20],
+        glow1: 'rgba(59, 130, 246, 0.48)',  // Royal Sapphire
+        glow2: 'rgba(99, 102, 241, 0.42)',  // Indigo
+        glowCenter: 'rgba(147, 197, 253, 0.25)',
+        colors: [[59, 130, 246], [99, 102, 241], [147, 197, 253], [129, 140, 248]],
+      },
+      {
+        name: 'Velvet Rose Gold',
+        bgTop: [32, 10, 22],
+        bgMid: [50, 18, 36],
+        bgBottom: [18, 5, 14],
+        glow1: 'rgba(244, 63, 94, 0.48)',   // Rose Red
+        glow2: 'rgba(251, 146, 60, 0.42)',  // Peach Gold
+        glowCenter: 'rgba(253, 164, 175, 0.28)',
+        colors: [[244, 63, 94], [251, 146, 60], [253, 164, 175], [251, 191, 36]],
+      },
+      {
+        name: 'Celestial Opal',
+        bgTop: [8, 18, 30],
+        bgMid: [16, 32, 48],
+        bgBottom: [5, 12, 22],
+        glow1: 'rgba(56, 189, 248, 0.48)',  // Sky Blue
+        glow2: 'rgba(251, 113, 133, 0.42)', // Opal Pink
+        glowCenter: 'rgba(167, 243, 208, 0.26)',
+        colors: [[56, 189, 248], [251, 113, 133], [167, 243, 208], [244, 114, 182]],
+      },
+      {
+        name: 'Prismatic Starlight',
+        bgTop: [10, 10, 36],
+        bgMid: [16, 20, 56],
+        bgBottom: [6, 6, 22],
+        glow1: 'rgba(217, 70, 239, 0.48)',  // Vivid Orchid
+        glow2: 'rgba(14, 165, 233, 0.45)',  // Sky Azure
+        glowCenter: 'rgba(167, 139, 250, 0.28)',
+        colors: [[217, 70, 239], [14, 165, 233], [167, 139, 250], [186, 230, 253]],
+      },
+      {
+        name: 'Mystic Amethyst',
+        bgTop: [22, 8, 36],
+        bgMid: [38, 14, 58],
+        bgBottom: [12, 4, 20],
+        glow1: 'rgba(192, 132, 252, 0.48)', // Starlight Lilac
+        glow2: 'rgba(168, 85, 247, 0.44)',  // Purple Crystal
+        glowCenter: 'rgba(232, 121, 249, 0.28)',
+        colors: [[192, 132, 252], [168, 85, 247], [232, 121, 249], [129, 140, 248]],
+      },
+      {
+        name: 'Arctic Borealis',
+        bgTop: [6, 22, 34],
+        bgMid: [10, 38, 54],
+        bgBottom: [4, 14, 24],
+        glow1: 'rgba(45, 212, 191, 0.48)',  // Aqua Mint
+        glow2: 'rgba(56, 189, 248, 0.44)',  // Polar Cyan
+        glowCenter: 'rgba(147, 197, 253, 0.26)',
+        colors: [[45, 212, 191], [56, 189, 248], [147, 197, 253], [204, 251, 241]],
+      },
+      {
+        name: 'Cyberpunk Tokyo',
+        bgTop: [26, 6, 32],
+        bgMid: [12, 22, 46],
+        bgBottom: [8, 4, 18],
+        glow1: 'rgba(244, 63, 94, 0.48)',   // Cyber Magenta
+        glow2: 'rgba(6, 182, 212, 0.46)',   // Neon Cyan
+        glowCenter: 'rgba(234, 179, 8, 0.25)',
+        colors: [[244, 63, 94], [6, 182, 212], [234, 179, 8], [168, 85, 247]],
+      },
+      {
+        name: 'Celestial Cyan Velvet',
+        bgTop: [4, 16, 32],
+        bgMid: [8, 28, 52],
+        bgBottom: [2, 10, 22],
+        glow1: 'rgba(6, 182, 212, 0.48)',   // Glowing Aquamarine
+        glow2: 'rgba(59, 130, 246, 0.44)',  // Royal Electric Sapphire
+        glowCenter: 'rgba(110, 231, 183, 0.28)',
+        colors: [[6, 182, 212], [59, 130, 246], [110, 231, 183], [147, 197, 253]],
+      },
+      {
+        name: 'Oceanic Abyss',
+        bgTop: [3, 16, 28],
+        bgMid: [6, 28, 44],
+        bgBottom: [2, 10, 18],
+        glow1: 'rgba(20, 184, 166, 0.48)',  // Phosphor Teal
+        glow2: 'rgba(14, 165, 233, 0.45)',  // Deep Azure
+        glowCenter: 'rgba(45, 212, 191, 0.26)',
+        colors: [[20, 184, 166], [14, 165, 233], [45, 212, 191], [125, 211, 252]],
+      },
+      {
+        name: 'Electric Elysium',
+        bgTop: [6, 14, 30],
+        bgMid: [10, 26, 46],
+        bgBottom: [4, 8, 20],
+        glow1: 'rgba(52, 211, 153, 0.48)',  // Neon Lime-Aqua
+        glow2: 'rgba(139, 92, 246, 0.44)',  // Cyber Violet
+        glowCenter: 'rgba(56, 189, 248, 0.28)',
+        colors: [[52, 211, 153], [139, 92, 246], [56, 189, 248], [16, 185, 129]],
+      }
+    ];
+
+    // ── 16 Diverse, Elegant Line Art Animation Engines ──
+    const ANIM_TYPES = [
+      'sacred_mandala',
+      'contour_waves',
+      'constellation_lattice',
+      'lissajous_orbit',
+      'celestial_armillary',
+      'fibonacci_spiral',
+      'aurora_ribbons',
+      'torus_wireframe',
+      'sacred_lotus_rose',
+      'hyperspace_tunnel',
+      'undulating_terrain_grid',
+      'metatron_polygons',
+      'sacred_cymatics_harmonics',
+      'celestial_pendulum_wave',
+      'hyperbolic_poincare_disk',
+      'quantum_vortex_rings'
+    ];
+
+    function djb2(str: string) {
+      let hash = 5381;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) + hash + str.charCodeAt(i)) >>> 0;
+      }
+      return hash;
+    }
+
+    let currentPalette = PALETTES[0];
+    let currentAnim = 'sacred_mandala';
+    let currentTop = [...currentPalette.bgTop];
+    let currentBottom = [...currentPalette.bgBottom];
+
+    // History tracking to guarantee the current animation & palette differ from the last 2
+    let recentAnims: string[] = [];
+    let recentPalettes: string[] = [];
+
+    // Node lattice for geometric line webs (no star dots drawn at vertices)
+    interface Node {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      phase: number;
+    }
+    let nodes: Node[] = [];
+
+    function resize() {
+      const { canvas: currentCanvas, ctx: currentCtx } = getCanvasAndContext();
+      if (!currentCanvas || !currentCtx) return;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth || document.documentElement.clientWidth || 390;
+      height = window.innerHeight || document.documentElement.clientHeight || 844;
+      if (width === 0 || height === 0) return;
+      currentCanvas.width = Math.floor(width * dpr);
+      currentCanvas.height = Math.floor(height * dpr);
+      currentCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      initNodes();
+    }
+
+    function lerp(a: number, b: number, t: number) {
+      return a + (b - a) * t;
+    }
+
+    function initNodes() {
+      nodes = [];
+      const count = 42;
+      for (let i = 0; i < count; i++) {
+        nodes.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.45,
+          vy: (Math.random() - 0.5) * 0.45,
+          phase: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    // ── Helper: Create a smooth multi-stop linear gradient across line art ──
+    function createStrokeGradient(x1: number, y1: number, x2: number, y2: number, alpha = 0.28) {
+      // Multiply incoming alpha by 1.35 so all lines render with greater brilliance and lightness
+      const effectiveAlpha = Math.min(0.65, alpha * 1.35);
+      const g = ctx.createLinearGradient(x1, y1, x2, y2);
+      const c1 = currentPalette.colors[0];
+      const c2 = currentPalette.colors[1] || currentPalette.colors[0];
+      const c3 = currentPalette.colors[2] || currentPalette.colors[0];
+      const c4 = currentPalette.colors[3] || currentPalette.colors[1] || currentPalette.colors[0];
+
+      g.addColorStop(0, `rgba(${c1[0]}, ${c1[1]}, ${c1[2]}, ${effectiveAlpha * 0.75})`);
+      g.addColorStop(0.33, `rgba(${c2[0]}, ${c2[1]}, ${c2[2]}, ${effectiveAlpha})`);
+      g.addColorStop(0.66, `rgba(${c3[0]}, ${c3[1]}, ${c3[2]}, ${effectiveAlpha})`);
+      g.addColorStop(1, `rgba(${c4[0]}, ${c4[1]}, ${c4[2]}, ${effectiveAlpha * 0.75})`);
+      return g;
+    }
+
+    // ── Engine 1: Sacred Geometry & Astrolabe Mandala Line Art ──
+    function drawSacredMandala() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const rx = Math.max(width * 0.46, Math.min(width, height) * 0.44);
+      const ry = Math.max(height * 0.32, Math.min(width, height) * 0.38);
+
+      ctx.lineWidth = 1.1;
+
+      // Outer astrolabe coordinate ring with subtle breathing
+      const breathX = Math.sin(time * 0.4) * 12;
+      const breathY = Math.cos(time * 0.4) * 10;
+      const rxOuter = rx + breathX;
+      const ryOuter = ry + breathY;
+      ctx.strokeStyle = createStrokeGradient(cx - rxOuter, cy, cx + rxOuter, cy, 0.18);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rxOuter, ryOuter, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Degree tick lines along outer perimeter
+      const ticks = 48;
+      ctx.lineWidth = 0.8;
+      for (let i = 0; i < ticks; i++) {
+        const theta = (Math.PI * 2 / ticks) * i + time * 0.04;
+        const innerLen = (i % 4 === 0) ? 14 : 7;
+        const x1 = cx + Math.cos(theta) * (rxOuter - innerLen);
+        const y1 = cy + Math.sin(theta) * (ryOuter - innerLen);
+        const x2 = cx + Math.cos(theta) * rxOuter;
+        const y2 = cy + Math.sin(theta) * ryOuter;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      // Intersecting Flower of Life circular arcs
+      ctx.lineWidth = 0.9;
+      const petalRx = rx * 0.55;
+      const petalRy = ry * 0.55;
+      for (let i = 0; i < 6; i++) {
+        const theta = (Math.PI * 2 / 6) * i - time * 0.06;
+        const ox = cx + Math.cos(theta) * petalRx;
+        const oy = cy + Math.sin(theta) * petalRy;
+        ctx.strokeStyle = createStrokeGradient(ox - petalRx, oy, ox + petalRx, oy, 0.14);
+        ctx.beginPath();
+        ctx.ellipse(ox, oy, petalRx, petalRy, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Rotating inner concentric polygon wireframes
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(time * 0.05);
+
+      ctx.beginPath();
+      const points = 12;
+      for (let i = 0; i <= points; i++) {
+        const theta = (Math.PI * 2 / points) * i;
+        const rScale = (i % 2 === 0) ? 0.75 : 0.42;
+        const px = Math.cos(theta) * (rx * rScale);
+        const py = Math.sin(theta) * (ry * rScale);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = createStrokeGradient(-rx, -ry, rx, ry, 0.16);
+      ctx.stroke();
+
+      ctx.rotate(-time * 0.1);
+      const sqX = rx * 0.38;
+      const sqY = ry * 0.38;
+      ctx.beginPath();
+      ctx.rect(-sqX, -sqY, sqX * 2, sqY * 2);
+      ctx.strokeStyle = createStrokeGradient(-sqX, -sqY, sqX, sqY, 0.14);
+      ctx.stroke();
+
+      ctx.restore();
+      ctx.restore();
+    }
+
+    // ── Engine 2: Flowing Topographic Contour Lines ──
+    function drawContourWaves() {
+      ctx.save();
+      const waveCount = 7;
+      ctx.lineWidth = 1.0;
+
+      for (let j = 0; j < waveCount; j++) {
+        const progress = j / (waveCount - 1);
+        const yBase = height * (0.2 + progress * 0.6);
+        const grad = createStrokeGradient(0, yBase - 50, width, yBase + 50, 0.16 + (j % 2) * 0.06);
+        ctx.strokeStyle = grad;
+
+        ctx.beginPath();
+        const step = 25;
+        let first = true;
+
+        for (let x = 0; x <= width + step; x += step) {
+          const w1 = Math.sin(x * 0.0025 + time * 0.5 + j * 1.2) * 45;
+          const w2 = Math.cos(x * 0.005 - time * 0.35 + j * 0.8) * 28;
+          const w3 = Math.sin(x * 0.0012 + time * 0.2) * 55;
+          const y = yBase + w1 + w2 + w3;
+
+          if (first) {
+            ctx.moveTo(x, y);
+            first = false;
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 3: Pure Gossamer Geometric Constellation Lattice (No Star Dots) ──
+    function drawConstellationLattice() {
+      ctx.save();
+      const maxDist = 135;
+      ctx.lineWidth = 0.85;
+
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > width) n.vx *= -1;
+        if (n.y < 0 || n.y > height) n.vy *= -1;
+      }
+
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < maxDist) {
+            const alpha = (1 - dist / maxDist) * 0.22;
+            ctx.strokeStyle = createStrokeGradient(nodes[i].x, nodes[i].y, nodes[j].x, nodes[j].y, alpha);
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 4: Harmonic Lissajous Spirograph Orbit Line Art ──
+    function drawLissajousOrbit() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const a = Math.max(width * 0.46, Math.min(width, height) * 0.44);
+      const b = Math.max(height * 0.32, Math.min(width, height) * 0.38);
+
+      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = createStrokeGradient(cx - a, cy - b, cx + a, cy + b, 0.18);
+
+      const segments = 220;
+      const delta = (Math.PI * 2) / segments;
+
+      ctx.beginPath();
+      for (let i = 0; i <= segments; i++) {
+        const t = i * delta;
+        const x = cx + Math.sin(3 * t + time * 0.2) * a;
+        const y = cy + Math.cos(4 * t + time * 0.15) * b;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let i = 0; i <= segments; i++) {
+        const t = i * delta;
+        const x = cx + Math.sin(5 * t - time * 0.1) * (a * 0.65);
+        const y = cy + Math.sin(6 * t + time * 0.25) * (b * 0.65);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = createStrokeGradient(cx - a * 0.7, cy, cx + a * 0.7, cy, 0.14);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // ── Engine 5: Celestial Armillary 3D Wireframe Line Art ──
+    function drawCelestialArmillary() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const rx = Math.max(width * 0.46, Math.min(width, height) * 0.44);
+      const ry = Math.max(height * 0.32, Math.min(width, height) * 0.38);
+      const rotY = time * 0.12;
+      const rotX = Math.PI / 6;
+
+      ctx.lineWidth = 1.0;
+
+      const latSteps = 5;
+      for (let i = -latSteps; i <= latSteps; i++) {
+        const lat = (Math.PI / 2) * (i / (latSteps + 1));
+        const rLatX = rx * Math.cos(lat);
+        const rLatY = ry * Math.cos(lat);
+        const yLat = ry * Math.sin(lat);
+
+        ctx.beginPath();
+        const steps = 60;
+        for (let j = 0; j <= steps; j++) {
+          const lon = (Math.PI * 2 / steps) * j + rotY;
+          const x3d = rLatX * Math.sin(lon);
+          const z3d = rLatY * Math.cos(lon);
+
+          const yProj = yLat * Math.cos(rotX) - z3d * Math.sin(rotX);
+          const px = cx + x3d;
+          const py = cy + yProj;
+          if (j === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = createStrokeGradient(cx - rLatX, cy, cx + rLatX, cy, 0.12 + Math.cos(lat) * 0.08);
+        ctx.stroke();
+      }
+
+      const lonSteps = 4;
+      for (let k = 0; k < lonSteps; k++) {
+        const baseLon = (Math.PI / lonSteps) * k + rotY;
+        ctx.beginPath();
+        const steps = 60;
+        for (let j = 0; j <= steps; j++) {
+          const theta = (Math.PI * 2 / steps) * j;
+          const x3d = rx * Math.sin(theta) * Math.sin(baseLon);
+          const y3d = ry * Math.cos(theta);
+          const z3d = ry * Math.sin(theta) * Math.cos(baseLon);
+
+          const yProj = y3d * Math.cos(rotX) - z3d * Math.sin(rotX);
+          const px = cx + x3d;
+          const py = cy + yProj;
+          if (j === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = createStrokeGradient(cx - rx, cy, cx + rx, cy, 0.14);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    // ── Engine 6: Golden Fibonacci Nautilus Spiral Line Art ──
+    function drawFibonacciSpiral() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const maxR = Math.max(width, height) * 0.55;
+      ctx.lineWidth = 1.0;
+
+      for (let s = 0; s < 3; s++) {
+        const spiralPhase = (Math.PI * 2 / 3) * s + time * 0.08;
+        ctx.strokeStyle = createStrokeGradient(cx - maxR, cy - maxR, cx + maxR, cy + maxR, 0.16 + s * 0.04);
+        ctx.beginPath();
+        const steps = 180;
+        let first = true;
+        for (let i = 0; i < steps; i++) {
+          const theta = i * 0.12;
+          const r = Math.min(maxR, 8 * Math.exp(theta * 0.16));
+          const angle = theta + spiralPhase;
+          const px = cx + Math.cos(angle) * r;
+          const py = cy + Math.sin(angle) * (r * 0.85);
+          if (first) { ctx.moveTo(px, py); first = false; }
+          else { ctx.lineTo(px, py); }
+        }
+        ctx.stroke();
+      }
+
+      // Harmonic golden section orbital rings
+      for (let k = 1; k <= 5; k++) {
+        const rK = maxR * Math.pow(0.618, k);
+        ctx.strokeStyle = createStrokeGradient(cx - rK, cy, cx + rK, cy, 0.12);
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rK, rK * 0.85, time * 0.05, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 7: Sine Ribbon Aurora Waves ──
+    function drawAuroraRibbons() {
+      ctx.save();
+      ctx.lineWidth = 1.0;
+      const ribbonCount = 8;
+      const spanY = height / ribbonCount;
+
+      for (let r = 0; r < ribbonCount; r++) {
+        const yBase = (r + 0.5) * spanY;
+        const grad = createStrokeGradient(0, yBase - 80, width, yBase + 80, 0.18);
+        ctx.strokeStyle = grad;
+        ctx.beginPath();
+
+        const step = 20;
+        let first = true;
+        for (let x = 0; x <= width + step; x += step) {
+          const wave1 = Math.sin(x * 0.003 + time * 0.4 + r * 0.9) * 40;
+          const wave2 = Math.cos(x * 0.006 - time * 0.25 + r * 1.4) * 22;
+          const wave3 = Math.sin((x + yBase) * 0.002 + time * 0.15) * 35;
+          const py = yBase + wave1 + wave2 + wave3;
+
+          if (first) { ctx.moveTo(x, py); first = false; }
+          else { ctx.lineTo(x, py); }
+        }
+        ctx.stroke();
+
+        // Echo strand for luminous ribbon depth
+        ctx.beginPath();
+        first = true;
+        for (let x = 0; x <= width + step; x += step) {
+          const wave1 = Math.sin(x * 0.003 + time * 0.4 + r * 0.9 + 0.15) * 40;
+          const wave2 = Math.cos(x * 0.006 - time * 0.25 + r * 1.4 + 0.15) * 22;
+          const wave3 = Math.sin((x + yBase) * 0.002 + time * 0.15) * 35;
+          const py = yBase + wave1 + wave2 + wave3 + 12;
+
+          if (first) { ctx.moveTo(x, py); first = false; }
+          else { ctx.lineTo(x, py); }
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 8: 3D Revolving Torus Knot Line Art ──
+    function drawTorusWireframe() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const R = Math.min(width, height) * 0.38;
+      const r = Math.min(width, height) * 0.18;
+      const rotY = time * 0.15;
+      const rotX = Math.PI / 4 + Math.sin(time * 0.1) * 0.15;
+
+      ctx.lineWidth = 0.95;
+
+      const coils = 12;
+      for (let c = 0; c < coils; c++) {
+        const phiBase = (Math.PI * 2 / coils) * c + rotY;
+        ctx.strokeStyle = createStrokeGradient(cx - R, cy - R, cx + R, cy + R, 0.15);
+        ctx.beginPath();
+        const steps = 48;
+        let first = true;
+        for (let i = 0; i <= steps; i++) {
+          const theta = (Math.PI * 2 / steps) * i;
+          const x3d = (R + r * Math.cos(theta)) * Math.cos(phiBase);
+          const y3d = r * Math.sin(theta);
+          const z3d = (R + r * Math.cos(theta)) * Math.sin(phiBase);
+
+          const yProj = y3d * Math.cos(rotX) - z3d * Math.sin(rotX);
+          const px = cx + x3d;
+          const py = cy + yProj;
+
+          if (first) { ctx.moveTo(px, py); first = false; }
+          else { ctx.lineTo(px, py); }
+        }
+        ctx.stroke();
+      }
+
+      // Torus Knot (p=2, q=3 harmonic curve)
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = createStrokeGradient(cx - R - r, cy, cx + R + r, cy, 0.22);
+      ctx.beginPath();
+      const knotSteps = 160;
+      let first = true;
+      for (let i = 0; i <= knotSteps; i++) {
+        const phi = (Math.PI * 2 * 2 / knotSteps) * i;
+        const theta = (Math.PI * 2 * 3 / knotSteps) * i + time * 0.2;
+        const x3d = (R + r * Math.cos(theta)) * Math.cos(phi + rotY);
+        const y3d = r * Math.sin(theta);
+        const z3d = (R + r * Math.cos(theta)) * Math.sin(phi + rotY);
+
+        const yProj = y3d * Math.cos(rotX) - z3d * Math.sin(rotX);
+        const px = cx + x3d;
+        const py = cy + yProj;
+
+        if (first) { ctx.moveTo(px, py); first = false; }
+        else { ctx.lineTo(px, py); }
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── Engine 9: Harmonic Polar Rose Sacred Bloom ──
+    function drawSacredLotusRose() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const maxR = Math.max(width * 0.44, Math.min(width, height) * 0.44);
+
+      ctx.lineWidth = 1.0;
+      const petalLayers = 4;
+      for (let L = 0; L < petalLayers; L++) {
+        const layerScale = 1.0 - L * 0.22;
+        const rot = (L % 2 === 0 ? 1 : -1) * time * 0.07 + L * 0.4;
+        const k = 4;
+        ctx.strokeStyle = createStrokeGradient(cx - maxR, cy - maxR, cx + maxR, cy + maxR, 0.14 + (petalLayers - L) * 0.03);
+
+        ctx.beginPath();
+        const steps = 200;
+        let first = true;
+        for (let i = 0; i <= steps; i++) {
+          const theta = (Math.PI * 2 / steps) * i;
+          const r = maxR * layerScale * (0.35 + 0.65 * Math.abs(Math.cos(k * theta)));
+          const angle = theta + rot;
+          const px = cx + Math.cos(angle) * r;
+          const py = cy + Math.sin(angle) * (r * 0.88);
+
+          if (first) { ctx.moveTo(px, py); first = false; }
+          else { ctx.lineTo(px, py); }
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 10: Hyperspace Geometric Tunnel Rings & Rays ──
+    function drawHyperspaceTunnel() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const maxR = Math.max(width, height) * 0.6;
+
+      ctx.lineWidth = 0.95;
+      const ringCount = 9;
+      for (let i = 0; i < ringCount; i++) {
+        const ringProgress = (i / ringCount + time * 0.1) % 1.0;
+        const r = Math.pow(ringProgress, 1.8) * maxR;
+        if (r < 15) continue;
+        const alpha = Math.sin(ringProgress * Math.PI) * 0.22;
+        ctx.strokeStyle = createStrokeGradient(cx - r, cy, cx + r, cy, alpha);
+
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r, r * 0.72, time * 0.04, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const rays = 16;
+      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = createStrokeGradient(cx - maxR, cy, cx + maxR, cy, 0.12);
+      for (let j = 0; j < rays; j++) {
+        const theta = (Math.PI * 2 / rays) * j + time * 0.03;
+        const rInner = 28;
+        const x1 = cx + Math.cos(theta) * rInner;
+        const y1 = cy + Math.sin(theta) * (rInner * 0.72);
+        const x2 = cx + Math.cos(theta) * maxR;
+        const y2 = cy + Math.sin(theta) * (maxR * 0.72);
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 11: Undulating Terrain Perspective Grid ──
+    function drawUndulatingTerrainGrid() {
+      ctx.save();
+      ctx.lineWidth = 0.9;
+      const rows = 9;
+      const cols = 14;
+      const yStart = height * 0.25;
+      const yEnd = height * 0.95;
+
+      for (let r = 0; r < rows; r++) {
+        const rowProg = r / (rows - 1);
+        const yBase = yStart + rowProg * (yEnd - yStart);
+        const alpha = 0.12 + rowProg * 0.10;
+        ctx.strokeStyle = createStrokeGradient(0, yBase, width, yBase, alpha);
+        ctx.beginPath();
+
+        const step = 20;
+        let first = true;
+        for (let x = 0; x <= width + step; x += step) {
+          const wave = Math.sin(x * 0.004 + time * 0.6 + r * 0.8) * (20 + rowProg * 25);
+          const py = yBase + wave;
+          if (first) { ctx.moveTo(x, py); first = false; }
+          else { ctx.lineTo(x, py); }
+        }
+        ctx.stroke();
+      }
+
+      ctx.lineWidth = 0.75;
+      for (let c = 0; c < cols; c++) {
+        const xBase = (c / (cols - 1)) * width;
+        ctx.strokeStyle = createStrokeGradient(xBase, yStart, xBase, yEnd, 0.12);
+        ctx.beginPath();
+        let first = true;
+        for (let r = 0; r < rows; r++) {
+          const rowProg = r / (rows - 1);
+          const yBase = yStart + rowProg * (yEnd - yStart);
+          const wave = Math.sin(xBase * 0.004 + time * 0.6 + r * 0.8) * (20 + rowProg * 25);
+          const py = yBase + wave;
+          if (first) { ctx.moveTo(xBase, py); first = false; }
+          else { ctx.lineTo(xBase, py); }
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 12: Concentric Platonic Metatron Polygons ──
+    function drawMetatronPolygons() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const baseR = Math.max(width * 0.44, Math.min(width, height) * 0.42);
+
+      ctx.lineWidth = 1.0;
+      const polyConfigs = [
+        { sides: 6, scale: 1.0, speed: 0.04, alpha: 0.18 },
+        { sides: 8, scale: 0.72, speed: -0.06, alpha: 0.16 },
+        { sides: 12, scale: 0.45, speed: 0.08, alpha: 0.14 },
+      ];
+
+      for (const conf of polyConfigs) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(time * conf.speed);
+
+        ctx.strokeStyle = createStrokeGradient(-baseR * conf.scale, 0, baseR * conf.scale, 0, conf.alpha);
+        ctx.beginPath();
+        const rX = baseR * conf.scale;
+        const rY = baseR * conf.scale * 0.82;
+
+        for (let i = 0; i <= conf.sides; i++) {
+          const theta = (Math.PI * 2 / conf.sides) * i;
+          const px = Math.cos(theta) * rX;
+          const py = Math.sin(theta) * rY;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.lineWidth = 0.75;
+        for (let i = 0; i < conf.sides; i++) {
+          const theta1 = (Math.PI * 2 / conf.sides) * i;
+          const theta2 = (Math.PI * 2 / conf.sides) * ((i + 2) % conf.sides);
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(theta1) * rX, Math.sin(theta1) * rY);
+          ctx.lineTo(Math.cos(theta2) * rX, Math.sin(theta2) * rY);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 13: Sacred Cymatic Resonance Standing Waves ──
+    function drawSacredCymatics() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const maxR = Math.max(width * 0.46, Math.min(width, height) * 0.44);
+      ctx.lineWidth = 1.0;
+
+      const rings = 8;
+      for (let r = 1; r <= rings; r++) {
+        const progress = r / rings;
+        const radius = maxR * Math.pow(progress, 0.88);
+        const freq = 4 + (r % 3) * 2;
+        const phase = time * (0.12 + (r % 2) * 0.08) * (r % 2 === 0 ? 1 : -1);
+        const alpha = 0.13 + (1 - progress) * 0.08;
+
+        ctx.strokeStyle = createStrokeGradient(cx - radius, cy - radius, cx + radius, cy + radius, alpha);
+        ctx.beginPath();
+        const steps = 180;
+        let first = true;
+        for (let i = 0; i <= steps; i++) {
+          const theta = (Math.PI * 2 / steps) * i;
+          const mod = Math.sin(freq * theta + phase) * (radius * 0.08);
+          const currentR = radius + mod;
+          const px = cx + Math.cos(theta) * currentR;
+          const py = cy + Math.sin(theta) * (currentR * 0.86);
+          if (first) { ctx.moveTo(px, py); first = false; }
+          else { ctx.lineTo(px, py); }
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 14: Celestial Harmonograph Pendulum Multi-Wave Ribbons ──
+    function drawCelestialPendulumWave() {
+      ctx.save();
+      ctx.lineWidth = 1.0;
+      const strandCount = 10;
+
+      for (let s = 0; s < strandCount; s++) {
+        const prog = s / (strandCount - 1);
+        const freq = 0.0028 + s * 0.00035;
+        const amp = 34 + Math.sin(time * 0.2 + s * 0.5) * 18;
+        const yBase = height * (0.18 + prog * 0.64);
+        const alpha = 0.11 + Math.sin(prog * Math.PI) * 0.11;
+
+        ctx.strokeStyle = createStrokeGradient(0, yBase, width, yBase, alpha);
+        ctx.beginPath();
+        const step = 20;
+        let first = true;
+        for (let x = 0; x <= width + step; x += step) {
+          const py = yBase + Math.sin(x * freq + time * 0.4 + s * 0.4) * amp + Math.cos(x * 0.0015 - time * 0.2) * 18;
+          if (first) { ctx.moveTo(x, py); first = false; }
+          else { ctx.lineTo(x, py); }
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 15: Sacred Hyperbolic Poincaré Geodesics ──
+    function drawHyperbolicPoincare() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const diskR = Math.max(width * 0.44, Math.min(width, height) * 0.42);
+
+      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = createStrokeGradient(cx - diskR, cy, cx + diskR, cy, 0.18);
+
+      // Boundary conformal ellipse
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, diskR, diskR * 0.85, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Orthogonal geodesic circular arcs
+      const arcs = 12;
+      ctx.lineWidth = 0.85;
+      for (let a = 0; a < arcs; a++) {
+        const angle = (Math.PI * 2 / arcs) * a + time * 0.05;
+        const d = diskR * (0.46 + 0.14 * Math.sin(time * 0.2 + a));
+        const arcR = Math.sqrt(Math.max(10, diskR * diskR - d * d));
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        ctx.strokeStyle = createStrokeGradient(-diskR, 0, diskR, 0, 0.13);
+        ctx.beginPath();
+        ctx.ellipse(d, 0, arcR, arcR * 0.85, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    // ── Engine 16: Precessing Quantum Vortex Gyroscope Rings ──
+    function drawQuantumVortexRings() {
+      ctx.save();
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const maxR = Math.max(width * 0.45, Math.min(width, height) * 0.42);
+      ctx.lineWidth = 1.0;
+
+      const rings = 9;
+      for (let r = 0; r < rings; r++) {
+        const theta = (Math.PI / rings) * r + time * 0.07;
+        const rotZ = time * 0.04 + r * 0.2;
+        const rx = maxR * (0.52 + 0.48 * Math.cos(r * 0.3));
+        const ry = maxR * (0.26 + 0.18 * Math.sin(r * 0.4));
+        const alpha = 0.12 + (r % 3) * 0.04;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rotZ);
+        ctx.strokeStyle = createStrokeGradient(-rx, -ry, rx, ry, alpha);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, ry, theta, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    // ── Living Liquid Gradient Mesh: Smooth Morphing Fluid Color Pools ──
+    function drawLivingGradientMesh() {
+      currentTop[0] = lerp(currentTop[0], currentPalette.bgTop[0], 0.03);
+      currentTop[1] = lerp(currentTop[1], currentPalette.bgTop[1], 0.03);
+      currentTop[2] = lerp(currentTop[2], currentPalette.bgTop[2], 0.03);
+
+      currentBottom[0] = lerp(currentBottom[0], currentPalette.bgBottom[0], 0.03);
+      currentBottom[1] = lerp(currentBottom[1], currentPalette.bgBottom[1], 0.03);
+      currentBottom[2] = lerp(currentBottom[2], currentPalette.bgBottom[2], 0.03);
+
+      // Ambient luminance lift so the background is visibly lighter and more luminous
+      const lift = 24;
+      const topR = Math.min(255, Math.round(currentTop[0] + lift * 0.85));
+      const topG = Math.min(255, Math.round(currentTop[1] + lift * 0.95));
+      const topB = Math.min(255, Math.round(currentTop[2] + lift * 1.35));
+
+      const botR = Math.min(255, Math.round(currentBottom[0] + lift * 0.85));
+      const botG = Math.min(255, Math.round(currentBottom[1] + lift * 0.95));
+      const botB = Math.min(255, Math.round(currentBottom[2] + lift * 1.35));
+
+      const baseGrad = ctx.createLinearGradient(0, 0, width * 0.3, height);
+      baseGrad.addColorStop(0, `rgb(${topR}, ${topG}, ${topB})`);
+      baseGrad.addColorStop(1, `rgb(${botR}, ${botG}, ${botB})`);
+      ctx.fillStyle = baseGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      const x1 = width * (0.35 + 0.22 * Math.sin(time * 0.35));
+      const y1 = height * (0.3 + 0.18 * Math.cos(time * 0.3));
+      const r1 = Math.max(width, height) * 0.60;
+      const c1 = currentPalette.colors[0];
+      const g1 = ctx.createRadialGradient(x1, y1, 0, x1, y1, r1);
+      g1.addColorStop(0, `rgba(${c1[0]}, ${c1[1]}, ${c1[2]}, 0.40)`);
+      g1.addColorStop(0.5, `rgba(${c1[0]}, ${c1[1]}, ${c1[2]}, 0.15)`);
+      g1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g1;
+      ctx.fillRect(0, 0, width, height);
+
+      const x2 = width * (0.65 + 0.2 * Math.cos(time * 0.4));
+      const y2 = height * (0.7 + 0.18 * Math.sin(time * 0.32));
+      const r2 = Math.max(width, height) * 0.62;
+      const c2 = currentPalette.colors[1] || c1;
+      const g2 = ctx.createRadialGradient(x2, y2, 0, x2, y2, r2);
+      g2.addColorStop(0, `rgba(${c2[0]}, ${c2[1]}, ${c2[2]}, 0.34)`);
+      g2.addColorStop(0.5, `rgba(${c2[0]}, ${c2[1]}, ${c2[2]}, 0.13)`);
+      g2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g2;
+      ctx.fillRect(0, 0, width, height);
+
+      const x3 = width * (0.5 + 0.15 * Math.sin(time * 0.25));
+      const y3 = height * (0.5 + 0.12 * Math.cos(time * 0.28));
+      const r3 = Math.max(width, height) * 0.50;
+      const c3 = currentPalette.colors[2] || c1;
+      const g3 = ctx.createRadialGradient(x3, y3, 0, x3, y3, r3);
+      g3.addColorStop(0, `rgba(${c3[0]}, ${c3[1]}, ${c3[2]}, 0.26)`);
+      g3.addColorStop(0.5, `rgba(${c3[0]}, ${c3[1]}, ${c3[2]}, 0.08)`);
+      g3.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g3;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    // ── Main Render Loop (60fps Hardware Accelerated) ──
+    function draw() {
+      if (!isVisible) {
+        animId = null;
+        return;
+      }
+      const { canvas: currentCanvas, ctx: currentCtx } = getCanvasAndContext();
+      if (!currentCanvas || !currentCtx) {
+        animId = null;
+        return;
+      }
+
+      time += 0.016;
+
+      try {
+        // 1. Render Living Liquid Gradient Mesh
+        drawLivingGradientMesh();
+
+        // 2. Render Pure Elegant Line Art (12 engines)
+        if (currentAnim === 'sacred_mandala') {
+          drawSacredMandala();
+        } else if (currentAnim === 'contour_waves') {
+          drawContourWaves();
+        } else if (currentAnim === 'constellation_lattice') {
+          drawConstellationLattice();
+        } else if (currentAnim === 'lissajous_orbit') {
+          drawLissajousOrbit();
+        } else if (currentAnim === 'celestial_armillary') {
+          drawCelestialArmillary();
+        } else if (currentAnim === 'fibonacci_spiral') {
+          drawFibonacciSpiral();
+        } else if (currentAnim === 'aurora_ribbons') {
+          drawAuroraRibbons();
+        } else if (currentAnim === 'torus_wireframe') {
+          drawTorusWireframe();
+        } else if (currentAnim === 'sacred_lotus_rose') {
+          drawSacredLotusRose();
+        } else if (currentAnim === 'hyperspace_tunnel') {
+          drawHyperspaceTunnel();
+        } else if (currentAnim === 'undulating_terrain_grid') {
+          drawUndulatingTerrainGrid();
+        } else if (currentAnim === 'metatron_polygons') {
+          drawMetatronPolygons();
+        } else if (currentAnim === 'sacred_cymatics_harmonics') {
+          drawSacredCymatics();
+        } else if (currentAnim === 'celestial_pendulum_wave') {
+          drawCelestialPendulumWave();
+        } else if (currentAnim === 'hyperbolic_poincare_disk') {
+          drawHyperbolicPoincare();
+        } else if (currentAnim === 'quantum_vortex_rings') {
+          drawQuantumVortexRings();
+        }
+      } catch (err) {
+        console.warn('[GlobalBackground] Render cycle recovered:', err);
+      }
+
+      animId = requestAnimationFrame(draw);
+    }
+
+    function startLoop() {
+      if (animId !== null) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+      isVisible = !document.hidden;
+      if (isVisible) {
+        animId = requestAnimationFrame(draw);
+      }
+    }
+
+    function stopLoop() {
+      if (animId !== null) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+    }
+
+    // Public Controller: called on slide arrival
+    (window as any).setBackground = function(videoSrc: string, gradientClass: string, mood: string, quoteId: string) {
+      const key = quoteId || mood || 'wisdom';
+      const hash = djb2(key);
+
+      // 1. Select Palette: strictly exclude last 2 played palettes
+      const eligiblePalettes = PALETTES.filter(p => !recentPalettes.includes(p.name));
+      const chosenPalette = eligiblePalettes.length > 0
+        ? eligiblePalettes[hash % eligiblePalettes.length]
+        : PALETTES[hash % PALETTES.length];
+
+      currentPalette = chosenPalette;
+      recentPalettes.push(chosenPalette.name);
+      if (recentPalettes.length > 2) recentPalettes.shift();
+
+      // 2. Select Line Art Animation: strictly exclude last 2 played animations
+      const eligibleAnims = ANIM_TYPES.filter(a => !recentAnims.includes(a));
+      const chosenAnim = eligibleAnims.length > 0
+        ? eligibleAnims[(hash >> 3) % eligibleAnims.length]
+        : ANIM_TYPES[hash % ANIM_TYPES.length];
+
+      currentAnim = chosenAnim;
+      recentAnims.push(chosenAnim);
+      if (recentAnims.length > 2) recentAnims.shift();
+
+      // Update ambient glow overlay CSS
+      const g1 = document.getElementById('mood-glow-1');
+      const g2 = document.getElementById('mood-glow-2');
+      const gc = document.getElementById('mood-glow-center');
+      if (g1) g1.style.background = currentPalette.glow1;
+      if (g2) g2.style.background = currentPalette.glow2;
+      if (gc) gc.style.background = currentPalette.glowCenter;
+
+      // Always guarantee animation loop is alive and active
+      if (isVisible && animId === null) {
+        startLoop();
+      }
+    };
+
+    (window as any).wisdomBackground = {
+      getCurrentPalette: () => currentPalette,
+      getCurrentAnim: () => currentAnim,
+      getCanvas: () => canvas,
+      start: () => { isVisible = true; startLoop(); },
+      stop: () => stopLoop(),
+      resize: () => resize(),
+    };
+
+    window.addEventListener('resize', resize, { passive: true });
+    document.addEventListener('visibilitychange', () => {
+      isVisible = !document.hidden;
+      if (isVisible) {
+        resize();
+        startLoop();
+      } else {
+        stopLoop();
+      }
+    });
+
+    window.addEventListener('pageshow', () => {
+      isVisible = !document.hidden;
+      resize();
+      startLoop();
+    });
+
+    window.addEventListener('focus', () => {
+      isVisible = true;
+      resize();
+      startLoop();
+    });
+
+    document.addEventListener('astro:page-load', () => {
+      resize();
+      startLoop();
+    });
+
+    document.addEventListener('astro:after-swap', () => {
+      resize();
+      startLoop();
+    });
+
+    if (canvas) {
+      canvas.addEventListener('contextrestored', () => {
+        resize();
+        startLoop();
+      });
+    }
+
+    resize();
+    startLoop();
+  })();
+</script>

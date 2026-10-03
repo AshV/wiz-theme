@@ -1,0 +1,635 @@
+---
+/**
+ * AuthorDossierModal — High-end editorial philosopher dossier modal.
+ *
+ * Provides a rich, beautiful magazine-style modal containing the thinker's
+ * complete biography, historical era, tradition, core philosophical pillars,
+ * primary sourced literature, and why their voice endures.
+ *
+ * Universally available across all feeds (main reel, author, category, mood, tag, quote).
+ * Author profiles are fetched on-demand from /wisdom/api/authors/[slug].json (2 KB per author).
+ */
+---
+
+<!-- Accessible Author Editorial Dossier Modal -->
+<div
+  id="author-context-modal"
+  class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-300 flex items-center justify-center p-3 sm:p-6 md:p-8"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="author-modal-title"
+  style="display: none;"
+>
+  <div
+    class="relative w-full max-w-6xl flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden border text-white transition-colors duration-300"
+    style="height: min(84vh, 780px); max-height: calc(100vh - 3.5rem); background: var(--quote-modal-bg, #1a1836); border-color: var(--quote-border, rgba(251,191,36,0.35)); box-shadow: 0 25px 90px rgba(0,0,0,0.85), var(--quote-modal-glow, 0 0 70px rgba(251,191,36,0.15));"
+  >
+    <!-- Dynamic Ambient Mood Glow Overlay -->
+    <div class="absolute inset-0 pointer-events-none opacity-45 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_top,var(--quote-glow)_0%,transparent_65%)]"></div>
+
+    <!-- Top Sticky App Bar -->
+    <header
+      class="relative z-20 shrink-0 border-b border-white/10 flex items-center justify-between select-none shadow-md transition-colors duration-300"
+      style="background-color: var(--quote-modal-header-bg, #0d0a1a); padding-left: clamp(1.25rem, 4vw, 4rem); padding-right: clamp(1.25rem, 4vw, 4rem); padding-top: 1.1rem; padding-bottom: 1.1rem;"
+    >
+      <div class="flex items-center gap-3.5 min-w-0">
+        <div
+          class="w-10 h-10 rounded-full border flex items-center justify-center font-serif font-bold text-xs shrink-0 shadow-sm relative overflow-hidden transition-all duration-300"
+          style="background: var(--quote-badge-bg, rgba(251,191,36,0.15)); border-color: var(--quote-border, rgba(251,191,36,0.4)); color: var(--quote-accent, #fbbf24);"
+        >
+          <span id="author-modal-header-initials" class="z-0">✦</span>
+          <img
+            id="author-modal-header-img"
+            src=""
+            alt=""
+            class="absolute inset-0 w-full h-full object-cover object-top opacity-0 transition-opacity duration-300 z-10 hidden"
+            onload="this.classList.remove('opacity-0')"
+            onerror="this.classList.add('hidden')"
+          />
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] uppercase font-mono tracking-[0.2em] font-semibold transition-colors duration-300" style="color: var(--quote-accent, #fbbf24);">
+              Philosopher Dossier
+            </span>
+            <span class="hidden sm:inline text-white/30 text-xs">•</span>
+            <span id="author-modal-header-era" class="hidden sm:inline text-xs text-white/60 font-mono"></span>
+          </div>
+          <h2 id="author-modal-header-name" class="text-sm sm:text-base font-serif font-bold text-white tracking-wide truncate">
+            About Author
+          </h2>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 shrink-0">
+        <button
+          id="author-context-close"
+          type="button"
+          class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white/70 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95 shadow-sm"
+          aria-label="Close author dossier (Esc)"
+          title="Close (Esc)"
+        >
+          <svg class="w-4 h-4 group-hover:rotate-90 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Scrollable Editorial Body -->
+    <div
+      class="flex-1 overflow-y-auto author-modal-scroll space-y-10"
+      style="padding-left: clamp(1.25rem, 4vw, 4rem); padding-right: clamp(1.25rem, 4vw, 4rem); padding-top: 2rem; padding-bottom: 6rem;"
+    >
+      <!-- 2-COLUMN EDITORIAL MAGAZINE GRID (lg:) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        
+        <!-- ── LEFT COLUMN (lg:col-span-5): Identity, Essence, Callout Card, Quick Actions ── -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+          
+          <!-- Hero Presentation Box -->
+          <div
+            class="rounded-2xl sm:rounded-3xl bg-white/[0.065] border border-white/15 shadow-lg space-y-6"
+            style="padding: clamp(1.5rem, 3vw, 2.25rem);"
+          >
+            <!-- Crest Avatar & Badges -->
+            <div class="flex items-center gap-4">
+              <div
+                class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 shadow-xl flex items-center justify-center relative overflow-hidden shrink-0 transition-all duration-300"
+                style="border-color: var(--quote-border, rgba(251,191,36,0.4)); background: var(--quote-badge-bg, rgba(251,191,36,0.15));"
+              >
+                <div class="absolute inset-0 pointer-events-none transition-opacity duration-300" style="background: radial-gradient(circle at center, var(--quote-glow, rgba(251,191,36,0.25)) 0%, transparent 70%);"></div>
+                <span
+                  id="author-modal-hero-initials"
+                  class="font-serif italic font-bold text-2xl sm:text-3xl tracking-wider drop-shadow-md select-none z-0 transition-colors duration-300"
+                  style="color: var(--quote-accent, #fef3c7);"
+                >
+                  ✦
+                </span>
+                <img
+                  id="author-modal-hero-img"
+                  src=""
+                  alt=""
+                  class="absolute inset-0 w-full h-full object-cover object-top opacity-0 transition-opacity duration-300 z-10 hidden"
+                  onload="this.classList.remove('opacity-0')"
+                  onerror="this.classList.add('hidden')"
+                />
+              </div>
+
+              <div class="flex-1 min-w-0 space-y-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    id="author-modal-tradition"
+                    class="pill text-[10px] uppercase tracking-wider font-semibold px-3 py-1.5 rounded-full border transition-all duration-300"
+                    style="color: var(--quote-accent, #fcd34d); background: var(--quote-badge-bg, rgba(251,191,36,0.1)); border-color: var(--quote-border, rgba(251,191,36,0.3));"
+                  >
+                    Philosophy
+                  </span>
+                  <span
+                    id="author-modal-era"
+                    class="pill text-[10px] text-white/60 font-mono px-3 py-1.5 rounded-full bg-white/5 border border-white/10"
+                  >
+                  </span>
+                </div>
+                <div class="text-xs font-medium flex items-center gap-1.5 text-white/80">
+                  <span id="author-modal-count">100+ Curated Quotes</span>
+                  <span class="font-sans" style="color: var(--quote-accent, #fbbf24);">&infin;</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Author Title & Summary -->
+            <div class="space-y-3">
+              <h3 id="author-modal-title" class="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight leading-tight">
+                Author Name
+              </h3>
+              <p
+                id="author-modal-summary"
+                class="text-xs sm:text-sm text-white/90 font-serif italic leading-relaxed border-l-2 pl-4 pr-3 py-2 rounded-r-lg transition-all duration-300"
+                style="border-color: var(--quote-accent, #fbbf24); background: var(--quote-badge-bg, rgba(251,191,36,0.03));"
+              >
+              </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-2 flex flex-col gap-2.5">
+              <button
+                id="author-modal-explore-cta"
+                type="button"
+                class="w-full py-3 px-5 rounded-xl text-neutral-950 font-bold text-xs sm:text-sm active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                style="background: linear-gradient(135deg, var(--quote-accent, #fbbf24), var(--quote-accent-dark, #f59e0b)); box-shadow: 0 0 25px var(--quote-glow-soft, rgba(251,191,36,0.3));"
+              >
+                <span>Explore Quotes &amp; Reels</span>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <polyline points="19 12 12 19 5 12" />
+                </svg>
+              </button>
+
+              <div class="flex items-center gap-2.5">
+                <button
+                  id="author-modal-share-btn"
+                  type="button"
+                  class="flex-1 py-2 px-3.5 rounded-xl glass border border-white/15 hover:border-white/30 text-white/80 hover:text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                  title="Share link to author's quotes"
+                >
+                  <svg class="w-3.5 h-3.5" style="color: var(--quote-accent, #fbbf24);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                  <span>Share Link</span>
+                </button>
+
+                <a
+                  id="author-modal-wikipedia"
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex-1 py-2 px-3.5 rounded-xl glass border border-white/15 hover:border-white/30 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                  style="color: var(--quote-accent, #fbbf24);"
+                >
+                  <span>Wikipedia</span>
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Why Timeless Callout Card -->
+          <div
+            id="author-modal-whytimeless-card"
+            class="relative rounded-2xl sm:rounded-3xl border overflow-hidden shadow-xl transition-all duration-300"
+            style="padding: clamp(1.5rem, 3vw, 2.25rem); border-color: var(--quote-border, rgba(251,191,36,0.3)); background: linear-gradient(135deg, rgba(var(--quote-accent-rgb, 251,191,36), 0.12), rgba(0,0,0,0.6));"
+          >
+            <span class="absolute -top-6 right-3 text-7xl font-serif text-white/5 select-none pointer-events-none">
+              &ldquo;
+            </span>
+            <div class="relative z-10 space-y-2.5">
+              <div class="flex items-center gap-2 text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] font-semibold transition-colors duration-300" style="color: var(--quote-accent, #fbbf24);">
+                <span>✦</span> Why This Voice Endures
+              </div>
+              <blockquote
+                id="author-modal-whytimeless"
+                class="text-xs sm:text-sm text-white/95 font-serif italic leading-relaxed pt-1 pr-3"
+              >
+              </blockquote>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── RIGHT COLUMN (lg:col-span-7): Narrative, Pillars, Bibliography ── -->
+        <div class="lg:col-span-7 flex flex-col gap-8">
+          
+          <!-- Biography / Narrative Section -->
+          <section class="space-y-3.5">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-300/90 font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Biographical Narrative
+              </div>
+              <div id="author-modal-longname-wrap" style="display: none;">
+                <span
+                  id="author-modal-longname"
+                  class="pill text-xs font-serif italic text-amber-200/90 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/25"
+                >
+                </span>
+              </div>
+            </div>
+            <div
+              class="rounded-2xl sm:rounded-3xl bg-gradient-to-b from-white/[0.09] to-white/[0.04] border border-white/15 text-base sm:text-lg text-white/90 leading-relaxed font-sans shadow-inner"
+              style="padding: clamp(1.75rem, 3.5vw, 2.5rem);"
+            >
+              <p
+                id="author-modal-bio"
+                class="first-letter:font-serif first-letter:text-5xl sm:first-letter:text-6xl first-letter:font-bold first-letter:text-amber-300 first-letter:float-left first-letter:mr-4 first-letter:leading-none whitespace-pre-line"
+              >
+              </p>
+            </div>
+          </section>
+
+          <!-- Core Philosophical Pillars -->
+          <section id="author-modal-pillars-section" class="space-y-3.5">
+            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+              <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-300/90 font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Core Philosophical Pillars
+              </div>
+              <span class="text-[11px] text-white/50 font-mono">Foundational concepts &amp; principles</span>
+            </div>
+            <div id="author-modal-pillars-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            </div>
+          </section>
+
+          <!-- Primary Sourced Works -->
+          <section id="author-modal-works-section" class="space-y-3.5">
+            <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+              <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-300/90 font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Primary Sourced Works
+              </div>
+              <span class="text-[11px] text-white/50 font-mono">Essential literature &amp; treatises</span>
+            </div>
+            <div id="author-modal-works-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- Bottom Clearance Spacer -->
+      <div class="h-16 sm:h-20"></div>
+    </div>
+  </div>
+</div>
+
+<style is:inline>
+  .author-modal-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--quote-border, rgba(251, 191, 36, 0.35)) rgba(255, 255, 255, 0.03);
+  }
+  .author-modal-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .author-modal-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+  }
+  .author-modal-scroll::-webkit-scrollbar-thumb {
+    background: var(--quote-border, rgba(251, 191, 36, 0.3));
+    border-radius: 8px;
+  }
+  .author-modal-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--quote-accent, rgba(251, 191, 36, 0.6));
+  }
+</style>
+
+<script is:inline>
+  const _authorCache = {};
+
+  async function fetchAuthorProfile(slug) {
+    if (!slug) return null;
+    if (_authorCache[slug]) return _authorCache[slug];
+    try {
+      const base = window.__wisdomBaseUrl || '/wisdom';
+      const res = await fetch(`${base}/api/authors/${slug}.json`);
+      if (res.ok) {
+        const data = await res.json();
+        _authorCache[slug] = data;
+        return data;
+      }
+    } catch (e) {
+      console.warn('Could not fetch author profile:', slug, e);
+    }
+    return null;
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  window.openAuthorDossierModal = async function(slug, fallbackName) {
+    const modal = document.getElementById('author-context-modal');
+    if (!modal) return;
+
+    // Harmonize theme with current active quote's mood
+    const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+    if (activeSlide && window.applyQuoteThemeToModals) {
+      window.applyQuoteThemeToModals(activeSlide.dataset?.mood || 'reflective');
+    }
+
+    if (window.firebaseStats && typeof window.firebaseStats.recordAuthorDossierView === 'function') {
+      window.firebaseStats.recordAuthorDossierView(slug, fallbackName);
+    }
+
+    let profile = window.zenLoader
+      ? await window.zenLoader.wrap(fetchAuthorProfile(slug), 'Opening author dossier...')
+      : await fetchAuthorProfile(slug);
+
+    if (!profile) {
+      const cleanName = fallbackName || (slug ? slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Philosopher');
+      profile = {
+        slug: slug || 'author',
+        name: cleanName,
+        longName: cleanName,
+        era: 'Historical Thinker',
+        tradition: 'Wisdom & Philosophy',
+        wikipediaUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(cleanName.replace(/ /g, '_'))}`,
+        summary: `Curated philosophical reflections and timeless sayings from ${cleanName}.`,
+        bio: `${cleanName} is featured in Wisdom's curated archive of timeless thinkers, whose words and insights continue to guide human reflection across generations.`,
+        keyWorks: [],
+        pillars: [
+          { concept: 'Timeless Reflection', description: 'Ideas that transcend their historical period to speak directly to the modern human condition.' },
+          { concept: 'Ethical Striving', description: 'Guiding humanity toward clarity, virtue, and resilience.' }
+        ],
+        whyTimeless: `${cleanName}'s insights have endured through history, offering grounding perspective and contemplative depth.`,
+        count: 0,
+      };
+    }
+
+    const initials = profile.name
+      .split(' ')
+      .filter(Boolean)
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+
+    // Top Header
+    const headerInitials = document.getElementById('author-modal-header-initials');
+    if (headerInitials) headerInitials.textContent = initials;
+    const headerEra = document.getElementById('author-modal-header-era');
+    if (headerEra) headerEra.textContent = profile.era || '';
+    const headerName = document.getElementById('author-modal-header-name');
+    if (headerName) headerName.textContent = profile.name;
+
+    // Left Presentation Card
+    const heroInitials = document.getElementById('author-modal-hero-initials');
+    if (heroInitials) heroInitials.textContent = initials;
+    const heroTradition = document.getElementById('author-modal-tradition');
+    if (heroTradition) heroTradition.textContent = profile.tradition || 'Philosophy';
+    const heroEra = document.getElementById('author-modal-era');
+    if (heroEra) heroEra.textContent = profile.era || '';
+    const heroCount = document.getElementById('author-modal-count');
+    if (heroCount) heroCount.textContent = `${profile.count > 0 ? profile.count : '100+'} Curated Quotes`;
+    const heroTitle = document.getElementById('author-modal-title');
+    if (heroTitle) heroTitle.textContent = profile.name;
+    const heroSummary = document.getElementById('author-modal-summary');
+    if (heroSummary) heroSummary.textContent = `"${profile.summary}"`;
+
+    // Photos (progressive load with graceful fallback to crest initials)
+    const photoUrl = profile.photo || `/wisdom/media/authors/${profile.slug}.webp`;
+    const headerImg = document.getElementById('author-modal-header-img');
+    const heroImg = document.getElementById('author-modal-hero-img');
+
+    if (headerImg) {
+      headerImg.classList.add('opacity-0');
+      headerImg.classList.remove('hidden');
+      headerImg.alt = profile.name;
+      headerImg.src = photoUrl;
+      if (headerImg.complete && headerImg.naturalWidth > 0) {
+        headerImg.classList.remove('opacity-0');
+      }
+    }
+    if (heroImg) {
+      heroImg.classList.add('opacity-0');
+      heroImg.classList.remove('hidden');
+      heroImg.alt = profile.name;
+      heroImg.src = photoUrl;
+      if (heroImg.complete && heroImg.naturalWidth > 0) {
+        heroImg.classList.remove('opacity-0');
+      }
+    }
+
+    // Explore CTA
+    const exploreCta = document.getElementById('author-modal-explore-cta');
+    if (exploreCta) {
+      exploreCta.onclick = () => {
+        window.closeAuthorDossierModal();
+        const currentPath = window.location.pathname;
+        const targetPath = `/wisdom/author/${profile.slug}/`;
+        if (currentPath.includes(`/author/${profile.slug}`)) {
+          const reel = document.getElementById('reel-container');
+          if (reel) reel.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          window.location.href = targetPath;
+        }
+      };
+    }
+
+    // Share Button
+    const shareBtn = document.getElementById('author-modal-share-btn');
+    if (shareBtn) {
+      shareBtn.onclick = () => {
+        const shareUrl = `https://www.ashishvishwakarma.com/wisdom/author/${profile.slug}/`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(shareUrl).then(() => {
+            if (window.showToast) window.showToast(`Link to ${profile.name}'s profile copied! ✓`);
+          }).catch(() => {
+            if (window.showToast) window.showToast('Could not copy link');
+          });
+        }
+      };
+    }
+
+    // Wikipedia Link
+    const wikiLink = document.getElementById('author-modal-wikipedia');
+    if (wikiLink) {
+      if (profile.wikipediaUrl) {
+        wikiLink.href = profile.wikipediaUrl;
+        wikiLink.style.display = 'inline-flex';
+      } else {
+        wikiLink.style.display = 'none';
+      }
+    }
+
+    // Why Timeless Callout
+    const whyTimeless = document.getElementById('author-modal-whytimeless');
+    const whyCard = document.getElementById('author-modal-whytimeless-card');
+    if (whyTimeless && whyCard) {
+      if (profile.whyTimeless) {
+        whyTimeless.textContent = `"${profile.whyTimeless}"`;
+        whyCard.style.display = 'block';
+      } else {
+        whyCard.style.display = 'none';
+      }
+    }
+
+    // Long Name
+    const longNameWrap = document.getElementById('author-modal-longname-wrap');
+    const longNameSpan = document.getElementById('author-modal-longname');
+    if (longNameWrap && longNameSpan) {
+      if (profile.longName && profile.longName !== profile.name) {
+        longNameSpan.textContent = `Full Name: ${profile.longName}`;
+        longNameWrap.style.display = 'inline-block';
+      } else {
+        longNameWrap.style.display = 'none';
+      }
+    }
+
+    // Bio
+    const bioPara = document.getElementById('author-modal-bio');
+    if (bioPara) bioPara.textContent = profile.bio || '';
+
+    // Pillars
+    const pillarsSection = document.getElementById('author-modal-pillars-section');
+    const pillarsGrid = document.getElementById('author-modal-pillars-grid');
+    if (pillarsSection && pillarsGrid) {
+      if (profile.pillars && profile.pillars.length > 0) {
+        pillarsGrid.innerHTML = profile.pillars.map((pillar, idx) => `
+          <div class="rounded-2xl bg-white/[0.035] border border-white/10 hover:border-amber-400/35 hover:bg-white/[0.06] transition-all duration-300 flex flex-col justify-between group shadow-sm p-6">
+            <div>
+              <div class="flex items-center justify-between gap-3 mb-2.5">
+                <span class="text-sm sm:text-base font-bold font-serif text-white group-hover:text-amber-200 transition-colors">${escapeHtml(pillar.concept)}</span>
+                <span class="pill-sm text-[10px] font-mono font-bold text-amber-400/70 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20 shrink-0">${String(idx + 1).padStart(2, '0')}</span>
+              </div>
+              <p class="text-xs sm:text-sm text-white/75 leading-relaxed font-sans">${escapeHtml(pillar.description)}</p>
+            </div>
+          </div>
+        `).join('');
+        pillarsSection.style.display = 'block';
+      } else {
+        pillarsSection.style.display = 'none';
+      }
+    }
+
+    // Sourced Works
+    const worksSection = document.getElementById('author-modal-works-section');
+    const worksGrid = document.getElementById('author-modal-works-grid');
+    if (worksSection && worksGrid) {
+      if (profile.keyWorks && profile.keyWorks.length > 0) {
+        worksGrid.innerHTML = profile.keyWorks.map((work) => `
+          <div class="rounded-2xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-colors flex items-start gap-4 shadow-sm p-6">
+            <div class="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/20 text-amber-300 flex items-center justify-center shrink-0 mt-0.5">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h4 class="text-sm sm:text-base font-semibold font-serif text-white tracking-wide">${escapeHtml(work.title)}</h4>
+              <p class="text-xs sm:text-sm text-white/70 leading-relaxed mt-1 font-sans">${escapeHtml(work.description)}</p>
+            </div>
+          </div>
+        `).join('');
+        worksSection.style.display = 'block';
+      } else {
+        worksSection.style.display = 'none';
+      }
+    }
+
+    // Open Modal
+    modal.style.display = 'flex';
+    if (window.wisdomBackground && typeof window.wisdomBackground.stop === 'function') {
+      window.wisdomBackground.stop();
+    }
+    requestAnimationFrame(() => {
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modal.classList.add('opacity-100', 'pointer-events-auto');
+      document.body.style.overflow = 'hidden';
+    });
+  };
+
+  window.closeAuthorDossierModal = function(immediate = false) {
+    if (window.wisdomBackground && typeof window.wisdomBackground.start === 'function') {
+      const exploreDrawer = document.getElementById('explore-drawer');
+      const isExploreOpen = exploreDrawer && (exploreDrawer.classList.contains('visible') || exploreDrawer.classList.contains('opacity-100'));
+      if (!isExploreOpen) {
+        window.wisdomBackground.start();
+      }
+    }
+    const modal = document.getElementById('author-context-modal');
+    if (!modal) return;
+    modal.classList.remove('opacity-100', 'pointer-events-auto');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    document.body.style.overflow = '';
+    if (immediate) {
+      modal.style.display = 'none';
+    } else {
+      setTimeout(() => {
+        if (modal.classList.contains('opacity-0')) {
+          modal.style.display = 'none';
+        }
+      }, 300);
+    }
+  };
+  window.addEventListener('wisdom:close-modals', (e) => window.closeAuthorDossierModal(e?.detail?.immediate ?? true));
+
+  function setupAuthorDossierModalEvents() {
+    const modal = document.getElementById('author-context-modal');
+    const closeBtn = document.getElementById('author-context-close');
+
+    if (!modal) return;
+
+    if (closeBtn) {
+      closeBtn.onclick = window.closeAuthorDossierModal;
+    }
+
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        window.closeAuthorDossierModal();
+      }
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('opacity-100')) {
+        window.closeAuthorDossierModal();
+      }
+      if ((e.key === 'i' || e.key === 'I') && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+        if (modal.classList.contains('opacity-100')) {
+          window.closeAuthorDossierModal();
+        } else {
+          const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+          const authorSlug = activeSlide?.dataset?.authorSlug || '';
+          const authorName = activeSlide?.dataset?.author || '';
+          window.openAuthorDossierModal(authorSlug, authorName);
+        }
+      }
+    });
+
+    // Auto-open if ?about=1 or ?bio=1 in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('about') === '1' || urlParams.get('bio') === '1') {
+      const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+      const authorSlug = activeSlide?.dataset?.authorSlug || '';
+      const authorName = activeSlide?.dataset?.author || '';
+      window.openAuthorDossierModal(authorSlug, authorName);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupAuthorDossierModalEvents);
+  } else {
+    setupAuthorDossierModalEvents();
+  }
+  document.addEventListener('astro:page-load', setupAuthorDossierModalEvents);
+</script>

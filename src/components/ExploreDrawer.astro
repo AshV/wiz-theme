@@ -1,0 +1,1339 @@
+---
+/**
+ * ExploreDrawer — High-end slide-up discovery sheet.
+ *
+ * Universal Multi-Domain Search:
+ * Typing in the search bar instantly searches across ALL domains (Authors, Moods, Categories, Tags, Liked Quotes)
+ * simultaneously without forcing tab switching. Matching sections are displayed with clear visual hierarchy.
+ *
+ * Tabs:
+ * 1. Liked (Saved quotes from localStorage with instant unlike & jump-to)
+ * 2. Moods (Visual mood cards)
+ * 3. Categories (Categorized wisdom)
+ * 4. Authors (Directory of timeless thinkers)
+ * 5. Tags (Topic tag cloud)
+ * 6. Rituals (Contemplation schedules)
+ */
+import { getExploreCatalog } from '../data/exploreCatalog';
+import { moodMeta, allMoods } from '../data/mediaRegistry';
+import { authorProfiles } from '../data/authorProfiles';
+import { slugifyQuote } from '../utils/slug';
+
+const BASE = '/wisdom';
+
+const {
+  totalQuotesCount,
+  moodCounts,
+  categoryCounts,
+  authorCounts,
+  tagCounts,
+  categories,
+  totalAuthorsCount,
+  totalTagsCount,
+  allAuthors,
+  popularTags,
+} = await getExploreCatalog();
+
+const categoryIcons: Record<string, string> = {
+  philosophy: '🏛️',
+  wisdom: '📜',
+  resilience: '🛡️',
+  nature: '🌿',
+  creativity: '🎨',
+  love: '💕',
+  science: '🔬',
+  spirituality: '🕊️',
+  humor: '😄',
+  leadership: '👑',
+};
+
+// Rich semantic keywords for mood matching
+const moodKeywords: Record<string, string> = {
+  reflective: 'reflective reflection introspective contemplation thought thinking deep inner mind soul quiet solitary',
+  motivational: 'motivational motivation inspire inspiration ambitious drive purpose courage energy strength action strive grit',
+  serene: 'serene serenity peace calm stillness tranquil tranquility nature zen quiet sanctuary rest peace of mind',
+  bold: 'bold courage bravery fearless strength warrior confidence power resilience grit daring bold resolve',
+  melancholic: 'melancholic melancholy sorrow grief sadness longing darkness poignant depth solace redemptive pain',
+  joyful: 'joyful joy happiness bliss cheer celebration delight ecstasy light grateful gratitude smile wonder laughter',
+  philosophical: 'philosophical philosophy wisdom truth intellect reason knowledge thinker logic insight inquiry ethics',
+  romantic: 'romantic romance love devotion heart passion affection beauty beloved tenderness kindred romance soulful',
+};
+---
+
+<div
+  id="explore-drawer"
+  class="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-2 md:p-3 lg:p-4 transition-all duration-300 pointer-events-none opacity-0 invisible"
+  aria-modal="true"
+  role="dialog"
+>
+  <!-- Backdrop -->
+  <div
+    id="explore-backdrop"
+    class="absolute inset-0 bg-black/60 backdrop-blur-2xl transition-opacity duration-300 cursor-pointer pointer-events-none"
+  ></div>
+
+  <!-- Sheet: Full screen on mobile, expansive nearly full screen on desktop -->
+  <div
+    id="explore-sheet"
+    class="relative w-full h-full sm:h-[96vh] sm:max-w-[98vw] 2xl:max-w-[1760px] flex flex-col z-10 overflow-hidden rounded-none sm:rounded-3xl border-0 sm:border transition-transform duration-500 ease-spring translate-y-full"
+    style="max-height: 100vh; background: var(--quote-modal-bg, linear-gradient(180deg, rgba(32, 24, 58, 0.98) 0%, rgba(18, 14, 34, 0.99) 100%)); border-color: var(--quote-border, rgba(255, 255, 255, 0.15)); box-shadow: 0 25px 80px -15px rgba(0, 0, 0, 0.85), var(--quote-modal-glow, 0 0 60px rgba(251,191,36,0.12));"
+  >
+    <!-- Dynamic Ambient Mood Glow Overlay -->
+    <div class="absolute inset-0 pointer-events-none opacity-40 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_top,var(--quote-glow)_0%,transparent_60%)]"></div>
+
+    <!-- Top Pull Bar (Mobile drag affordance) -->
+    <div id="explore-drag-handle" class="relative z-10 sm:hidden flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
+      <div class="w-12 h-1.5 rounded-full bg-white/25 hover:bg-white/40 transition-colors"></div>
+    </div>
+
+    <!-- Header: Dynamic Top Navigation with Integrated Search -->
+    <div
+      class="relative z-10 border-b border-white/6 flex items-center min-h-[64px] sm:min-h-[72px]"
+      style="padding-left: clamp(1.25rem, 3vw, 2.75rem); padding-right: clamp(1.25rem, 3vw, 2.75rem); padding-top: 0.875rem; padding-bottom: 0.875rem;"
+    >
+      <!-- Default Header Mode -->
+      <div id="explore-header-default" class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-3 sm:gap-3.5 min-w-0">
+          <div
+            class="w-10 h-10 rounded-2xl border flex items-center justify-center shadow-sm flex-shrink-0 transition-all duration-300"
+            style="background: var(--quote-badge-bg, rgba(251,191,36,0.15)); border-color: var(--quote-border, rgba(251,191,36,0.35)); color: var(--quote-accent, #fbbf24);"
+          >
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight truncate">Explore Wisdom</h2>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <button
+            id="pwa-drawer-install-btn"
+            type="button"
+            style="display: none;"
+            class="hidden items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 hover:bg-amber-400/25 hover:text-amber-200 text-xs font-medium tracking-wide transition-all cursor-pointer shadow-sm"
+            title="Install Wisdom App to Home Screen"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span class="hidden sm:inline">Install App</span>
+          </button>
+          <button
+            id="explore-search-toggle-btn"
+            type="button"
+            class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/8 hover:bg-white/18 active:scale-90 flex items-center justify-center transition-all text-white/70 hover:text-white cursor-pointer border border-white/10 shadow-sm"
+            aria-label="Search Wisdom"
+            title="Search (Press / to search)"
+          >
+            <svg class="w-4 h-4 sm:w-[18px] sm:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </button>
+          <button
+            id="explore-close-btn"
+            class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/8 hover:bg-white/18 active:scale-90 flex items-center justify-center transition-all text-white/60 hover:text-white cursor-pointer border border-white/10"
+            aria-label="Close Explore"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Focused Top Search Mode -->
+      <div id="explore-header-search" class="hidden items-center gap-2 sm:gap-3 w-full animate-fade-in">
+        <button
+          id="explore-search-back-btn"
+          type="button"
+          class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/8 hover:bg-white/18 active:scale-90 flex items-center justify-center transition-all text-white/70 hover:text-white cursor-pointer border border-white/10 shrink-0"
+          aria-label="Back to Explore"
+          title="Back"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+
+        <div class="relative flex-1 flex items-center min-w-0">
+          <svg
+            class="absolute left-3.5 text-amber-300/60 pointer-events-none z-10 w-4 h-4 sm:w-5 sm:h-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            id="explore-search"
+            type="text"
+            placeholder="Search authors, moods, categories, or keywords..."
+            style="padding-left: 42px; padding-right: 42px;"
+            class="w-full py-2 sm:py-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] focus:bg-white/[0.14] border border-amber-400/35 focus:border-amber-400 text-sm sm:text-base text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-amber-400/25 transition-all leading-normal shadow-inner"
+            autocomplete="off"
+          />
+          <button
+            id="explore-search-clear"
+            type="button"
+            class="absolute right-2.5 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white hidden items-center justify-center cursor-pointer transition-colors z-10"
+            aria-label="Clear search"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <button
+          id="explore-search-cancel-btn"
+          type="button"
+          class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold text-amber-300 hover:text-amber-200 hover:bg-white/8 transition-colors cursor-pointer shrink-0"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+
+    <!-- Horizontal Tab Bar -->
+    <div
+      class="border-b border-white/8 flex items-center gap-2 overflow-x-auto no-scrollbar py-2.5 bg-white/[0.02]"
+      style="padding-left: clamp(1.25rem, 3vw, 2.75rem); padding-right: clamp(1.25rem, 3vw, 2.75rem);"
+    >
+      <button
+        id="liked-tab-btn"
+        class="explore-tab hidden items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 border border-transparent text-white/55 hover:text-white hover:bg-white/8"
+        data-tab="liked"
+        style="display: none;"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-red-400">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
+        <span>Liked</span>
+        <span id="liked-tab-badge" class="pill-sm text-[10px] font-bold px-2 py-1.5 rounded-full bg-white/10 text-white/60 ml-0.5 min-w-[20px] text-center inline-flex items-center justify-center leading-none">0</span>
+      </button>
+
+      <button
+        class="explore-tab active flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 border bg-white/15 text-white border-white/20 shadow-sm backdrop-blur-md"
+        data-tab="authors"
+      >
+        <span>✍️</span>
+        <span>Authors</span>
+        <span class="text-[11px] text-white/40 font-normal">({totalAuthorsCount})</span>
+      </button>
+
+      <button
+        class="explore-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 border border-transparent text-white/55 hover:text-white hover:bg-white/8"
+        data-tab="moods"
+      >
+        <span>✨</span>
+        <span>Moods</span>
+        <span class="text-[11px] text-white/40 font-normal">({allMoods.length})</span>
+      </button>
+
+      <button
+        class="explore-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 border border-transparent text-white/55 hover:text-white hover:bg-white/8"
+        data-tab="categories"
+      >
+        <span>📂</span>
+        <span>Categories</span>
+        <span class="text-[11px] text-white/40 font-normal">({categories.length})</span>
+      </button>
+
+      <button
+        class="explore-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 border border-transparent text-white/55 hover:text-white hover:bg-white/8"
+        data-tab="tags"
+      >
+        <span>🏷️</span>
+        <span>Tags</span>
+        <span class="text-[11px] text-white/40 font-normal">({totalTagsCount})</span>
+      </button>
+    </div>
+
+    <!-- Content Area (Scrollable Viewport with Generous Padding) -->
+    <div
+      id="explore-scroll-area"
+      class="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin"
+      style="padding-left: clamp(1.25rem, 3vw, 2.75rem); padding-right: clamp(1.25rem, 3vw, 2.75rem); padding-top: 1.5rem; padding-bottom: 5rem;"
+    >
+      
+      <!-- Quick Jump by Quote Number (Shown when query matches a quote number/ID like 42, #42, q42) -->
+      <div id="quote-quickjump-section" class="hidden mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-400/15 via-purple-500/10 to-transparent border border-amber-400/30 backdrop-blur-xl shadow-lg">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300 font-bold text-sm shadow-sm flex-shrink-0">
+              #
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-300">Quote Quick Jump</span>
+                <span id="quickjump-number-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 font-bold text-amber-300">#42</span>
+              </div>
+              <p id="quickjump-prompt" class="text-xs text-white/70 mt-0.5">Jump directly to reflection #42</p>
+            </div>
+          </div>
+          <button
+            id="quickjump-action-btn"
+            type="button"
+            class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer flex-shrink-0"
+          >
+            <span>Open Quote</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 1. Liked Tab -->
+      <div id="tab-liked" class="explore-tab-content hidden">
+        <!-- Search Mode Header -->
+        <div class="search-section-header hidden items-center justify-between mb-4 pb-2 border-b border-rose-500/25 text-rose-300">
+          <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
+            <span>❤️</span>
+            <span>Matching Liked Quotes</span>
+          </div>
+          <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-rose-500/20 font-semibold text-rose-300"></span>
+        </div>
+
+        <!-- Liked items populated dynamically via JS in responsive grid -->
+        <div id="liked-items-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4"></div>
+
+        <!-- Empty State for Liked -->
+        <div id="liked-empty-state" class="flex flex-col items-center justify-center py-20 px-6 text-center">
+          <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-pink-500/20 via-red-500/15 to-transparent border border-red-500/25 flex items-center justify-center mb-5 shadow-xl shadow-red-500/10">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          </div>
+          <h3 class="text-lg sm:text-xl font-bold text-white mb-2 font-serif">Your Sanctuary Awaits</h3>
+          <p class="text-sm text-white/50 max-w-md leading-relaxed mb-6">
+            Double-tap any quote or tap the heart in the action rail while browsing to save timeless reflections here for offline contemplation.
+          </p>
+          <button
+            id="liked-browse-btn"
+            class="px-6 py-3 rounded-full bg-white/12 hover:bg-white/20 active:scale-95 text-sm font-semibold text-white border border-white/15 transition-all cursor-pointer shadow-lg hover:shadow-white/5"
+          >
+            Explore Authors &amp; Moods
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Authors Tab (All Timeless Thinkers in Catalog) -->
+      <div id="tab-authors" class="explore-tab-content space-y-4">
+        <!-- Search Mode Header -->
+        <div class="search-section-header hidden items-center justify-between pb-2 border-b border-amber-500/25 text-amber-300">
+          <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
+            <span>✍️</span>
+            <span>Matching Authors</span>
+          </div>
+          <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-amber-500/20 font-semibold text-amber-300"></span>
+        </div>
+
+        <!-- Authors Grid (All Thinkers in Catalog) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-3.5">
+          {allAuthors.map((auth, i) => {
+            const hue = (i * 137.5) % 360;
+            const prof = authorProfiles[auth.slug];
+            const searchTokens = `${auth.name} ${auth.slug} ${prof?.tradition || ''} ${prof?.whyTimeless || ''} author thinker`.toLowerCase();
+            return (
+              <a
+                href={`${BASE}/author/${auth.slug}/`}
+                class="explore-item author-card glass rounded-2xl p-4 flex items-center gap-3.5 hover:bg-white/[0.09] active:scale-[0.98] border border-white/8 hover:border-white/20 transition-all duration-200 group cursor-pointer"
+                data-search-text={searchTokens}
+                data-author-slug={auth.slug}
+                data-author-name={auth.name}
+              >
+                <span
+                  class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md flex-shrink-0 select-none relative overflow-hidden"
+                  style={`background: linear-gradient(135deg, hsl(${hue}, 65%, 48%), hsl(${(hue + 45) % 360}, 55%, 38%)); border: 1px solid rgba(255,255,255,0.25);`}
+                >
+                  <span class="z-0">{auth.name.charAt(0)}</span>
+                  <img
+                    src={`${BASE}/media/authors/${auth.slug}.webp`}
+                    alt={auth.name}
+                    loading="lazy"
+                    decoding="async"
+                    class="absolute inset-0 w-full h-full object-cover object-top opacity-0 transition-opacity duration-300 z-10"
+                    onload="this.classList.remove('opacity-0')"
+                    onerror="this.remove()"
+                  />
+                </span>
+                <div class="flex-1 min-w-0">
+                  <span class="text-sm font-bold text-white block group-hover:text-amber-200 transition-colors truncate mb-0.5">{auth.name}</span>
+                  <span class="text-xs text-white/50">{auth.count} {auth.count === 1 ? 'timeless quote' : 'timeless quotes'}</span>
+                </div>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white/25 group-hover:text-white/80 group-hover:translate-x-1 transition-all flex-shrink-0">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
+      <!-- 3. Moods Tab -->
+      <div id="tab-moods" class="explore-tab-content hidden space-y-4">
+        <!-- Search Mode Header -->
+        <div class="search-section-header hidden items-center justify-between pb-2 border-b border-purple-500/25 text-purple-300">
+          <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
+            <span>✨</span>
+            <span>Matching Moods</span>
+          </div>
+          <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-purple-500/20 font-semibold text-purple-300"></span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3.5 sm:gap-4">
+          {allMoods.map((mood) => (
+            <a
+              href={`${BASE}/mood/${mood}/`}
+              class={`explore-item mood-pill-${mood} rounded-2xl sm:rounded-3xl flex flex-col justify-between min-h-[180px] sm:min-h-[190px] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-xl group border border-white/15 hover:border-white/30 relative overflow-hidden`}
+              style="padding: 1.25rem 1.25rem 2rem 1.25rem;"
+              data-search-text={`${moodMeta[mood].label} ${mood} mood ${moodKeywords[mood] || ''}`}
+            >
+              <div class="flex items-center justify-between z-10">
+                <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-300 select-none">{moodMeta[mood].emoji}</span>
+                <span class="text-xs font-bold text-white/95 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/15 min-w-[32px] text-center inline-flex items-center justify-center leading-none">
+                  {moodCounts[mood] || 0}
+                </span>
+              </div>
+              <div class="z-10 mt-auto pt-4">
+                <span class="text-base sm:text-lg font-bold text-white block capitalize tracking-tight leading-tight mb-1">{moodMeta[mood].label}</span>
+                <span class="text-xs text-white/80 group-hover:text-white font-medium flex items-center gap-1 transition-colors">
+                  Explore stream <span class="group-hover:translate-x-1 transition-transform">→</span>
+                </span>
+              </div>
+              <!-- Subtle bottom contrast vignette -->
+              <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none"></div>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <!-- 4. Categories Tab -->
+      <div id="tab-categories" class="explore-tab-content hidden space-y-4">
+        <!-- Search Mode Header -->
+        <div class="search-section-header hidden items-center justify-between pb-2 border-b border-sky-500/25 text-sky-300">
+          <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
+            <span>📂</span>
+            <span>Matching Categories</span>
+          </div>
+          <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-sky-500/20 font-semibold text-sky-300"></span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-3.5">
+          {categories.map((cat) => (
+            <a
+              href={`${BASE}/category/${cat.slug}/`}
+              class="explore-item glass rounded-2xl px-4 py-3.5 sm:py-4 flex items-center justify-between hover:bg-white/[0.09] active:scale-[0.98] border border-white/8 hover:border-white/20 transition-all duration-200 group"
+              data-search-text={`${cat.name} ${cat.slug} category wisdom`}
+            >
+              <div class="flex items-center gap-3.5 min-w-0">
+                <span class="w-11 h-11 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center text-xl flex-shrink-0 group-hover:scale-110 transition-transform select-none">
+                  {categoryIcons[cat.slug.toLowerCase()] || '📂'}
+                </span>
+                <div class="min-w-0">
+                  <span class="text-sm font-bold text-white group-hover:text-amber-200 transition-colors block mb-0.5 truncate">{cat.name}</span>
+                  <span class="text-xs text-white/50">{cat.count} quotes</span>
+                </div>
+              </div>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white/30 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <!-- 5. Tags Tab (Popular & Trending Themes) -->
+      <div id="tab-tags" class="explore-tab-content hidden space-y-4">
+        <!-- Search Mode Header -->
+        <div class="search-section-header hidden items-center justify-between pb-2 border-b border-emerald-500/25 text-emerald-300">
+          <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
+            <span>🏷️</span>
+            <span>Matching Tags &amp; Topics</span>
+          </div>
+          <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 font-semibold text-emerald-300"></span>
+        </div>
+
+        <div class="flex flex-wrap gap-2.5 sm:gap-3 pt-1">
+          {popularTags.map(([tag, count]) => {
+            const isHighCount = count >= 3;
+            return (
+              <a
+                href={`${BASE}/tag/${tag}/`}
+                class={`pill pill-lg explore-item rounded-full px-4 py-2.5 text-xs sm:text-sm font-medium transition-all duration-200 inline-flex items-center gap-2.5 active:scale-95 border leading-normal ${
+                  isHighCount
+                    ? 'bg-white/12 hover:bg-white/22 text-white border-white/20 shadow-sm'
+                    : 'bg-white/6 hover:bg-white/14 text-white/80 border-white/8'
+                }`}
+                data-search-text={`${tag} tag topic theme`}
+              >
+                <span>#{tag}</span>
+                <span class="text-[10px] text-white/70 font-bold bg-black/35 rounded-full px-2.5 py-1.5 min-w-[20px] text-center inline-flex items-center justify-center leading-none">
+                  {count}
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
+      <!-- Empty Search Filter State -->
+      <div id="explore-search-empty" class="hidden flex-col items-center justify-center py-20 text-center">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-white/20 mb-4">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <p class="text-base font-semibold text-white/70 mb-1">No matches found</p>
+        <p class="text-xs text-white/40 mt-1 max-w-sm">Try searching by author (e.g. Rumi, Emerson, Seneca), mood (e.g. Serene, Bold), category (e.g. Nature, Wisdom), or topic.</p>
+        <button
+          id="explore-reset-search-btn"
+          class="mt-5 px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-xs text-white/80 hover:text-white font-medium cursor-pointer transition-colors border border-white/12"
+        >
+          Clear search filter
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Base URL & total quotes configuration -->
+<script is:inline define:vars={{ totalQuotesCount }}>
+  window.__wisdomBaseUrl = '/wisdom';
+  window.__wisdomTotalQuotes = totalQuotesCount;
+</script>
+
+<script is:inline>
+  function setupExploreDrawer() {
+    const drawer = document.getElementById('explore-drawer');
+    const backdrop = document.getElementById('explore-backdrop');
+    const closeBtn = document.getElementById('explore-close-btn');
+    const sheet = document.getElementById('explore-sheet');
+    const tabs = document.querySelectorAll('.explore-tab');
+    const tabContents = document.querySelectorAll('.explore-tab-content');
+    const headerDefault = document.getElementById('explore-header-default');
+    const headerSearch = document.getElementById('explore-header-search');
+    const searchToggleBtn = document.getElementById('explore-search-toggle-btn');
+    const searchBackBtn = document.getElementById('explore-search-back-btn');
+    const searchCancelBtn = document.getElementById('explore-search-cancel-btn');
+    const searchInput = document.getElementById('explore-search');
+    const searchClear = document.getElementById('explore-search-clear');
+    const searchEmpty = document.getElementById('explore-search-empty');
+    const resetSearchBtn = document.getElementById('explore-reset-search-btn');
+    const likedTabBtn = document.getElementById('liked-tab-btn');
+    const likedBadge = document.getElementById('liked-tab-badge');
+    const likedContainer = document.getElementById('liked-items-container');
+    const likedEmpty = document.getElementById('liked-empty-state');
+    const likedBrowseBtn = document.getElementById('liked-browse-btn');
+    const dragHandle = document.getElementById('explore-drag-handle');
+
+    let currentActiveTab = 'authors';
+
+    // ── Update Liked Tab Badge & Render (Self-Contained Local Storage) ──
+    function refreshLikedQuotes() {
+      if (!window.likedQuotes) return;
+      const allLikes = window.likedQuotes.getAll();
+      const likedCount = allLikes.length;
+
+      // Update Liked tab visibility: don't show Liked tab if count = 0
+      if (likedTabBtn) {
+        if (likedCount > 0) {
+          likedTabBtn.style.display = '';
+          likedTabBtn.classList.remove('hidden');
+          likedTabBtn.classList.add('flex');
+        } else {
+          likedTabBtn.style.display = 'none';
+          likedTabBtn.classList.add('hidden');
+          likedTabBtn.classList.remove('flex');
+        }
+      }
+
+      // If user is currently on 'liked' tab but has 0 likes, switch away to authors tab
+      if (likedCount === 0 && currentActiveTab === 'liked') {
+        activateTab('authors');
+      }
+
+      // Update count badge
+      if (likedBadge) {
+        likedBadge.textContent = String(likedCount);
+        if (likedCount > 0) {
+          likedBadge.classList.remove('bg-white/10', 'text-white/50');
+          likedBadge.classList.add('bg-red-500/25', 'text-red-300');
+        } else {
+          likedBadge.classList.remove('bg-red-500/25', 'text-red-300');
+          likedBadge.classList.add('bg-white/10', 'text-white/50');
+        }
+      }
+
+      if (!likedContainer) return;
+      likedContainer.innerHTML = '';
+
+      if (likedCount === 0) {
+        if (likedEmpty) likedEmpty.classList.remove('hidden');
+        return;
+      }
+
+      if (likedEmpty) likedEmpty.classList.add('hidden');
+
+      // Render cards in reverse chronological order (newest likes first)
+      const base = window.__wisdomBaseUrl || '/wisdom';
+
+      allLikes.slice().reverse().forEach((item) => {
+        const quote = (typeof item === 'object' && item !== null) ? item : (window.__wisdomQuoteMap ? window.__wisdomQuoteMap[item] : null);
+        if (!quote || !quote.content) return;
+        const id = quote.id;
+
+        const card = document.createElement('div');
+        card.className =
+          'explore-item rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all duration-200 group relative flex flex-col justify-between gap-4 shadow-sm';
+        card.style.cssText = 'padding: clamp(1.25rem, 2.5vw, 1.75rem);';
+        card.dataset.searchText = `${quote.content} ${quote.author} ${quote.category} ${quote.mood || ''} liked`;
+
+        // Quote text & Author
+        const contentBlock = document.createElement('div');
+        contentBlock.className = 'cursor-pointer flex-1';
+        contentBlock.innerHTML = `
+          <div class="flex items-start gap-2 mb-2">
+            <span class="text-2xl sm:text-3xl text-amber-400/40 font-serif leading-none select-none">“</span>
+            <p class="font-serif text-[15px] sm:text-[16px] text-white/95 leading-relaxed italic line-clamp-4 group-hover:text-white transition-colors">
+              ${escapeHtml(quote.content)}
+            </p>
+          </div>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-xs font-semibold text-white/75 tracking-wide">— ${escapeHtml(quote.author)}</span>
+            <span class="text-[10px] font-semibold text-white/60 bg-white/10 px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider leading-normal">
+              ${escapeHtml(quote.category || 'Wisdom')}
+            </span>
+          </div>
+        `;
+
+        // Action Row
+        const actionRow = document.createElement('div');
+        actionRow.className = 'pt-2 border-t border-white/8 flex items-center justify-between';
+
+        // Navigate button
+        const jumpBtn = document.createElement('button');
+        jumpBtn.className =
+          'inline-flex items-center gap-1.5 text-xs font-medium text-amber-300 hover:text-white transition-colors cursor-pointer';
+        jumpBtn.innerHTML = `
+          <span>Open Quote</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        `;
+        jumpBtn.onclick = (e) => {
+          e.stopPropagation();
+          navigateToQuote(quote);
+        };
+
+        // Unlike button
+        const unlikeBtn = document.createElement('button');
+        unlikeBtn.className =
+          'w-7 h-7 rounded-full bg-red-500/15 hover:bg-red-500/25 active:scale-90 flex items-center justify-center transition-all text-red-400 cursor-pointer';
+        unlikeBtn.title = 'Remove from Liked';
+        unlikeBtn.setAttribute('aria-label', 'Remove from Liked');
+        unlikeBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+          </svg>
+        `;
+        unlikeBtn.onclick = (e) => {
+          e.stopPropagation();
+          window.likedQuotes.toggle(id);
+
+          // Animate card removal
+          card.style.transition = 'all 0.25s ease';
+          card.style.opacity = '0';
+          card.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            refreshLikedQuotes();
+            // Sync with current slide if visible
+            const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+            if (activeSlide && window.updateLikeUI) {
+              window.updateLikeUI(window.likedQuotes.has(activeSlide.dataset.quoteId));
+            }
+          }, 240);
+
+          if (window.showToast) {
+            window.showToast('Removed from favorites');
+          }
+        };
+
+        contentBlock.onclick = () => navigateToQuote(quote);
+
+        actionRow.appendChild(jumpBtn);
+        actionRow.appendChild(unlikeBtn);
+        card.appendChild(contentBlock);
+        card.appendChild(actionRow);
+        likedContainer.appendChild(card);
+      });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ── Navigation to Quote ──
+    function navigateToQuote(quote) {
+      closeDrawer();
+      const targetHash = quote.slug || quote.id;
+
+      if (typeof window.__wisdomNavigateToQuote === 'function') {
+        window.__wisdomNavigateToQuote(targetHash, quote).then((success) => {
+          if (!success) {
+            const base = window.__wisdomBaseUrl || '/wisdom';
+            window.location.href = `${base}/#${targetHash}`;
+          }
+        });
+        return;
+      }
+
+      const reelContainer = document.getElementById('reel-container');
+      if (reelContainer) {
+        const targetSlide =
+          reelContainer.querySelector(`[data-quote-slug="${targetHash}"]`) ||
+          document.getElementById(`slide-${quote.id}`);
+        if (targetSlide) {
+          setTimeout(() => {
+            targetSlide.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            history.replaceState(null, '', `#${targetHash}`);
+          }, 320);
+          return;
+        }
+      }
+
+      // If not in DOM or on a subpage, navigate to root feed with hash
+      const base = window.__wisdomBaseUrl || '/wisdom';
+      setTimeout(() => {
+        window.location.href = `${base}/#${targetHash}`;
+      }, 300);
+    }
+
+    // ── Tab Switching ──
+    function activateTab(target) {
+      const hasLikes = window.likedQuotes && window.likedQuotes.getAll().length > 0;
+      if (target === 'liked' && !hasLikes) {
+        target = 'authors';
+      }
+
+      currentActiveTab = target;
+
+      tabs.forEach((tab) => {
+        const isSelected = tab.dataset.tab === target;
+        if (isSelected) {
+          tab.classList.add('active', 'bg-white/15', 'text-white', 'border-white/20', 'shadow-sm', 'backdrop-blur-md');
+          tab.classList.remove('border-transparent', 'text-white/55');
+          const tabContainer = tab.parentElement;
+          if (tabContainer) {
+            const left = tab.offsetLeft - (tabContainer.clientWidth / 2) + (tab.clientWidth / 2);
+            tabContainer.scrollTo({ left, behavior: 'smooth' });
+          }
+        } else {
+          tab.classList.remove('active', 'bg-white/15', 'text-white', 'border-white/20', 'shadow-sm', 'backdrop-blur-md');
+          tab.classList.add('border-transparent', 'text-white/55');
+        }
+      });
+
+      tabContents.forEach((content) => {
+        if (content.id === `tab-${target}`) {
+          content.classList.remove('hidden');
+        } else {
+          content.classList.add('hidden');
+        }
+      });
+
+      if (target === 'liked') {
+        refreshLikedQuotes();
+      }
+
+      // Reset scroll position
+      const scrollArea = document.getElementById('explore-scroll-area');
+      if (scrollArea) scrollArea.scrollTop = 0;
+    }
+
+    tabs.forEach((tab) => {
+      tab.onclick = () => {
+        // If user was searching, clicking a tab clears search to view that tab cleanly
+        if (searchInput && searchInput.value.trim()) {
+          closeSearchMode();
+        }
+        activateTab(tab.dataset.tab);
+      };
+    });
+
+    if (likedBrowseBtn) {
+      likedBrowseBtn.onclick = () => activateTab('authors');
+    }
+
+    // Wire up author card clicks to open Author Dossier Modal instead of directly showing their quotes
+    const authorCards = document.querySelectorAll('.author-card');
+    authorCards.forEach((card) => {
+      card.addEventListener('click', (e) => {
+        // Allow opening link in new tab if user explicitly Ctrl/Cmd+clicks
+        if (e.metaKey || e.ctrlKey) return;
+        e.preventDefault();
+        const slug = card.dataset.authorSlug;
+        const name = card.dataset.authorName;
+        if (slug && typeof window.openAuthorDossierModal === 'function') {
+          window.openAuthorDossierModal(slug, name);
+        } else if (card.href) {
+          window.location.href = card.href;
+        }
+      });
+    });
+
+    // ── Search & Filter Across ALL Domains Simultaneously ──
+    function filterItems(query) {
+      const q = query.toLowerCase().trim();
+      const isSearching = q.length > 0;
+
+      if (searchClear) {
+        if (isSearching) {
+          searchClear.classList.remove('hidden');
+          searchClear.classList.add('flex');
+        } else {
+          searchClear.classList.add('hidden');
+          searchClear.classList.remove('flex');
+        }
+      }
+
+      if (!isSearching) {
+        resetFilterVisibility();
+        return;
+      }
+
+      // Refresh liked quotes in case likes were toggled
+      refreshLikedQuotes();
+
+      let totalMatches = 0;
+
+      // Check if query is a quote number/ID (e.g. 42, #42, q42, q042)
+      const numMatch = q.match(/^#?q?(\d+)$/i);
+      const quoteNum = numMatch ? parseInt(numMatch[1], 10) : null;
+      const maxQuotes = window.__wisdomTotalQuotes || 4248;
+      const quickjumpSection = document.getElementById('quote-quickjump-section');
+      const quickjumpBadge = document.getElementById('quickjump-number-badge');
+      const quickjumpPrompt = document.getElementById('quickjump-prompt');
+      const quickjumpBtn = document.getElementById('quickjump-action-btn');
+
+      if (quoteNum && quoteNum >= 1 && quoteNum <= maxQuotes) {
+        if (quickjumpSection) {
+          quickjumpSection.classList.remove('hidden');
+          if (quickjumpBadge) quickjumpBadge.textContent = `#${quoteNum}`;
+          if (quickjumpPrompt) quickjumpPrompt.textContent = `Jump directly to reflection #${quoteNum}`;
+          if (quickjumpBtn) {
+            quickjumpBtn.onclick = () => {
+              closeDrawer();
+              const paddedId = 'q' + String(quoteNum).padStart(quoteNum >= 1000 ? 4 : 3, '0');
+              if (window.__wisdomNavigateToQuote) {
+                window.__wisdomNavigateToQuote(paddedId).then((success) => {
+                  if (!success) {
+                    const base = window.__wisdomBaseUrl || '/wisdom';
+                    window.location.href = `${base}/#${paddedId}`;
+                  }
+                });
+              } else {
+                const base = window.__wisdomBaseUrl || '/wisdom';
+                window.location.href = `${base}/#${paddedId}`;
+              }
+            };
+          }
+        }
+        totalMatches++;
+      } else {
+        if (quickjumpSection) quickjumpSection.classList.add('hidden');
+      }
+
+      const hasLikes = window.likedQuotes && window.likedQuotes.getAll().length > 0;
+      const searchableTabIds = ['tab-authors', 'tab-moods', 'tab-categories', 'tab-tags'];
+      if (hasLikes) {
+        searchableTabIds.push('tab-liked');
+      }
+
+      searchableTabIds.forEach((tabId) => {
+        const tabEl = document.getElementById(tabId);
+        if (!tabEl) return;
+
+        const items = tabEl.querySelectorAll('.explore-item');
+        let tabMatchCount = 0;
+
+        items.forEach((item) => {
+          const text = (item.dataset.searchText || item.textContent || '').toLowerCase();
+          const match = text.includes(q);
+          item.style.display = match ? '' : 'none';
+          if (match) tabMatchCount++;
+        });
+
+        tabMatchCounts[tabId] = tabMatchCount;
+        totalMatches += tabMatchCount;
+
+        const header = tabEl.querySelector('.search-section-header');
+        const badge = header ? header.querySelector('.search-section-badge') : null;
+        const emptyState = tabEl.querySelector('#liked-empty-state');
+
+        if (tabMatchCount > 0) {
+          tabEl.classList.remove('hidden');
+          tabEl.classList.add('mb-8');
+          if (header) {
+            header.classList.remove('hidden');
+            header.classList.add('flex');
+            if (badge) badge.textContent = `${tabMatchCount} ${tabMatchCount === 1 ? 'match' : 'matches'}`;
+          }
+          if (emptyState) emptyState.classList.add('hidden');
+        } else {
+          tabEl.classList.add('hidden');
+          tabEl.classList.remove('mb-8');
+          if (header) {
+            header.classList.add('hidden');
+            header.classList.remove('flex');
+          }
+        }
+      });
+
+      // Update tab button visual cues with match indicators
+      tabs.forEach((tab) => {
+        const tabKey = tab.dataset.tab;
+        if (tabKey === 'liked' && !hasLikes) {
+          tab.style.display = 'none';
+          tab.classList.add('hidden');
+          return;
+        }
+        const tabContentId = `tab-${tabKey}`;
+        const count = tabMatchCounts[tabContentId] || 0;
+
+        if (count > 0) {
+          tab.style.opacity = '1';
+          tab.classList.add('ring-1', 'ring-amber-400/50');
+        } else {
+          tab.style.opacity = '0.45';
+          tab.classList.remove('ring-1', 'ring-amber-400/50');
+        }
+      });
+
+      // Handle Empty Search Results
+      if (searchEmpty) {
+        if (totalMatches === 0) {
+          searchEmpty.classList.remove('hidden');
+          searchEmpty.classList.add('flex');
+          const emptyText = searchEmpty.querySelector('p');
+          if (emptyText) emptyText.textContent = `No matches found for "${query}"`;
+        } else {
+          searchEmpty.classList.add('hidden');
+          searchEmpty.classList.remove('flex');
+        }
+      }
+    }
+
+    function resetFilterVisibility() {
+      // Hide quote quick jump card
+      const quickjumpSection = document.getElementById('quote-quickjump-section');
+      if (quickjumpSection) quickjumpSection.classList.add('hidden');
+
+      // Restore currently active tab visibility
+      tabContents.forEach((tc) => {
+        tc.classList.remove('mb-8');
+        const isCurrent = tc.id === `tab-${currentActiveTab}`;
+        if (isCurrent) {
+          tc.classList.remove('hidden');
+        } else {
+          tc.classList.add('hidden');
+        }
+
+        // Reset all item displays to default
+        const items = tc.querySelectorAll('.explore-item');
+        items.forEach((item) => {
+          item.style.display = '';
+        });
+
+        // Hide search headers
+        const header = tc.querySelector('.search-section-header');
+        if (header) {
+          header.classList.add('hidden');
+          header.classList.remove('flex');
+        }
+      });
+
+      // Reset tab button opacities and ring indicators
+      tabs.forEach((tab) => {
+        if (tab.dataset.tab === 'liked') {
+          const hasLikes = window.likedQuotes && window.likedQuotes.getAll().length > 0;
+          tab.style.display = hasLikes ? '' : 'none';
+          if (!hasLikes) {
+            tab.classList.add('hidden');
+          } else {
+            tab.classList.remove('hidden');
+          }
+        }
+        tab.style.opacity = '';
+        tab.classList.remove('ring-1', 'ring-amber-400/50');
+      });
+
+      if (searchEmpty) {
+        searchEmpty.classList.add('hidden');
+        searchEmpty.classList.remove('flex');
+      }
+
+      if (currentActiveTab === 'liked') {
+        refreshLikedQuotes();
+      }
+    }
+
+    // ── Search Mode Toggle Mechanics ──
+    function openSearchMode() {
+      if (headerDefault) {
+        headerDefault.classList.add('hidden');
+        headerDefault.classList.remove('flex');
+      }
+      if (headerSearch) {
+        headerSearch.classList.remove('hidden');
+        headerSearch.classList.add('flex');
+      }
+      if (searchInput) {
+        setTimeout(() => {
+          searchInput.focus();
+          searchInput.select();
+        }, 50);
+        if (searchInput.value.trim()) {
+          filterItems(searchInput.value);
+        }
+      }
+    }
+
+    function closeSearchMode() {
+      if (headerSearch) {
+        headerSearch.classList.add('hidden');
+        headerSearch.classList.remove('flex');
+      }
+      if (headerDefault) {
+        headerDefault.classList.remove('hidden');
+        headerDefault.classList.add('flex');
+      }
+      if (searchInput) {
+        searchInput.value = '';
+        if (searchClear) {
+          searchClear.classList.add('hidden');
+          searchClear.classList.remove('flex');
+        }
+      }
+      resetFilterVisibility();
+    }
+
+    if (searchToggleBtn) {
+      searchToggleBtn.onclick = () => openSearchMode();
+    }
+    if (searchBackBtn) {
+      searchBackBtn.onclick = () => closeSearchMode();
+    }
+    if (searchCancelBtn) {
+      searchCancelBtn.onclick = () => closeSearchMode();
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => filterItems(e.target.value));
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const quickjumpSection = document.getElementById('quote-quickjump-section');
+          const quickjumpBtn = document.getElementById('quickjump-action-btn');
+          if (quickjumpSection && !quickjumpSection.classList.contains('hidden') && quickjumpBtn) {
+            e.preventDefault();
+            quickjumpBtn.click();
+          }
+        }
+      });
+    }
+
+    if (searchClear) {
+      searchClear.onclick = () => {
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+        }
+        filterItems('');
+      };
+    }
+
+    if (resetSearchBtn) {
+      resetSearchBtn.onclick = () => {
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+        }
+        filterItems('');
+      };
+    }
+
+    // ── Open / Close Mechanics ──
+    let drawerOpenedAt = 0;
+
+    function openDrawer(tabToOpen = 'auto', onReady) {
+      try {
+        const d = document.getElementById('explore-drawer');
+        const s = document.getElementById('explore-sheet');
+        const b = document.getElementById('explore-backdrop');
+        if (!d) return;
+
+        drawerOpenedAt = Date.now();
+
+        // Harmonize theme with current active quote's mood
+        const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+        if (activeSlide && window.applyQuoteThemeToModals) {
+          window.applyQuoteThemeToModals(activeSlide.dataset?.mood || 'reflective');
+        }
+
+        // Refresh liked state first to show/hide liked tab button
+        refreshLikedQuotes();
+
+        // Pre-select tab: if 'auto' or 'liked', only use 'liked' if user has liked quotes
+        const hasLikes = window.likedQuotes && window.likedQuotes.getAll().length > 0;
+        let targetTab = 'authors';
+        if (tabToOpen === 'auto') {
+          targetTab = hasLikes ? 'liked' : 'authors';
+        } else if (tabToOpen === 'liked') {
+          targetTab = hasLikes ? 'liked' : 'authors';
+        } else if (tabToOpen) {
+          targetTab = tabToOpen;
+        }
+
+        activateTab(targetTab);
+
+        // Only reset filter if a search term was previously entered
+        const si = document.getElementById('explore-search');
+        if (si && si.value) {
+          si.value = '';
+          filterItems('');
+        }
+
+        // Clean up any stale inline display or hidden class so modal is guaranteed to render
+        d.style.display = '';
+        d.classList.remove('invisible', 'pointer-events-none', 'opacity-0', 'hidden');
+        d.classList.add('visible', 'pointer-events-auto', 'opacity-100');
+
+        if (b) {
+          b.classList.remove('pointer-events-none');
+          b.classList.add('pointer-events-auto');
+        }
+
+        if (s) {
+          s.style.transform = '';
+          s.classList.remove('translate-y-full');
+          s.classList.add('translate-y-0');
+        }
+
+        // Pause 60 FPS generative canvas loop while modal is active to eliminate GPU/CPU contention
+        if (window.wisdomBackground && typeof window.wisdomBackground.stop === 'function') {
+          window.wisdomBackground.stop();
+        }
+
+        // Ensure PWA install button state is properly synchronized
+        if (typeof window.updatePwaInstallUI === 'function') {
+          window.updatePwaInstallUI();
+        }
+      } finally {
+        if (typeof onReady === 'function') {
+          onReady();
+        }
+      }
+    }
+
+    function closeDrawer(immediate = false) {
+      const d = document.getElementById('explore-drawer');
+      const s = document.getElementById('explore-sheet');
+      const b = document.getElementById('explore-backdrop');
+      if (!d) return;
+
+      closeSearchMode();
+
+      // Resume 60 FPS background animation loop
+      if (window.wisdomBackground && typeof window.wisdomBackground.start === 'function') {
+        window.wisdomBackground.start();
+      }
+
+      if (b) {
+        b.classList.remove('pointer-events-auto');
+        b.classList.add('pointer-events-none');
+      }
+
+      if (immediate) {
+        if (s) {
+          s.style.transform = '';
+          s.classList.remove('translate-y-0');
+          s.classList.add('translate-y-full');
+        }
+        d.classList.remove('visible', 'pointer-events-auto', 'opacity-100');
+        d.classList.add('invisible', 'pointer-events-none', 'opacity-0');
+        return;
+      }
+
+      if (s) {
+        s.style.transform = '';
+        s.classList.remove('translate-y-0');
+        s.classList.add('translate-y-full');
+      }
+      d.classList.remove('opacity-100');
+      d.classList.add('opacity-0');
+
+      setTimeout(() => {
+        d.classList.remove('visible', 'pointer-events-auto');
+        d.classList.add('invisible', 'pointer-events-none');
+      }, 280);
+    }
+
+    // Re-bind backdrop/close btn every setup so new DOM nodes are wired correctly
+    const freshBackdrop = document.getElementById('explore-backdrop');
+    const freshCloseBtn = document.getElementById('explore-close-btn');
+    if (freshBackdrop) {
+      const handleBackdropClose = (e) => {
+        // Guard: ignore clicks/touches that occur within 350ms of opening (prevents touch tap-through)
+        if (Date.now() - drawerOpenedAt < 350) {
+          if (e) {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+          }
+          return;
+        }
+        closeDrawer();
+      };
+      freshBackdrop.onclick = handleBackdropClose;
+      freshBackdrop.addEventListener('touchend', handleBackdropClose, { passive: false });
+    }
+    if (freshCloseBtn) {
+      freshCloseBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        closeDrawer();
+      };
+    }
+
+    // Keyboard ESC & Shortcut handling
+    document.addEventListener('keydown', (e) => {
+      const d = document.getElementById('explore-drawer');
+      const authorModal = document.getElementById('author-context-modal');
+      const isAuthorOpen = authorModal && !authorModal.classList.contains('opacity-0') && authorModal.style.display !== 'none';
+      if (isAuthorOpen) return;
+
+      if (e.key === 'Escape' && d && d.classList.contains('visible')) {
+        const isSearchOpen = headerSearch && !headerSearch.classList.contains('hidden');
+        if (isSearchOpen) {
+          closeSearchMode();
+        } else {
+          closeDrawer();
+        }
+      }
+
+      // Quick search shortcut: '/' key to open search when explore drawer is open
+      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+        if (d && d.classList.contains('visible')) {
+          e.preventDefault();
+          openSearchMode();
+        }
+      }
+    });
+
+    // Swipe down to dismiss on mobile drag handle
+    let touchStartY = 0;
+    let touchDiffY = 0;
+
+    if (dragHandle && sheet) {
+      dragHandle.addEventListener(
+        'touchstart',
+        (e) => {
+          touchStartY = e.touches[0].clientY;
+          touchDiffY = 0;
+        },
+        { passive: true }
+      );
+
+      dragHandle.addEventListener(
+        'touchmove',
+        (e) => {
+          touchDiffY = e.touches[0].clientY - touchStartY;
+          if (touchDiffY > 0) {
+            sheet.style.transform = `translateY(${touchDiffY}px)`;
+          }
+        },
+        { passive: true }
+      );
+
+      dragHandle.addEventListener('touchend', () => {
+        if (touchDiffY > 120) {
+          closeDrawer();
+        } else {
+          sheet.style.transition = 'transform 0.2s ease-out';
+          sheet.style.transform = '';
+          setTimeout(() => {
+            sheet.style.transition = '';
+          }, 200);
+        }
+      });
+    }
+
+    // Background Pre-Warming: Pre-calculate layout and styles during browser idle time
+    function prewarmDrawer() {
+      refreshLikedQuotes();
+      const hasLikes = window.likedQuotes && window.likedQuotes.getAll().length > 0;
+      activateTab(hasLikes ? 'liked' : 'authors');
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(prewarmDrawer, { timeout: 1500 });
+    } else {
+      setTimeout(prewarmDrawer, 300);
+    }
+
+    // Initial check of liked tab button visibility on setup
+    refreshLikedQuotes();
+
+    // Global hooks
+    window.openExploreDrawer = openDrawer;
+    window.closeExploreDrawer = closeDrawer;
+    window.refreshExploreLikes = refreshLikedQuotes;
+    window.addEventListener('wisdom:close-modals', (e) => closeDrawer(e?.detail?.immediate ?? true));
+
+    function checkHashForExplore() {
+      if (window.location.hash === '#explore' || window.location.hash.startsWith('#explore?')) {
+        openDrawer('authors');
+      }
+    }
+    checkHashForExplore();
+    window.addEventListener('hashchange', checkHashForExplore);
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.key === 'e' || e.key === 'E') && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+        const d = document.getElementById('explore-drawer');
+        if (d && (d.classList.contains('invisible') || d.classList.contains('hidden') || d.style.display === 'none')) {
+          openDrawer('authors');
+        } else {
+          closeDrawer();
+        }
+      }
+    });
+  }
+
+  // Setup immediately so window.openExploreDrawer is available without waiting for DOMContentLoaded
+  setupExploreDrawer();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupExploreDrawer);
+  }
+  document.addEventListener('astro:page-load', setupExploreDrawer);
+</script>
+
+<style>
+  /* Custom horizontal scrollbar hiding for tabs */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>

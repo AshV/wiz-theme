@@ -1,0 +1,313 @@
+---
+/**
+ * ZenLoader.astro
+ *
+ * Ambient, ultra-smooth loading indicator for navigations and async operations.
+ *
+ * Design:
+ * 1. Top Shimmering Laser Progress Bar: Pin-sharp golden laser at the top edge.
+ * 2. Luminous Zen Celestial Portal: Expanding ethereal ripples and counter-rotating
+ *    delicate gold rings with glowing ✦ core. Unmissable & captivating, yet 100% see-through
+ *    wireframe light so it never blocks or obscures quote content.
+ * 3. Ambient Breathing Vignette: Soft golden peripheral pulse signalling activity.
+ * 4. Smart Zero-Flicker Debounce: Never flashes on fast (<120ms) cached actions.
+ * 5. Persists across page transitions via transition:persist="zen-loader".
+ */
+---
+<div
+  id="zen-loader-root"
+  transition:persist="zen-loader"
+  class="fixed inset-0 z-[9999] pointer-events-none select-none transition-opacity duration-300 opacity-0"
+  aria-hidden="true"
+>
+  <!-- Ambient Screen-Edge Breathing Vignette -->
+  <div
+    class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(245,158,11,0.07)_100%)] pointer-events-none"
+    style="animation: zenAmbientBreathe 2.8s ease-in-out infinite;"
+  ></div>
+
+  <!-- Top Laser Progress Bar -->
+  <div
+    id="zen-loader-bar-track"
+    class="absolute top-0 left-0 right-0 h-[2.5px] overflow-hidden"
+  >
+    <div
+      id="zen-loader-bar"
+      class="h-full w-full origin-left -translate-x-full transition-transform duration-300 ease-out"
+      style="
+        background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 35%, #fffbeb 50%, #fbbf24 65%, #f59e0b 100%);
+        background-size: 200% 100%;
+        box-shadow: 0 0 10px rgba(251, 191, 36, 0.9), 0 0 4px rgba(245, 158, 11, 0.8);
+        animation: zenLaserShimmer 1.8s infinite linear;
+      "
+    ></div>
+  </div>
+
+  <!-- Center Luminous Zen Portal (Unmissable yet 100% see-through wireframe light) -->
+  <div
+    id="zen-loader-portal"
+    class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-0 scale-90 transition-all duration-300"
+  >
+    <!-- Geometric Celestial Rings -->
+    <div class="relative flex items-center justify-center w-36 h-36">
+      <!-- Expanding ripple pulse 1 -->
+      <div
+        class="absolute inset-0 rounded-full border border-amber-400/40 pointer-events-none"
+        style="animation: zenRipple 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;"
+      ></div>
+      <!-- Expanding ripple pulse 2 (offset) -->
+      <div
+        class="absolute inset-0 rounded-full border border-amber-300/25 pointer-events-none"
+        style="animation: zenRipple 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite 0.75s;"
+      ></div>
+
+      <!-- Outer delicate dashed compass ring -->
+      <div
+        class="w-24 h-24 rounded-full border border-dashed border-amber-400/25 flex items-center justify-center pointer-events-none"
+        style="animation: zenSpinSlow 14s linear infinite;"
+      ></div>
+
+      <!-- Core gyroscope spinning circle -->
+      <div
+        class="absolute w-16 h-16 rounded-full border border-amber-400/50 border-t-amber-200 flex items-center justify-center pointer-events-none"
+        style="
+          animation: zenSpinSlow 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          box-shadow: 0 0 20px rgba(251, 191, 36, 0.3), inset 0 0 12px rgba(251, 191, 36, 0.15);
+        "
+      >
+        <div
+          class="w-10 h-10 rounded-full border border-amber-300/40 border-b-transparent flex items-center justify-center"
+          style="animation: zenSpinReverse 1.9s linear infinite;"
+        >
+          <span
+            class="text-amber-200 text-sm font-serif select-none pointer-events-none"
+            style="
+              animation: zenAmbientBreathe 1.5s ease-in-out infinite;
+              filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.9));
+            "
+          >✦</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ethereal Translucent Label -->
+    <div
+      class="mt-3.5 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/45 border border-amber-400/25 shadow-lg backdrop-blur-md select-none pointer-events-none"
+    >
+      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+      <span
+        id="zen-loader-text"
+        class="text-amber-100/90 font-serif italic text-xs tracking-widest uppercase"
+        style="letter-spacing: 0.18em;"
+      >
+        Gathering Wisdom
+      </span>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes zenLaserShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  @keyframes zenRipple {
+    0% {
+      transform: scale(0.65);
+      opacity: 0.85;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+    }
+    100% {
+      transform: scale(1.65);
+      opacity: 0;
+      box-shadow: 0 0 25px rgba(251, 191, 36, 0);
+    }
+  }
+
+  @keyframes zenSpinSlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes zenSpinReverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+
+  @keyframes zenAmbientBreathe {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.04); }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    if (window.zenLoaderInitialized) return;
+    window.zenLoaderInitialized = true;
+
+    let activeCount = 0;
+    let barTimer = null;
+    let portalTimer = null;
+    let crawlInterval = null;
+    let currentPct = 0;
+    let isBarActive = false;
+
+    function getEls() {
+      return {
+        root: document.getElementById('zen-loader-root'),
+        bar: document.getElementById('zen-loader-bar'),
+        portal: document.getElementById('zen-loader-portal'),
+        text: document.getElementById('zen-loader-text')
+      };
+    }
+
+    function setBar(pct, duration = 300) {
+      const { bar } = getEls();
+      if (!bar) return;
+      currentPct = Math.min(100, Math.max(0, pct));
+      bar.style.transitionDuration = `${duration}ms`;
+      bar.style.transform = `translateX(${currentPct - 100}%)`;
+    }
+
+    function startCrawling() {
+      clearInterval(crawlInterval);
+      crawlInterval = setInterval(() => {
+        if (currentPct < 65) {
+          setBar(currentPct + (75 - currentPct) * 0.12, 200);
+        } else if (currentPct < 90) {
+          setBar(currentPct + (94 - currentPct) * 0.05, 300);
+        }
+      }, 200);
+    }
+
+    function start(message = 'Gathering Wisdom') {
+      activeCount++;
+      const { text } = getEls();
+      if (text && message) {
+        text.textContent = message;
+      }
+
+      if (activeCount > 1) {
+        return;
+      }
+
+      // Reset state
+      clearTimeout(barTimer);
+      clearTimeout(portalTimer);
+      clearInterval(crawlInterval);
+      currentPct = 0;
+      isBarActive = false;
+
+      const { root, bar, portal } = getEls();
+      if (bar) {
+        bar.style.transitionDuration = '0ms';
+        bar.style.transform = 'translateX(-100%)';
+      }
+
+      // ── Threshold 1: After 120ms, activate top laser bar ──
+      barTimer = setTimeout(() => {
+        isBarActive = true;
+        if (root) root.classList.remove('opacity-0');
+        setBar(22, 220);
+        startCrawling();
+      }, 120);
+
+      // ── Threshold 2: After 260ms, bloom the center luminous portal ──
+      portalTimer = setTimeout(() => {
+        if (root) root.classList.remove('opacity-0');
+        if (portal) {
+          portal.classList.remove('opacity-0', 'scale-90');
+          portal.classList.add('opacity-100', 'scale-100');
+        }
+      }, 260);
+    }
+
+    function stop() {
+      if (activeCount > 0) activeCount--;
+      if (activeCount > 0) return; // Wait for all concurrent operations
+
+      clearTimeout(barTimer);
+      clearTimeout(portalTimer);
+      clearInterval(crawlInterval);
+
+      const { root, bar, portal } = getEls();
+
+      if (portal) {
+        portal.classList.remove('opacity-100', 'scale-100');
+        portal.classList.add('opacity-0', 'scale-90');
+      }
+
+      if (isBarActive && bar) {
+        // Complete bar to 100% then fade root
+        setBar(100, 160);
+        setTimeout(() => {
+          if (root) root.classList.add('opacity-0');
+          setTimeout(() => {
+            bar.style.transitionDuration = '0ms';
+            bar.style.transform = 'translateX(-100%)';
+            currentPct = 0;
+            isBarActive = false;
+          }, 240);
+        }, 160);
+      } else {
+        if (root) root.classList.add('opacity-0');
+        if (bar) {
+          bar.style.transitionDuration = '0ms';
+          bar.style.transform = 'translateX(-100%)';
+        }
+        currentPct = 0;
+        isBarActive = false;
+      }
+    }
+
+    async function wrap(promiseOrFn, message) {
+      start(message);
+      try {
+        const promise = typeof promiseOrFn === 'function' ? promiseOrFn() : promiseOrFn;
+        return await promise;
+      } finally {
+        stop();
+      }
+    }
+
+    window.zenLoader = {
+      start,
+      stop,
+      wrap
+    };
+    window.appLoader = window.zenLoader;
+
+    // ── Astro View Transitions / ClientRouter Navigation Hooks ──
+    document.addEventListener('astro:before-preparation', (e) => {
+      let label = 'Navigating...';
+      try {
+        if (e.to) {
+          const path = e.to.pathname || '';
+          if (path.includes('/author/')) label = 'Loading Author';
+          else if (path.includes('/category/')) label = 'Loading Category';
+          else if (path.includes('/tag/')) label = 'Loading Reflections';
+          else if (path.includes('/mood/')) label = 'Loading Mood';
+          else label = 'Gathering Wisdom';
+        }
+      } catch {}
+      start(label);
+    });
+
+    document.addEventListener('astro:after-preparation', () => {
+      // Swapping starts
+    });
+
+    document.addEventListener('astro:after-swap', () => {
+      stop();
+    });
+
+    document.addEventListener('astro:page-load', () => {
+      stop();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      start('Loading Wisdom');
+    });
+  })();
+</script>

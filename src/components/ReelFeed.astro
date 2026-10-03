@@ -1,0 +1,1562 @@
+---
+/**
+ * ReelFeed — Scroll-snap vertical reel container.
+ *
+ * Manages IntersectionObserver for:
+ * - Background media switching
+ * - URL hash updates
+ * - Audio source switching
+ * - Active slide tracking
+ * - Double-tap like detection
+ */
+import ReelSlide from './ReelSlide.astro';
+import RightActionRail from './RightActionRail.astro';
+import ExploreDrawer from './ExploreDrawer.astro';
+import ShareModal from './ShareModal.astro';
+import AuthorDossierModal from './AuthorDossierModal.astro';
+import QuoteDelveModal from './QuoteDelveModal.astro';
+import DislikeFeedbackModal from './DislikeFeedbackModal.astro';
+import { moodMeta } from '../data/mediaRegistry';
+
+interface QuoteData {
+  id: string;
+  content: string;
+  author: string;
+  authorSlug: string;
+  category: string;
+  categorySlug: string;
+  mood: 'reflective' | 'motivational' | 'serene' | 'bold' | 'melancholic' | 'joyful' | 'philosophical' | 'romantic';
+  tags: string[];
+  sourceWork?: string;
+  story?: string;
+  explanation?: string;
+  practicalInsight?: string;
+  reflectionPrompt?: string;
+}
+
+interface Props {
+  quotes: QuoteData[];
+  feedTitle: string;
+  feedType?: string;
+  matchedCount?: number;
+  filterLabel?: string;
+  totalChunks?: number;
+}
+
+const { quotes, feedTitle, feedType = 'master', matchedCount, filterLabel, totalChunks = 1 } = Astro.props;
+const effectiveMatchedCount = matchedCount ?? (feedType === 'quote' ? 1 : (feedType === 'master' ? 0 : quotes.length));
+const BASE = '/wisdom';
+const firstQuote = quotes.length > 0 ? quotes[0] : null;
+const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
+---
+
+<!-- Feed Header (subtle overlay) -->
+<header class="fixed top-0 left-0 right-0 z-20 pointer-events-none overflow-visible">
+  <div class="flex items-center justify-between px-2.5 sm:px-3.5 pt-[max(env(safe-area-inset-top),8px)] pb-1.5 sm:pb-2">
+    <div class="w-16 sm:w-20 flex justify-start pointer-events-auto">
+      {feedType !== 'master' && (
+        <a
+          href="/wisdom/"
+          class="glass rounded-full px-2.5 py-1 text-[11px] font-medium text-white/80 hover:text-white flex items-center gap-1 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Back
+        </a>
+      )}
+    </div>
+    <div class="text-center flex-1 mx-2 sm:mx-3 truncate">
+      <h1
+        id="feed-header-title"
+        class="text-xs sm:text-sm font-bold text-white/90 tracking-wide text-shadow-soft truncate transition-opacity duration-300"
+      >
+        {feedTitle}
+      </h1>
+    </div>
+    <div class="w-16 sm:w-20 flex justify-end pointer-events-auto">
+      <!-- Quote Number Label: shows current quote number -->
+      <span
+        id="quote-id-pill"
+        class="text-[10px] font-mono font-medium text-white/80 glass px-2.5 py-1 rounded-full inline-flex items-center shadow-sm leading-normal select-none pointer-events-auto"
+      >
+        <span id="quote-id-pill-label">{firstQuote ? `#${firstQuote.id.replace(/^q?0*/i, '') || '0'}` : '—'}</span>
+      </span>
+    </div>
+  </div>
+</header>
+
+<!-- Scroll-Snap Reel Container (Infinite Never-Ending Stream) -->
+<main
+  id="reel-container"
+  class="reel-container relative z-10 w-full h-[100dvh]"
+  data-feed-type={feedType}
+  data-matched-count={matchedCount}
+  data-total-chunks={totalChunks}
+>
+  {quotes.map((q, i) => (
+    <ReelSlide
+      id={q.id}
+      content={q.content}
+      author={q.author}
+      authorSlug={q.authorSlug}
+      category={q.category}
+      categorySlug={q.categorySlug}
+      mood={q.mood}
+      tags={q.tags}
+      index={i}
+      isStreamContinuation={Boolean(effectiveMatchedCount && i === effectiveMatchedCount)}
+      isTopicMatch={Boolean(effectiveMatchedCount ? i < effectiveMatchedCount : true)}
+      sourceWork={q.sourceWork}
+      story={q.story}
+      explanation={q.explanation}
+      practicalInsight={q.practicalInsight}
+      reflectionPrompt={q.reflectionPrompt}
+    />
+  ))}
+
+  {quotes.length === 0 && (
+    <div class="reel-slide flex flex-col items-center justify-center p-6 text-center">
+      <p class="text-2xl text-white/70 font-light mb-4">No quotes found in this feed.</p>
+      <a href="/wisdom/" class="glass px-6 py-3 rounded-full text-sm font-medium text-white hover:bg-white/10">Return to Master Feed</a>
+    </div>
+  )}
+</main>
+
+<!-- Right Action Rail -->
+<RightActionRail />
+
+<!-- Fixed Top Center Tags Dock (with 3D flip-in-place transition) -->
+{firstQuote && (
+  <nav
+    id="fixed-tags-dock"
+    class="fixed top-14 sm:top-16 left-0 right-0 z-20 pointer-events-none flex justify-center px-4"
+    style="top: calc(max(env(safe-area-inset-top, 0px), 16px) + 48px);"
+    aria-label="Quote Tags"
+  >
+    <div
+      id="dock-tags-container"
+      class="flex flex-wrap items-center justify-center gap-2 max-w-md sm:max-w-lg md:max-w-xl text-center pointer-events-none"
+    >
+      {firstQuote.tags.map((tag) => (
+        <div class="flip-pill-wrapper inline-flex" data-dock-tag-wrapper>
+          <a
+            href={`${BASE}/tag/${encodeURIComponent(tag)}/`}
+            class="pill pill-lg pointer-events-auto text-xs font-medium text-white/60 hover:text-white transition-colors duration-200 bg-white/10 hover:bg-white/20 active:scale-95 px-3.5 py-2 rounded-full backdrop-blur-md border border-white/15 cursor-pointer shadow-md inline-flex items-center leading-normal dock-pill"
+          >
+            #{tag}
+          </a>
+        </div>
+      ))}
+    </div>
+  </nav>
+)}
+
+<!-- Fixed Bottom Metadata Dock (Category & Mood with 3D flip-in-place transition) -->
+{firstQuote && (
+  <aside
+    id="fixed-metadata-dock"
+    class="fixed bottom-0 left-0 right-0 z-20 pointer-events-none pb-[max(env(safe-area-inset-bottom,12px),16px)] pt-2"
+    style="padding-right: clamp(4.5rem, 12vw, 6.5rem); padding-left: clamp(1.25rem, 4vw, 2.5rem);"
+    aria-label="Quote Metadata"
+  >
+    <!-- Single row layout with horizontal scrolling if needed -->
+    <div class="flex items-center gap-2.5 w-full max-w-2xl overflow-x-auto snap-x hide-scrollbar">
+
+      <!-- Mood Badge -->
+      <div id="dock-mood-wrapper" class="flip-pill-wrapper inline-flex shrink-0 snap-start">
+        <a
+          id="dock-mood-pill"
+          href={`${BASE}/mood/${firstQuote.mood}/`}
+          class={`pill pill-lg pointer-events-auto mood-pill-${firstQuote.mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-105 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal dock-pill`}
+        >
+          <span id="dock-mood-emoji" class="shrink-0 text-sm leading-none">{firstMoodInfo?.emoji}</span>
+          <span id="dock-mood-label" class="whitespace-nowrap tracking-wide leading-normal">{firstMoodInfo?.label}</span>
+        </a>
+      </div>
+
+      <!-- Category Pill -->
+      <div id="dock-category-wrapper" class="flip-pill-wrapper inline-flex shrink-0 snap-start">
+        <a
+          id="dock-category-pill"
+          href={`${BASE}/category/${firstQuote.categorySlug}/`}
+          class="pill pill-lg pointer-events-auto glass rounded-full px-4.5 py-2 text-xs font-medium text-white/90 hover:text-white hover:bg-white/20 transition-all duration-200 shadow-sm whitespace-nowrap inline-flex items-center leading-normal dock-pill"
+        >
+          {firstQuote.category}
+        </a>
+      </div>
+
+    </div>
+  </aside>
+)}
+
+<!-- Explore Drawer -->
+<ExploreDrawer />
+
+<!-- Share Modal -->
+<ShareModal />
+
+<!-- Author Dossier Modal -->
+<AuthorDossierModal />
+
+<!-- Quote Delve Modal (Explanation & Deep Meaning) -->
+<QuoteDelveModal />
+
+<!-- Dislike & Quality Feedback Modal -->
+<DislikeFeedbackModal />
+
+<script is:inline define:vars={{ moodMetaClient: moodMeta }}>
+  async function setupReelFeed() {
+    const container = document.getElementById('reel-container');
+    if (!container) return;
+
+    let initialSlides = Array.from(container.querySelectorAll('.reel-slide'));
+    if (initialSlides.length === 0) return;
+
+    let viewDebounceTimer = null;
+    let batchNumber = 1;
+    let isFetchingChunk = false;
+    let loadedQuoteList = [];
+    // Tracks which chunk pages have been fetched, to avoid duplicates
+    const fetchedChunkPages = new Set();
+    // Total chunks will be populated after the first fetch
+    let totalChunkPages = null;
+    // Randomized fetch order: spread across full range so old & new quotes mix evenly
+    let chunkFetchQueue = [];
+
+    // Cached lookup promise for resolving quotes to exact chunk pages
+    let _quoteLookupPromise = null;
+    async function getQuoteLookup() {
+      if (window.__wisdomQuoteLookup) return window.__wisdomQuoteLookup;
+      if (!_quoteLookupPromise) {
+        const _base = window.__wisdomBaseUrl || '/wisdom';
+        _quoteLookupPromise = fetch(`${_base}/api/quotes/lookup.json`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data) window.__wisdomQuoteLookup = data;
+            return data;
+          })
+          .catch((err) => {
+            console.warn('Failed to fetch quote lookup manifest:', err);
+            return null;
+          });
+      }
+      return _quoteLookupPromise;
+    }
+
+    // Performance: single active-slide reference avoids O(n) forEach on every swipe.
+    let _activeSlide = null;
+    // Performance: cache the matchMedia result once; listen for system changes.
+    const _reducedMotion = window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null;
+    // Performance: maintain a live slides array to avoid querySelectorAll in hot paths.
+    let allSlides = [];
+
+    // Snapshot a clean slide as template for on-demand dynamic streaming
+    const templateSlide = initialSlides[0].cloneNode(true);
+    const initialContBanner = templateSlide.querySelector('.continuation-banner');
+    if (initialContBanner) initialContBanner.remove();
+    templateSlide.classList.remove('is-active');
+
+    // ── Pick a random starting chunk based on totalChunks embedded in the HTML at build time.
+    // This is the correct approach for a static site:
+    //   - totalChunks is stamped into data-total-chunks at build time (no round-trip needed)
+    //   - Client picks a random page number with Math.random() → different pool every session
+    //   - Each chunk is a seeded-shuffle cross-section of the full catalog (not sequential IDs)
+    //   - Result: true per-session randomization over the full catalog, zero extra cost
+    try {
+      const _baseUrl = window.__wisdomBaseUrl || '/wisdom';
+      const _knownTotal = parseInt(container.dataset.totalChunks || '1', 10) || 1;
+      // Pick a random chunk page for this session
+      const _randomPage = Math.floor(Math.random() * _knownTotal) + 1;
+      const _res = await fetch(`${_baseUrl}/api/quotes/chunk-${_randomPage}.json`);
+      if (_res.ok) {
+        const _data = await _res.json();
+        if (_data && _data.quotes) {
+          fetchedChunkPages.add(_randomPage);
+          totalChunkPages = _data.totalChunks || _knownTotal;
+          loadedQuoteList.push(..._data.quotes);
+          await initChunkQueue(totalChunkPages);
+        }
+      }
+    } catch (_) {
+      // Non-fatal: shuffle will work with DOM slides only
+    }
+
+    // ── Fisher-Yates shuffle helper ──
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+      }
+      return arr;
+    }
+
+    // ── Helper to record viewed quote ID in recentQuotes store ──
+    function recordQuoteSeen(id) {
+      if (!id) return;
+      if (window.recentQuotes && typeof window.recentQuotes.add === 'function') {
+        window.recentQuotes.add(id);
+      }
+    }
+
+    // ── Mood metadata injected via define:vars as moodMetaClient ──
+    // (eliminates the duplicate hand-maintained object that previously lived here)
+
+    const base = window.__wisdomBaseUrl || '/wisdom';
+
+    function getMediaForClientQuote(id, mood) {
+      return {
+        gradient: `gradient-${mood}`,
+        audio: `${base}/media/audio/chime-${mood}.wav`
+      };
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // ── Factory to build full-fidelity slide DOM element from quote object ──
+    function createSlideFromQuote(quote, templateElement, loopSuffix = '') {
+      const clone = templateElement.cloneNode(true);
+      const existingElem = document.getElementById(`slide-${quote.id}`);
+      clone.id = (existingElem || loopSuffix) ? `slide-${quote.id}-${loopSuffix || 'dyn'}` : `slide-${quote.id}`;
+      clone.classList.remove('is-active');
+
+      const media = getMediaForClientQuote(quote.id, quote.mood);
+      const moodInfo = moodMetaClient[quote.mood] || { label: quote.mood, emoji: '✨' };
+
+      // Update data attributes
+      clone.dataset.quoteId = quote.id;
+      clone.dataset.quoteSlug = quote.slug;
+      clone.dataset.content = quote.content;
+      clone.dataset.author = quote.author;
+      clone.dataset.authorSlug = quote.authorSlug;
+      clone.dataset.videoSrc = media.video;
+      clone.dataset.gradientClass = media.gradient;
+      clone.dataset.mood = quote.mood;
+      clone.dataset.moodLabel = moodInfo.label;
+      clone.dataset.moodEmoji = moodInfo.emoji;
+      clone.dataset.category = quote.category;
+      clone.dataset.categorySlug = quote.categorySlug;
+      clone.dataset.tags = JSON.stringify(quote.tags || []);
+      clone.dataset.audioSrc = media.audio;
+      clone.dataset.topicMatch = 'true';
+      clone.dataset.sourceWork = quote.sourceWork || '';
+      clone.dataset.explanation = quote.explanation || quote.story || '';
+      clone.dataset.practicalInsight = quote.practicalInsight || '';
+      clone.dataset.reflectionPrompt = quote.reflectionPrompt || '';
+
+      const srMeta = clone.querySelector('.sr-only');
+      if (srMeta) {
+        srMeta.innerHTML = `<span>Category: ${escapeHtml(quote.category)}</span><span>Mood: ${escapeHtml(moodInfo.label)}</span><span>Tags: ${(quote.tags || []).map(t => `#${escapeHtml(t)}`).join(' ')}</span>`;
+      }
+
+      // Remove continuation banner from cloned slides
+      const banner = clone.querySelector('.continuation-banner');
+      if (banner) banner.remove();
+
+      // Double-tap zone
+      const dtz = clone.querySelector('[data-doubletap-zone]');
+      if (dtz) dtz.dataset.doubletapZone = quote.id;
+
+      // Quote text & adaptive typography sizing
+      const len = quote.content.length;
+      let quoteSizeStyle = '';
+      if (len < 55) {
+        quoteSizeStyle = 'font-size: clamp(2.2rem, 5.5vw, 4.2rem); line-height: 1.28; letter-spacing: 0.01em; max-width: 900px;';
+      } else if (len < 110) {
+        quoteSizeStyle = 'font-size: clamp(1.75rem, 4.2vw, 3.1rem); line-height: 1.35; letter-spacing: 0.01em; max-width: 950px;';
+      } else if (len < 180) {
+        quoteSizeStyle = 'font-size: clamp(1.4rem, 3.2vw, 2.4rem); line-height: 1.42; letter-spacing: 0.01em; max-width: 1000px;';
+      } else {
+        quoteSizeStyle = 'font-size: clamp(1.2rem, 2.6vw, 1.95rem); line-height: 1.48; letter-spacing: 0.01em; max-width: 1050px;';
+      }
+
+      const quoteP = clone.querySelector('.quote-text');
+      if (quoteP) {
+        quoteP.textContent = quote.content;
+        quoteP.style.cssText = `${quoteSizeStyle} font-family: var(--font-display);`;
+      }
+
+      // Author attribution & Source Work citation
+      const authorLink = clone.querySelector('a[href*="/author/"]');
+      if (authorLink) {
+        authorLink.href = `${base}/author/${quote.authorSlug}/`;
+        authorLink.title = `More quotes by ${quote.author}`;
+        const authorSpan = authorLink.querySelector('.author-name-text') || authorLink;
+        authorSpan.textContent = quote.author;
+
+        let citationSpan = authorLink.querySelector('.source-work-citation');
+        if (quote.sourceWork) {
+          if (!citationSpan) {
+            citationSpan = document.createElement('span');
+            citationSpan.className = 'source-work-citation text-white/45 text-sm sm:text-base not-italic font-sans font-light tracking-normal';
+            authorLink.appendChild(citationSpan);
+          }
+          citationSpan.innerHTML = `, <em class="italic text-white/65">${escapeHtml(quote.sourceWork)}</em>`;
+        } else if (citationSpan) {
+          citationSpan.remove();
+        }
+      }
+
+      // Delve Pill Button
+      let delveBtn = clone.querySelector('.delve-pill-btn');
+      const quoteExplanation = quote.explanation || quote.story || '';
+      if (quoteExplanation) {
+        if (!delveBtn) {
+          const authorCol = authorLink ? authorLink.closest('.select-none.flex.flex-col') : null;
+          if (authorCol) {
+            delveBtn = document.createElement('button');
+            delveBtn.type = 'button';
+            delveBtn.className = 'pill pill-lg delve-pill-btn pointer-events-auto mt-1 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 hover:border-amber-400/40 text-xs sm:text-[13px] text-amber-200/90 hover:text-amber-100 font-sans tracking-wide transition-all duration-200 active:scale-95 shadow-md group cursor-pointer backdrop-blur-md';
+            delveBtn.title = 'Delve into the meaning, philosophy, and practical insight of this quote';
+            delveBtn.innerHTML = `
+              <span class="text-amber-300 text-xs group-hover:scale-110 transition-transform animate-pulse-soft">✦</span>
+              <span class="font-medium">Delve</span>
+              <svg class="w-3.5 h-3.5 text-white/40 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            `;
+            authorCol.appendChild(delveBtn);
+          }
+        } else {
+          delveBtn.className = 'pill pill-lg delve-pill-btn pointer-events-auto mt-1 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 hover:border-amber-400/40 text-xs sm:text-[13px] text-amber-200/90 hover:text-amber-100 font-sans tracking-wide transition-all duration-200 active:scale-95 shadow-md group cursor-pointer backdrop-blur-md';
+          delveBtn.title = 'Delve into the meaning, philosophy, and practical insight of this quote';
+          delveBtn.innerHTML = `
+            <span class="text-amber-300 text-xs group-hover:scale-110 transition-transform animate-pulse-soft">✦</span>
+            <span class="font-medium">Delve</span>
+            <svg class="w-3.5 h-3.5 text-white/40 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          `;
+        }
+        if (delveBtn) {
+          delveBtn.dataset.quoteId = quote.id;
+        }
+      } else if (delveBtn) {
+        delveBtn.remove();
+      }
+
+      // Category pill
+      const categoryLink = clone.querySelector('a[href*="/category/"]');
+      if (categoryLink) {
+        categoryLink.className = 'pill pill-lg pointer-events-auto glass rounded-full px-4.5 py-2.5 text-xs font-medium text-white/90 hover:text-white hover:bg-white/20 transition-all duration-200 shadow-sm whitespace-nowrap inline-flex items-center leading-normal';
+        categoryLink.href = `${base}/category/${quote.categorySlug}/`;
+        categoryLink.textContent = quote.category;
+      }
+
+      // Mood pill
+      const moodLink = clone.querySelector('a[href*="/mood/"]');
+      if (moodLink) {
+        moodLink.className = `pill pill-lg pointer-events-auto mood-pill-${quote.mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-105 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal`;
+        moodLink.href = `${base}/mood/${quote.mood}/`;
+        moodLink.innerHTML = `<span class="shrink-0 text-sm leading-none">${moodInfo.emoji}</span><span class="whitespace-nowrap tracking-wide leading-normal">${moodInfo.label}</span>`;
+      }
+
+      // Tag chips
+      const tagContainer = clone.querySelector('[data-tags-container]') || clone.querySelector('.flex.flex-wrap');
+      if (tagContainer) {
+        tagContainer.innerHTML = (quote.tags || []).map(t =>
+          `<a href="${base}/tag/${encodeURIComponent(t)}/" class="pill pill-lg pointer-events-auto text-xs font-medium text-white/75 hover:text-white transition-colors duration-200 bg-white/10 hover:bg-white/20 active:scale-95 px-4 py-2 rounded-full backdrop-blur-sm border border-white/15 cursor-pointer shadow-sm inline-flex items-center leading-normal">#${escapeHtml(t)}</a>`
+        ).join('');
+      }
+
+      return clone;
+    }
+
+    // ── Helper: Caps each author to at most `maxPerAuthor` quotes in a single batch ──
+    // Runs AFTER the streak check, as a second diversity pass.
+    function enforceAuthorQuotaPerBatch(items, maxPerAuthor = 2) {
+      const authorCounts = {};
+      const result = [];
+      const deferred = []  ;
+      for (const item of items) {
+        const auth = item.authorSlug || item.author ||
+          item.dataset?.authorSlug || item.dataset?.author || '__unknown';
+        const count = authorCounts[auth] || 0;
+        if (count < maxPerAuthor) {
+          authorCounts[auth] = count + 1;
+          result.push(item);
+        } else {
+          deferred.push(item);
+        }
+      }
+      // Append deferred items at end so nothing is lost
+      return [...result, ...deferred];
+    }
+
+    // ── Helper: Enforces at most maxStreak consecutive quotes from the same author in a row ──
+    function enforceMaxAuthorStreak(items, maxStreak = 3, prevAuthor = null, prevStreak = 0) {
+      if (!items || items.length === 0) return [];
+      const result = [];
+      const pool = [...items];
+      let currentAuthor = prevAuthor;
+      let streak = prevStreak;
+
+      const getAuthor = (item) => {
+        if (!item) return '';
+        if (item.dataset) return item.dataset.authorSlug || item.dataset.author || '';
+        return item.authorSlug || item.author || '';
+      };
+
+      while (pool.length > 0) {
+        let candidateIdx = 0;
+        if (streak >= maxStreak && currentAuthor) {
+          // Find first quote in pool with a different author
+          const diffIdx = pool.findIndex(item => {
+            const auth = getAuthor(item);
+            return auth && auth !== currentAuthor;
+          });
+          if (diffIdx !== -1) {
+            candidateIdx = diffIdx;
+          }
+        }
+
+        const [item] = pool.splice(candidateIdx, 1);
+        const author = getAuthor(item);
+        if (author && author === currentAuthor) {
+          streak++;
+        } else {
+          currentAuthor = author;
+          streak = 1;
+        }
+        result.push(item);
+      }
+      return result;
+    }
+
+    // ── Feed Configuration & Reordering ──
+    const rawHash = window.location.hash ? window.location.hash.slice(1) : null;
+    let targetHash = (rawHash && !rawHash.startsWith('explore')) ? decodeURIComponent(rawHash) : null;
+    const feedType = container.dataset.feedType || 'master';
+    const matchedCount = parseInt(container.dataset.matchedCount, 10) || 0;
+
+    // Retrieve user's recently viewed quote IDs (up to 500 seen quotes)
+    const recentSeenList = (window.recentQuotes && typeof window.recentQuotes.getAll === 'function')
+      ? window.recentQuotes.getAll()
+      : [];
+    const recentSeenSet = new Set(recentSeenList);
+
+    // If an initial slide hash was requested and exists in initialSlides:
+    if (targetHash) {
+      const hashNumMatch = targetHash.match(/^q?(\d+)$/i);
+      const hashNum = hashNumMatch ? parseInt(hashNumMatch[1], 10) : null;
+      const hashNormalizedId = hashNum ? ('q' + String(hashNum).padStart(hashNum >= 1000 ? 4 : 3, '0')).toLowerCase() : null;
+
+      let targetIdx = initialSlides.findIndex(s => {
+        const id = s.dataset.quoteId;
+        const slug = s.dataset.quoteSlug;
+        if (slug === targetHash || s.id === `slide-${targetHash}` || id === targetHash) return true;
+        if (id && id.toLowerCase() === targetHash.toLowerCase()) return true;
+        if (slug && slug.toLowerCase() === targetHash.toLowerCase()) return true;
+        if (hashNormalizedId && id && id.toLowerCase() === hashNormalizedId) return true;
+        if (hashNum !== null && id && parseInt(id.replace(/\D/g, ''), 10) === hashNum) return true;
+        return false;
+      });
+
+      if (targetIdx !== -1) {
+        const [targetSlide] = initialSlides.splice(targetIdx, 1);
+        const unseenRemaining = initialSlides.filter(s => !recentSeenSet.has(s.dataset.quoteId));
+        const seenRemaining = initialSlides.filter(s => recentSeenSet.has(s.dataset.quoteId));
+        shuffleArray(unseenRemaining);
+        seenRemaining.sort((a, b) => recentSeenList.indexOf(a.dataset.quoteId) - recentSeenList.indexOf(b.dataset.quoteId));
+        const rest = enforceMaxAuthorStreak([...unseenRemaining, ...seenRemaining], 5, targetSlide.dataset.authorSlug, 1);
+        initialSlides = [targetSlide, ...rest];
+      }
+    }
+
+    if (!targetHash) {
+      if (feedType === 'quote') {
+        // On individual canonical quote pages, keep target quote first, shuffle continuation stream avoiding seen
+        const primary = initialSlides[0];
+        const rest = initialSlides.slice(1);
+        const unseenRest = rest.filter(s => !recentSeenSet.has(s.dataset.quoteId));
+        const seenRest = rest.filter(s => recentSeenSet.has(s.dataset.quoteId));
+        shuffleArray(unseenRest);
+        seenRest.sort((a, b) => recentSeenList.indexOf(a.dataset.quoteId) - recentSeenList.indexOf(b.dataset.quoteId));
+        const structuredRest = enforceMaxAuthorStreak([...unseenRest, ...seenRest], 5, primary?.dataset?.authorSlug, 1);
+        initialSlides = [primary, ...structuredRest];
+      } else if (matchedCount > 0 && matchedCount < initialSlides.length) {
+        // In filtered feeds (author, category, mood, tag)
+        const matched = initialSlides.slice(0, matchedCount);
+        const continuation = initialSlides.slice(matchedCount);
+
+        const unseenMatched = matched.filter(s => !recentSeenSet.has(s.dataset.quoteId));
+        const seenMatched = matched.filter(s => recentSeenSet.has(s.dataset.quoteId));
+        shuffleArray(unseenMatched);
+        seenMatched.sort((a, b) => recentSeenList.indexOf(a.dataset.quoteId) - recentSeenList.indexOf(b.dataset.quoteId));
+        const structuredMatched = feedType === 'author'
+          ? [...unseenMatched, ...seenMatched]
+          : enforceMaxAuthorStreak([...unseenMatched, ...seenMatched], 5);
+
+        const lastMatchedAuthor = structuredMatched[structuredMatched.length - 1]?.dataset?.authorSlug || null;
+        let lastMatchedStreak = 0;
+        for (let i = structuredMatched.length - 1; i >= 0; i--) {
+          if (structuredMatched[i]?.dataset?.authorSlug === lastMatchedAuthor) lastMatchedStreak++;
+          else break;
+        }
+
+        const unseenCont = continuation.filter(s => !recentSeenSet.has(s.dataset.quoteId));
+        const seenCont = continuation.filter(s => recentSeenSet.has(s.dataset.quoteId));
+        shuffleArray(unseenCont);
+        seenCont.sort((a, b) => recentSeenList.indexOf(a.dataset.quoteId) - recentSeenList.indexOf(b.dataset.quoteId));
+        const structuredCont = enforceMaxAuthorStreak([...unseenCont, ...seenCont], 5, lastMatchedAuthor, lastMatchedStreak);
+
+        initialSlides = [...structuredMatched, ...structuredCont];
+
+        // Keep continuation banner precisely positioned on the first continuation slide
+        initialSlides.forEach(s => {
+          const b = s.querySelector('.continuation-banner');
+          if (b) b.remove();
+        });
+        if (initialSlides[matchedCount]) {
+          const bannerDiv = document.createElement('div');
+          bannerDiv.className = 'continuation-banner pointer-events-none absolute top-28 sm:top-32 z-30 left-1/2 -translate-x-1/2 flex items-center gap-2 glass px-4.5 py-2 rounded-full border border-white/20 text-[11px] font-medium text-white/90 shadow-xl shadow-black/40 select-none tracking-wider uppercase leading-normal';
+          bannerDiv.style.top = 'calc(max(env(safe-area-inset-top, 0px), 16px) + 94px)';
+          bannerDiv.innerHTML = '<span class="text-amber-300">✦</span><span>More Wisdom Ahead</span>';
+          initialSlides[matchedCount].appendChild(bannerDiv);
+        }
+      } else {
+        // General master feed:
+        // Keep the Daily Quote (initialSlides[0]) as the opening anchor
+        const dailySlide = initialSlides[0];
+        const restSlides = initialSlides.slice(1);
+
+        // Separate remaining into unseen and seen slides
+        let unseen = restSlides.filter(s => !recentSeenSet.has(s.dataset.quoteId));
+        const seen = restSlides.filter(s => recentSeenSet.has(s.dataset.quoteId));
+
+        // Inject fresh unseen quotes from the eagerly-loaded chunk-1 catalog.
+        // loadedQuoteList is now populated before this shuffle runs, so every
+        // session draws from ~200 quotes instead of just the 12 in the DOM.
+        if (loadedQuoteList.length > 0) {
+          const existingIds = new Set(initialSlides.map(s => s.dataset.quoteId));
+          const freshCatalogQuotes = loadedQuoteList.filter(q => !recentSeenSet.has(q.id) && !existingIds.has(q.id));
+          shuffleArray(freshCatalogQuotes);
+          // Top up unseen pool to at least 35 quotes before shuffling
+          const needed = Math.max(0, 35 - unseen.length);
+          if (needed > 0) {
+            const toInject = freshCatalogQuotes.slice(0, needed);
+            toInject.forEach(q => {
+              const newSlide = createSlideFromQuote(q, templateSlide, 'init');
+              unseen.push(newSlide);
+            });
+          }
+        }
+
+        shuffleArray(unseen);
+        // Sort seen slides by oldest seen first
+        seen.sort((a, b) => recentSeenList.indexOf(a.dataset.quoteId) - recentSeenList.indexOf(b.dataset.quoteId));
+
+        const dailyAuthor = dailySlide?.dataset?.authorSlug || null;
+        // Streak cap: max 3 consecutive from same author; then author-quota: max 2 per author in the initial 50
+        const streakOrdered = enforceMaxAuthorStreak([...unseen, ...seen], 3, dailyAuthor, 1);
+        const restOrdered = enforceAuthorQuotaPerBatch(streakOrdered, 2);
+        initialSlides = dailySlide ? [dailySlide, ...restOrdered] : restOrdered;
+      }
+    }
+
+    // Reorder DOM nodes in container
+    const fragment = document.createDocumentFragment();
+    initialSlides.forEach(slide => fragment.appendChild(slide));
+    container.innerHTML = '';
+    container.appendChild(fragment);
+    // Sync tracked array with the reordered DOM
+    allSlides = initialSlides.slice();
+
+    // ── Build a randomised chunk fetch order that spreads across the full ID range ──
+    // We fetch chunk-1 first to learn totalChunks, then build a random order.
+    async function initChunkQueue(knownTotal) {
+      if (chunkFetchQueue.length > 0) return;
+      const total = knownTotal || totalChunkPages || 20;
+      // Strided walk: pick every Nth chunk starting from a random offset so that
+      // early, middle, and late quote IDs are represented in the first few fetches.
+      const stride = Math.max(1, Math.floor(total / 4));
+      const offsets = [0, 1, 2, 3].map(i => (Math.floor(Math.random() * stride) + i * stride) % total);
+      const ordered = [];
+      const seen = new Set();
+      // Add strided anchors first, then fill remaining in random order
+      for (const o of offsets) {
+        const p = o + 1; // 1-indexed
+        if (!fetchedChunkPages.has(p) && !seen.has(p)) {
+          ordered.push(p);
+          seen.add(p);
+        }
+      }
+      for (let p = 1; p <= total; p++) {
+        if (!fetchedChunkPages.has(p) && !seen.has(p)) {
+          ordered.push(p);
+          seen.add(p);
+        }
+      }
+      // Fisher-Yates shuffle the non-anchor portion so subsequent fetches are random
+      for (let i = ordered.length - 1; i > offsets.length; i--) {
+        const j = offsets.length + Math.floor(Math.random() * (i - offsets.length + 1));
+        [ordered[i], ordered[j]] = [ordered[j], ordered[i]];
+      }
+      chunkFetchQueue = ordered;
+    }
+
+    async function loadNextQuoteChunk() {
+      if (isFetchingChunk) return [];
+      isFetchingChunk = true;
+      if (window.zenLoader) window.zenLoader.start('Gathering wisdom...');
+      try {
+        const base = window.__wisdomBaseUrl || '/wisdom';
+
+        // Fallback: if the eager random-chunk fetch failed (e.g. network error),
+        // totalChunkPages is still null here. Fetch chunk-1 to bootstrap the queue.
+        if (totalChunkPages === null) {
+          const res = await fetch(`${base}/api/quotes/chunk-1.json`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.quotes) {
+              fetchedChunkPages.add(1);
+              totalChunkPages = data.totalChunks || 20;
+              loadedQuoteList.push(...data.quotes);
+              await initChunkQueue(totalChunkPages);
+              return data.quotes;
+            }
+          }
+          return [];
+        }
+
+        // Subsequent fetches: pop the next page from the randomised queue
+        let page = null;
+        while (chunkFetchQueue.length > 0) {
+          const candidate = chunkFetchQueue.shift();
+          if (!fetchedChunkPages.has(candidate)) { page = candidate; break; }
+        }
+        if (page === null) return []; // all chunks fetched
+
+        const res = await fetch(`${base}/api/quotes/chunk-${page}.json`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.quotes) {
+            fetchedChunkPages.add(page);
+            loadedQuoteList.push(...data.quotes);
+            return data.quotes;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not load quote chunk:', e);
+      } finally {
+        isFetchingChunk = false;
+        if (window.zenLoader) window.zenLoader.stop();
+      }
+      return [];
+    }
+
+    // A random chunk was already fetched eagerly above. Pre-warm one additional
+    // spread chunk on idle so appendNextBatch always has fresh quotes queued up.
+    if (typeof window !== 'undefined') {
+      const prewarm = async () => {
+        await loadNextQuoteChunk(); // next chunk from the randomised queue
+      };
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(prewarm);
+      } else {
+        setTimeout(prewarm, 500);
+      }
+    }
+
+    // ── Infinite Scroll Appender: Appends fresh unseen quotes avoiding the last 500 seen & capping author streaks ──
+    async function appendNextBatch() {
+      const batchFragment = document.createDocumentFragment();
+      const appendedSlides = [];
+
+      const currentSeenList = (window.recentQuotes && typeof window.recentQuotes.getAll === 'function')
+        ? window.recentQuotes.getAll()
+        : [];
+      const currentSeenSet = new Set(currentSeenList);
+
+      // Quote IDs currently rendered in the DOM (use tracked array — avoids querySelectorAll)
+      const domQuoteIds = new Set(allSlides.map(s => s.dataset.quoteId));
+
+      // Fetch next chunk if the loaded catalog is running low on UNSEEN quotes
+      // (not just on total loaded quotes — a returning user may have seen all of
+      // the currently loaded pool even if loadedQuoteList has 200+ entries).
+      const _seenCheckIds = new Set(allSlides.map(s => s.dataset.quoteId));
+      const _unseenAvailable = loadedQuoteList.filter(q =>
+        !currentSeenSet.has(q.id) && !_seenCheckIds.has(q.id)
+      ).length;
+      if (_unseenAvailable < 15) {
+        await loadNextQuoteChunk();
+      }
+
+      const quoteMap = window.__wisdomQuoteMap || {};
+      const allQuoteList = loadedQuoteList.length > 0 ? loadedQuoteList : Object.values(quoteMap);
+      if (allQuoteList.length === 0) return;
+
+      // Candidate quotes from loaded catalog:
+      // 1. Must NOT be in the last 500 seen quotes (currentSeenSet)
+      // 2. Must NOT be currently in the DOM (domQuoteIds)
+      let freshCandidates = allQuoteList.filter(q =>
+        !currentSeenSet.has(q.id) && !domQuoteIds.has(q.id)
+      );
+
+      // In filtered feeds, prioritize matching topic quotes if any remain unseen
+      const firstSlide = initialSlides[0];
+      if (feedType === 'category' && firstSlide && firstSlide.dataset.categorySlug) {
+        const catSlug = firstSlide.dataset.categorySlug;
+        const matchingFresh = freshCandidates.filter(q => q.categorySlug === catSlug);
+        if (matchingFresh.length > 0) {
+          freshCandidates = matchingFresh;
+        }
+      } else if (feedType === 'author' && firstSlide && firstSlide.dataset.authorSlug) {
+        const authSlug = firstSlide.dataset.authorSlug;
+        const matchingFresh = freshCandidates.filter(q => q.authorSlug === authSlug);
+        if (matchingFresh.length > 0) {
+          freshCandidates = matchingFresh;
+        }
+      } else if (feedType === 'mood' && firstSlide && firstSlide.dataset.mood) {
+        const m = firstSlide.dataset.mood;
+        const matchingFresh = freshCandidates.filter(q => q.mood === m);
+        if (matchingFresh.length > 0) {
+          freshCandidates = matchingFresh;
+        }
+      }
+
+      // Check trailing author and streak from current DOM slides (use tracked array)
+      const currentDomSlides = allSlides;
+      let trailingAuthor = null;
+      let trailingStreak = 0;
+      for (let i = currentDomSlides.length - 1; i >= 0; i--) {
+        const auth = currentDomSlides[i]?.dataset?.authorSlug || currentDomSlides[i]?.dataset?.author || null;
+        if (!trailingAuthor) {
+          trailingAuthor = auth;
+          trailingStreak = 1;
+        } else if (auth === trailingAuthor) {
+          trailingStreak++;
+        } else {
+          break;
+        }
+      }
+
+      if (freshCandidates.length > 0) {
+        shuffleArray(freshCandidates);
+        const isAuthorFeed = feedType === 'author' && freshCandidates.some(q => q.authorSlug === firstSlide?.dataset?.authorSlug);
+        const streakCapped = isAuthorFeed
+          ? freshCandidates
+          : enforceMaxAuthorStreak(freshCandidates, 3, trailingAuthor, trailingStreak);
+        // Secondary diversity pass: max 2 quotes per author per batch
+        const quotaCapped = isAuthorFeed ? streakCapped : enforceAuthorQuotaPerBatch(streakCapped, 2);
+        const batch = quotaCapped.slice(0, 15);
+        batch.forEach(quote => {
+          const slide = createSlideFromQuote(quote, templateSlide, `b${batchNumber}`);
+          batchFragment.appendChild(slide);
+          appendedSlides.push(slide);
+        });
+      } else {
+        // Fallback when all catalog quotes were viewed:
+        // Pick quotes from catalog that are NOT currently in the last 500 seen quotes
+        let eligible = allQuoteList.filter(q => !currentSeenSet.has(q.id));
+        if (eligible.length === 0) {
+          // If total catalog <= 500, select quotes whose last view was oldest in history
+          eligible = allQuoteList.slice().sort((a, b) => {
+            const idxA = currentSeenList.indexOf(a.id);
+            const idxB = currentSeenList.indexOf(b.id);
+            return (idxA === -1 ? -1 : idxA) - (idxB === -1 ? -1 : idxB);
+          });
+        }
+        shuffleArray(eligible);
+        const isAuthorFeedFallback = feedType === 'author' && eligible.some(q => q.authorSlug === firstSlide?.dataset?.authorSlug);
+        const streakCappedFallback = isAuthorFeedFallback
+          ? eligible
+          : enforceMaxAuthorStreak(eligible, 3, trailingAuthor, trailingStreak);
+        const quotaCappedFallback = isAuthorFeedFallback ? streakCappedFallback : enforceAuthorQuotaPerBatch(streakCappedFallback, 2);
+        const batch = quotaCappedFallback.slice(0, 15);
+        batch.forEach(quote => {
+          const slide = createSlideFromQuote(quote, templateSlide, `b${batchNumber}`);
+          batchFragment.appendChild(slide);
+          appendedSlides.push(slide);
+        });
+      }
+
+      batchNumber++;
+      container.appendChild(batchFragment);
+      // Sync tracked slides array with newly appended batch
+      allSlides.push(...appendedSlides);
+
+      // Observe all newly appended slides
+      appendedSlides.forEach(slide => observer.observe(slide));
+    }
+
+    let lastTapTime = 0;
+    let lastTapTarget = null;
+
+    // ── Fixed Metadata Dock Flip-in-Place Controller ──
+    let currentDockQuoteId = (initialSlides.length > 0 && initialSlides[0].dataset) ? initialSlides[0].dataset.quoteId : null;
+    let flipToken = 0;
+
+    function renderDockTagsHtml(tagsArray, isFlipping = false) {
+      return tagsArray.map((t, idx) => `
+        <div class="flip-pill-wrapper inline-flex" data-dock-tag-wrapper>
+          <a href="${base}/tag/${encodeURIComponent(t)}/"
+             class="pill pill-lg pointer-events-auto text-xs font-medium text-white/60 hover:text-white transition-colors duration-200 bg-white/10 hover:bg-white/20 active:scale-95 px-3.5 py-2 rounded-full backdrop-blur-md border border-white/15 cursor-pointer shadow-md inline-flex items-center leading-normal dock-pill ${isFlipping ? 'pill-flipping-in' : ''}"
+             ${isFlipping ? `style="animation-delay: ${idx * 30}ms;"` : ''}>
+            #${escapeHtml(t)}
+          </a>
+        </div>
+      `).join('');
+    }
+
+    // ── Dynamic Modal Theme Synchronizer (Aligns all modals with current quote mood) ──
+    const MOOD_MODAL_THEMES = {
+      reflective: {
+        accent: '#a5b4fc',
+        accentRgb: '165, 180, 252',
+        accentDark: '#6366f1',
+        glow: 'rgba(129, 140, 248, 0.55)',
+        glowSoft: 'rgba(129, 140, 248, 0.22)',
+        border: 'rgba(165, 180, 252, 0.42)',
+        modalBg: '#1a1836',
+        headerBg: '#232047',
+        glowGradient: 'radial-gradient(ellipse at 50% 0%, rgba(129, 140, 248, 0.32) 0%, transparent 70%)',
+        badgeBg: 'rgba(99, 102, 241, 0.22)',
+      },
+      motivational: {
+        accent: '#fcd34d',
+        accentRgb: '252, 211, 77',
+        accentDark: '#f59e0b',
+        glow: 'rgba(245, 158, 11, 0.55)',
+        glowSoft: 'rgba(245, 158, 11, 0.22)',
+        border: 'rgba(252, 211, 77, 0.42)',
+        modalBg: '#261c10',
+        headerBg: '#342617',
+        glowGradient: 'radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.32) 0%, transparent 70%)',
+        badgeBg: 'rgba(245, 158, 11, 0.22)',
+      },
+      serene: {
+        accent: '#67e8f9',
+        accentRgb: '103, 232, 249',
+        accentDark: '#06b6d4',
+        glow: 'rgba(34, 211, 238, 0.55)',
+        glowSoft: 'rgba(34, 211, 238, 0.22)',
+        border: 'rgba(103, 232, 249, 0.42)',
+        modalBg: '#102733',
+        headerBg: '#163544',
+        glowGradient: 'radial-gradient(ellipse at 50% 0%, rgba(6, 182, 212, 0.32) 0%, transparent 70%)',
+        badgeBg: 'rgba(6, 182, 212, 0.22)',
+      },
+      bold: {
+        accent: '#fca5a5',
+        accentRgb: '252, 165, 165',
+        accentDark: '#ef4444',
+        glow: 'rgba(244, 63, 94, 0.55)',
+        glowSoft: 'rgba(244, 63, 94, 0.22)',
+        border: 'rgba(252, 165, 165, 0.42)',
+        modalBg: '#2b1016',
+        headerBg: '#38161d',
+        glowGradient: 'radial-gradient(ellipse at 50% 0%, rgba(239, 68, 68, 0.32) 0%, transparent 70%)',
+        badgeBg: 'rgba(239, 68, 68, 0.22)',
+      },
+      melancholic: {
+        accent: '#c4b5fd',
+        accentRgb: '196, 181, 253',
+        accentDark: '#8b5cf6',
+        glow: 'rgba(167, 139, 250, 0.55)',
+        glowSoft: 'rgba(167, 139, 250, 0.22)',
+        border: 'rgba(196, 181, 253, 0.42)',
+        modalBg: '#201a30',
+        headerBg: '#2a2240',
+        glowGradient: 'radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.32) 0%, transparent 70%)',
+        badgeBg: 'rgba(139, 92, 246, 0.22)',
+      },
+      joyful: {
+        accent: '#6ee7b7',
+        accentRgb: '110, 231, 183',
+        accentDark: '#10b981',
+        glow: 'rgba(52, 211, 153, 0.55)',
+        glowSoft: 'rgba(52, 211, 153, 0.22)',
+        border: 'rgba(110, 231, 183, 0.42)',
+        modalBg: '#122c20',
+        headerBg: '#193a2b',
+        glowGradient: 'radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.32) 0%, transparent 70%)',
+        badgeBg: 'rgba(16, 185, 129, 0.22)',
+      },
+      philosophical: {
+        accent: '#93c5fd',
+        accentRgb: '147, 197, 253',
+        accentDark: '#3b82f6',
+        glow: 'rgba(96, 165, 250, 0.55)',
+        glowSoft: 'rgba(96, 165, 250, 0.22)',
+        border: 'rgba(147, 197, 253, 0.42)',
+        modalBg: '#142238',
+        headerBg: '#1c2e4c',
+        glowGradient: 'radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.32) 0%, transparent 70%)',
+        badgeBg: 'rgba(59, 130, 246, 0.22)',
+      },
+      romantic: {
+        accent: '#f9a8d4',
+        accentRgb: '249, 168, 212',
+        accentDark: '#ec4899',
+        glow: 'rgba(244, 114, 182, 0.55)',
+        glowSoft: 'rgba(244, 114, 182, 0.22)',
+        border: 'rgba(249, 168, 212, 0.42)',
+        modalBg: '#301324',
+        headerBg: '#401930',
+        glowGradient: 'radial-gradient(ellipse at 50% 0%, rgba(236, 72, 153, 0.32) 0%, transparent 70%)',
+        badgeBg: 'rgba(236, 72, 153, 0.22)',
+      }
+    };
+
+    function applyQuoteThemeToModals(mood) {
+      if (!mood) return;
+      const t = MOOD_MODAL_THEMES[mood] || MOOD_MODAL_THEMES.motivational;
+      const root = document.documentElement;
+      root.style.setProperty('--quote-mood', mood);
+      root.style.setProperty('--quote-accent', t.accent);
+      root.style.setProperty('--quote-accent-rgb', t.accentRgb);
+      root.style.setProperty('--quote-accent-dark', t.accentDark);
+      root.style.setProperty('--quote-glow', t.glow);
+      root.style.setProperty('--quote-glow-soft', t.glowSoft);
+      root.style.setProperty('--quote-border', t.border);
+      root.style.setProperty('--quote-modal-bg', t.modalBg);
+      root.style.setProperty('--quote-modal-header-bg', t.headerBg);
+      root.style.setProperty('--quote-modal-glow', t.glowGradient);
+      root.style.setProperty('--quote-badge-bg', t.badgeBg);
+    }
+    window.applyQuoteThemeToModals = applyQuoteThemeToModals;
+
+    function updateDockPills(slide, immediate = false) {
+      if (!slide || !slide.dataset) return;
+      const quoteId = slide.dataset.quoteId;
+      if (!quoteId) return;
+      if (!immediate && quoteId === currentDockQuoteId) return;
+
+      currentDockQuoteId = quoteId;
+      const thisToken = ++flipToken;
+
+      const category = slide.dataset.category || 'Wisdom';
+      const categorySlug = slide.dataset.categorySlug || 'wisdom';
+      const mood = slide.dataset.mood || 'reflective';
+      const moodInfo = moodMetaClient[mood] || { label: mood, emoji: '✨' };
+      const moodLabel = slide.dataset.moodLabel || moodInfo.label;
+      const moodEmoji = slide.dataset.moodEmoji || moodInfo.emoji;
+
+      let tags = [];
+      if (slide.dataset.tags) {
+        try {
+          tags = JSON.parse(slide.dataset.tags);
+        } catch {}
+      }
+
+      const catPill = document.getElementById('dock-category-pill');
+      const moodPill = document.getElementById('dock-mood-pill');
+      const moodEmojiSpan = document.getElementById('dock-mood-emoji');
+      const moodLabelSpan = document.getElementById('dock-mood-label');
+      const tagsContainer = document.getElementById('dock-tags-container');
+
+      const prefersReducedMotion = _reducedMotion && _reducedMotion.matches;
+
+      if (immediate || prefersReducedMotion) {
+        if (catPill) {
+          catPill.textContent = category;
+          catPill.href = `${base}/category/${categorySlug}/`;
+        }
+        if (moodPill) {
+          moodPill.href = `${base}/mood/${mood}/`;
+          moodPill.className = `pill pill-lg pointer-events-auto mood-pill-${mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-105 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal dock-pill`;
+          if (moodEmojiSpan) moodEmojiSpan.textContent = moodEmoji;
+          if (moodLabelSpan) moodLabelSpan.textContent = moodLabel;
+        }
+        if (tagsContainer) {
+          tagsContainer.innerHTML = renderDockTagsHtml(tags, false);
+        }
+        return;
+      }
+
+      // ── 3D Perspective Flip-in-Place Sequence ──
+      // 1. Mood Badge Flip (starts at 0ms - first in visual order)
+      if (moodPill) {
+        moodPill.classList.remove('pill-flipping-in');
+        moodPill.classList.add('pill-flipping-out');
+        setTimeout(() => {
+          if (thisToken !== flipToken) return;
+          moodPill.href = `${base}/mood/${mood}/`;
+          moodPill.className = `pill pill-lg pointer-events-auto mood-pill-${mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-105 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal dock-pill pill-flipping-in`;
+          if (moodEmojiSpan) moodEmojiSpan.textContent = moodEmoji;
+          if (moodLabelSpan) moodLabelSpan.textContent = moodLabel;
+          setTimeout(() => {
+            if (thisToken !== flipToken) return;
+            moodPill.classList.remove('pill-flipping-in');
+          }, 240);
+        }, 140);
+      }
+
+      // 2. Category Pill Flip (starts at 35ms - second in visual order)
+      if (catPill) {
+        setTimeout(() => {
+          if (thisToken !== flipToken) return;
+          catPill.classList.remove('pill-flipping-in');
+          catPill.classList.add('pill-flipping-out');
+          setTimeout(() => {
+            if (thisToken !== flipToken) return;
+            catPill.textContent = category;
+            catPill.href = `${base}/category/${categorySlug}/`;
+            catPill.classList.remove('pill-flipping-out');
+            catPill.classList.add('pill-flipping-in');
+            setTimeout(() => {
+              if (thisToken !== flipToken) return;
+              catPill.classList.remove('pill-flipping-in');
+            }, 240);
+          }, 140);
+        }, 35);
+      }
+
+      // 3. Tag Chips Flip (starts at 70ms)
+      if (tagsContainer) {
+        setTimeout(() => {
+          if (thisToken !== flipToken) return;
+          const oldTagPills = Array.from(tagsContainer.querySelectorAll('.dock-pill'));
+          if (oldTagPills.length > 0) {
+            oldTagPills.forEach((p, idx) => {
+              p.classList.remove('pill-flipping-in');
+              p.style.animationDelay = `${idx * 25}ms`;
+              p.classList.add('pill-flipping-out');
+            });
+          }
+
+          setTimeout(() => {
+            if (thisToken !== flipToken) return;
+            tagsContainer.innerHTML = renderDockTagsHtml(tags, true);
+            setTimeout(() => {
+              if (thisToken !== flipToken) return;
+              const newPills = Array.from(tagsContainer.querySelectorAll('.dock-pill'));
+              newPills.forEach(p => {
+                p.classList.remove('pill-flipping-in');
+                p.style.animationDelay = '';
+              });
+            }, 240 + (tags.length * 30));
+          }, oldTagPills.length > 0 ? 140 : 0);
+        }, 70);
+      }
+    }
+
+    // ── IntersectionObserver for active slide detection ──
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          const slide = entry.target;
+          const quoteId = slide.dataset.quoteId;
+          const videoSrc = slide.dataset.videoSrc;
+          const gradientClass = slide.dataset.gradientClass;
+          const mood = slide.dataset.mood;
+          const audioSrc = slide.dataset.audioSrc;
+
+          // Use tracked slides array for active-index check (avoids querySelectorAll)
+          const activeIdx = allSlides.indexOf(slide);
+
+          if (activeIdx >= allSlides.length - 4) {
+            appendNextBatch();
+          }
+
+          // O(1) active-slide swap: remove class from previous, add to new
+          if (_activeSlide && _activeSlide !== slide) _activeSlide.classList.remove('is-active');
+          _activeSlide = slide;
+          slide.classList.add('is-active');
+
+          // Flip dock metadata pills (mood, category, tags) to match newly active slide
+          updateDockPills(slide, false);
+          applyQuoteThemeToModals(mood);
+
+          // Update the quote ID pill in the header
+          updateQuoteIdPill(quoteId);
+
+          // Record as viewed in the last 50 seen quotes history
+          recordQuoteSeen(quoteId);
+
+          // Update background animation with quoteId for unique diverse visual personality
+          if (window.setBackground) {
+            window.setBackground(videoSrc, gradientClass, mood, quoteId);
+          }
+
+          // Play peaceful Zen chime once on slide arrival (then complete silence)
+          if (window.wisdomAudio && mood) {
+            window.wisdomAudio.playOnce(mood);
+          }
+
+          const quoteSlug = slide.dataset.quoteSlug;
+
+          // Update URL hash for natural-language quote permalink
+          if (quoteSlug) {
+            history.replaceState(null, '', `#${quoteSlug}`);
+          } else if (quoteId) {
+            history.replaceState(null, '', `#${quoteId}`);
+          }
+
+          // Update like and dislike button state
+          if (window.likedQuotes && window.updateLikeUI) {
+            window.updateLikeUI(window.likedQuotes.has(quoteId));
+          }
+          if (window.dislikedQuotes && window.updateDislikeUI) {
+            window.updateDislikeUI(window.dislikedQuotes.has(quoteId));
+          }
+
+          // Debounced quote view count for Firebase RTDB
+          if (viewDebounceTimer) clearTimeout(viewDebounceTimer);
+          viewDebounceTimer = setTimeout(() => {
+            if (_activeSlide === slide && window.firebaseStats && typeof window.firebaseStats.recordView === 'function') {
+              window.firebaseStats.recordView(quoteId);
+            }
+          }, 1500);
+
+          // Update header topic text (remove on scroll if topic is deviated in infinite scroll)
+          updateHeaderTopicState(slide);
+
+          // Update share context & background prepare 9:16 quote card image
+          if (window.updateShareContext) {
+            window.updateShareContext(slide);
+          }
+          if (window.prepareQuoteCardImage) {
+            if ('requestIdleCallback' in window) {
+              requestIdleCallback(() => window.prepareQuoteCardImage(slide), { timeout: 2500 });
+            }
+          }
+        }
+      });
+    }, {
+      root: container,
+      threshold: 0.5,
+    });
+
+    // Helper: update header topic visibility when scrolling between matched and continuation quotes
+    function updateHeaderTopicState(slide) {
+      if (!slide) return;
+      const isTopicMatch = slide.dataset.topicMatch !== 'false';
+      const headerTitle = document.getElementById('feed-header-title');
+      if (headerTitle && feedType !== 'master') {
+        if (isTopicMatch) {
+          headerTitle.classList.remove('opacity-0', 'pointer-events-none');
+          headerTitle.classList.add('opacity-100');
+          headerTitle.removeAttribute('aria-hidden');
+        } else {
+          headerTitle.classList.remove('opacity-100');
+          headerTitle.classList.add('opacity-0', 'pointer-events-none');
+          headerTitle.setAttribute('aria-hidden', 'true');
+        }
+      }
+    }
+
+    initialSlides.forEach(slide => observer.observe(slide));
+
+    // ── Quote ID Pill controller ──
+    function updateQuoteIdPill(quoteId) {
+      const label = document.getElementById('quote-id-pill-label');
+      if (label && quoteId) {
+        label.textContent = `#${quoteId.replace(/^q?0*/i, '') || '0'}`;
+      }
+    }
+
+    // Initialize first slide (target quote or freshly randomized top quote)
+    if (initialSlides.length > 0) {
+      const first = initialSlides[0];
+      // Set initial active slide without removing from others (they start inactive)
+      _activeSlide = first;
+      first.classList.add('is-active');
+      recordQuoteSeen(first.dataset.quoteId);
+      updateHeaderTopicState(first);
+      updateDockPills(first, true);
+      applyQuoteThemeToModals(first.dataset.mood);
+      updateQuoteIdPill(first.dataset.quoteId);
+
+      if (window.setBackground) {
+        window.setBackground(first.dataset.videoSrc, first.dataset.gradientClass, first.dataset.mood, first.dataset.quoteId);
+      }
+      if (window.likedQuotes && window.updateLikeUI) {
+        window.updateLikeUI(window.likedQuotes.has(first.dataset.quoteId));
+      }
+      if (window.dislikedQuotes && window.updateDislikeUI) {
+        window.updateDislikeUI(window.dislikedQuotes.has(first.dataset.quoteId));
+      }
+      if (viewDebounceTimer) clearTimeout(viewDebounceTimer);
+      viewDebounceTimer = setTimeout(() => {
+        if (_activeSlide === first && window.firebaseStats && typeof window.firebaseStats.recordView === 'function') {
+          window.firebaseStats.recordView(first.dataset.quoteId);
+        }
+      }, 1500);
+      if (window.updateShareContext) {
+        window.updateShareContext(first);
+      }
+      if (window.prepareQuoteCardImage) {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => window.prepareQuoteCardImage(first), { timeout: 3000 });
+        }
+      }
+      if (window.wisdomAudio && first.dataset.mood) {
+        window.wisdomAudio.setMood(first.dataset.mood);
+        window.wisdomAudio.playOnce(first.dataset.mood);
+      }
+
+      // Sync URL hash with the first quote only if explicit targetHash was requested or on filtered pages
+      if (targetHash) {
+        history.replaceState(null, '', `#${targetHash}`);
+      } else if (feedType !== 'master' && first.dataset.quoteSlug) {
+        history.replaceState(null, '', `#${first.dataset.quoteSlug}`);
+      }
+
+      // If targetHash requested quote wasn't in initialSlides, dynamically load and jump to it
+      if (targetHash && !initialSlides.some(s => s.dataset.quoteId === targetHash || s.dataset.quoteSlug === targetHash || (targetHash.match(/^q?\d+$/i) && parseInt(s.dataset.quoteId.replace(/\D/g, ''), 10) === parseInt(targetHash.replace(/\D/g, ''), 10)))) {
+        navigateToQuote(targetHash, null, true);
+      }
+    }
+
+    // ── In-Feed Quote Navigation ──
+    async function navigateToQuote(slugOrId, quotePayload = null, skipCloseModals = false) {
+      if (!slugOrId && !quotePayload) return false;
+
+      if (!skipCloseModals && typeof window.__wisdomCloseAllModals === 'function') {
+        window.__wisdomCloseAllModals(true);
+      }
+
+      const cleanTarget = slugOrId ? decodeURIComponent(slugOrId).replace(/^#/, '').trim() : '';
+      const navNumMatch = cleanTarget ? cleanTarget.match(/^q?(\d+)$/i) : null;
+      const navNum = navNumMatch ? parseInt(navNumMatch[1], 10) : null;
+      const navNormalizedId = navNum ? ('q' + String(navNum).padStart(navNum >= 1000 ? 4 : 3, '0')).toLowerCase() : null;
+
+      let match = allSlides.find(s => {
+        if (quotePayload && (s.dataset.quoteId === quotePayload.id || s.dataset.quoteSlug === quotePayload.slug)) return true;
+        if (!cleanTarget) return false;
+        const id = s.dataset.quoteId;
+        const slug = s.dataset.quoteSlug;
+        if (slug === cleanTarget || id === cleanTarget || s.id === `slide-${cleanTarget}`) return true;
+        if (id && id.toLowerCase() === cleanTarget.toLowerCase()) return true;
+        if (slug && slug.toLowerCase() === cleanTarget.toLowerCase()) return true;
+        if (navNormalizedId && id && id.toLowerCase() === navNormalizedId) return true;
+        if (navNum !== null && id && parseInt(id.replace(/\D/g, ''), 10) === navNum) return true;
+        return false;
+      });
+
+      // If quote is not yet rendered in the DOM, resolve and dynamically mount it
+      if (!match) {
+        let targetQuote = quotePayload;
+
+        // 1. Check loadedQuoteList in memory
+        if (!targetQuote && (navNum !== null || cleanTarget)) {
+          targetQuote = loadedQuoteList.find(q => {
+            if (!q) return false;
+            const qNum = parseInt(String(q.id).replace(/\D/g, ''), 10);
+            if (navNum !== null && qNum === navNum) return true;
+            if (navNormalizedId && String(q.id).toLowerCase() === navNormalizedId) return true;
+            if (cleanTarget && (String(q.id).toLowerCase() === cleanTarget.toLowerCase() || (q.slug && q.slug.toLowerCase() === cleanTarget.toLowerCase()))) return true;
+            return false;
+          });
+        }
+
+        // 2. Check window.__wisdomQuoteMap in memory
+        if (!targetQuote && window.__wisdomQuoteMap) {
+          if (navNormalizedId && window.__wisdomQuoteMap[navNormalizedId]) {
+            targetQuote = window.__wisdomQuoteMap[navNormalizedId];
+          } else {
+            targetQuote = Object.values(window.__wisdomQuoteMap).find(q => {
+              if (!q) return false;
+              const qNum = parseInt(String(q.id).replace(/\D/g, ''), 10);
+              if (navNum !== null && qNum === navNum) return true;
+              if (cleanTarget && (String(q.id).toLowerCase() === cleanTarget.toLowerCase() || (q.slug && q.slug.toLowerCase() === cleanTarget.toLowerCase()))) return true;
+              return false;
+            });
+          }
+        }
+
+        // 3. Resolve target chunk page via the build-time lookup manifest
+        if (!targetQuote && (navNum !== null || cleanTarget)) {
+          try {
+            const lookup = await getQuoteLookup();
+            let targetChunkPage = null;
+
+            if (lookup) {
+              if (navNum !== null && lookup.chunks && lookup.chunks[navNum]) {
+                targetChunkPage = lookup.chunks[navNum];
+              } else if (navNormalizedId && lookup.quotes && lookup.quotes[navNormalizedId]) {
+                targetChunkPage = lookup.quotes[navNormalizedId];
+              } else if (cleanTarget && lookup.slugs && lookup.slugs[cleanTarget.toLowerCase()]) {
+                targetChunkPage = lookup.slugs[cleanTarget.toLowerCase()];
+              }
+            }
+
+            // Fallback to predicted page only if manifest is unreachable
+            if (!targetChunkPage && navNum !== null && navNum >= 1) {
+              targetChunkPage = Math.floor((navNum - 1) / 200) + 1;
+            }
+
+            if (targetChunkPage) {
+              const base = window.__wisdomBaseUrl || '/wisdom';
+              const res = await fetch(`${base}/api/quotes/chunk-${targetChunkPage}.json`);
+              if (res.ok) {
+                const data = await res.json();
+                if (data && Array.isArray(data.quotes)) {
+                  fetchedChunkPages.add(targetChunkPage);
+                  loadedQuoteList.push(...data.quotes);
+                  targetQuote = data.quotes.find(q => {
+                    const qNum = parseInt(String(q.id).replace(/\D/g, ''), 10);
+                    return (
+                      qNum === navNum ||
+                      (navNormalizedId && String(q.id).toLowerCase() === navNormalizedId) ||
+                      (cleanTarget && (
+                        String(q.id).toLowerCase() === cleanTarget.toLowerCase() ||
+                        (q.slug && q.slug.toLowerCase() === cleanTarget.toLowerCase())
+                      ))
+                    );
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('Error resolving quote chunk for navigation:', e);
+          }
+        }
+
+        // 4. Mount slide dynamically if found
+        if (targetQuote) {
+          const newSlide = createSlideFromQuote(targetQuote, templateSlide, `jump-${targetQuote.id}`);
+          if (_activeSlide && _activeSlide.parentElement === container) {
+            _activeSlide.insertAdjacentElement('afterend', newSlide);
+            const activeIdx = allSlides.indexOf(_activeSlide);
+            if (activeIdx !== -1) {
+              allSlides.splice(activeIdx + 1, 0, newSlide);
+            } else {
+              allSlides.push(newSlide);
+            }
+          } else {
+            container.appendChild(newSlide);
+            allSlides.push(newSlide);
+          }
+          observer.observe(newSlide);
+          match = newSlide;
+        }
+      }
+
+      if (match) {
+        const prevSnap = container.style.scrollSnapType;
+        container.style.scrollSnapType = 'none';
+        container.scrollTop = match.offsetTop;
+        container.scrollTo({ top: match.offsetTop, behavior: 'instant' });
+
+        requestAnimationFrame(() => {
+          container.scrollTop = match.offsetTop;
+          match.scrollIntoView({ behavior: 'instant', block: 'start' });
+          requestAnimationFrame(() => {
+            container.style.scrollSnapType = prevSnap;
+          });
+        });
+
+        if (_activeSlide) _activeSlide.classList.remove('is-active');
+        _activeSlide = match;
+        match.classList.add('is-active');
+        recordQuoteSeen(match.dataset.quoteId);
+        updateDockPills(match, true);
+        updateQuoteIdPill(match.dataset.quoteId);
+        if (window.setBackground) {
+          window.setBackground(match.dataset.videoSrc, match.dataset.gradientClass, match.dataset.mood, match.dataset.quoteId);
+        }
+        if (window.wisdomAudio && match.dataset.mood) {
+          window.wisdomAudio.playOnce(match.dataset.mood);
+        }
+        if (window.likedQuotes && window.updateLikeUI) {
+          window.updateLikeUI(window.likedQuotes.has(match.dataset.quoteId));
+        }
+        if (window.dislikedQuotes && window.updateDislikeUI) {
+          window.updateDislikeUI(window.dislikedQuotes.has(match.dataset.quoteId));
+        }
+        if (viewDebounceTimer) clearTimeout(viewDebounceTimer);
+        viewDebounceTimer = setTimeout(() => {
+          if (_activeSlide === match && window.firebaseStats && typeof window.firebaseStats.recordView === 'function') {
+            window.firebaseStats.recordView(match.dataset.quoteId);
+          }
+        }, 1500);
+        if (window.updateShareContext) {
+          window.updateShareContext(match);
+        }
+        updateHeaderTopicState(match);
+        if (window.prepareQuoteCardImage) {
+          if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => window.prepareQuoteCardImage(match), { timeout: 3000 });
+          }
+        }
+        const finalHash = cleanTarget || match.dataset.quoteSlug || match.dataset.quoteId;
+        if (finalHash && window.history && window.history.replaceState) {
+          history.replaceState(null, '', `#${finalHash}`);
+        }
+        return true;
+      }
+
+      if (window.showToast) {
+        window.showToast(`Quote #${navNum || cleanTarget} could not be found`);
+      }
+      return false;
+    }
+
+    // Global hook & live event listeners
+    window.__wisdomNavigateToQuote = navigateToQuote;
+
+    window.addEventListener('hashchange', () => {
+      if (window.location.hash) {
+        const h = window.location.hash.slice(1);
+        if (h && !h.startsWith('explore')) {
+          navigateToQuote(h, null, true);
+        }
+      }
+    });
+
+
+
+    // ── Double-tap to Like ──
+    container.onclick = (e) => {
+      const zone = e.target.closest('[data-doubletap-zone]');
+      if (!zone) return;
+
+      const now = Date.now();
+      const zoneId = zone.dataset.doubletapZone;
+
+      if (now - lastTapTime < 380 && lastTapTarget === zoneId) {
+        e.preventDefault();
+        triggerDoubleTapLike(zoneId);
+        lastTapTime = 0;
+        lastTapTarget = null;
+      } else {
+        lastTapTime = now;
+        lastTapTarget = zoneId;
+      }
+    };
+
+    function triggerDoubleTapLike(quoteId) {
+      if (window.likedQuotes) {
+        if (!window.likedQuotes.has(quoteId)) {
+          window.likedQuotes.toggle(quoteId);
+          if (window.updateLikeUI) window.updateLikeUI(true);
+        }
+      }
+
+      // Heart burst animation
+      const overlay = document.getElementById('heart-burst-overlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        const svg = overlay.querySelector('svg');
+        if (svg) {
+          svg.style.animation = 'none';
+          svg.offsetHeight; // force reflow
+          svg.style.animation = 'heart-burst 0.65s var(--ease-spring) forwards';
+        }
+        setTimeout(() => { overlay.style.display = 'none'; }, 700);
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupReelFeed);
+  } else {
+    setupReelFeed();
+  }
+  document.addEventListener('astro:page-load', setupReelFeed);
+</script>

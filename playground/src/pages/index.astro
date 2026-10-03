@@ -1,0 +1,15 @@
+---
+import { BaseLayout, ReelFeed } from 'wiz-theme';
+import { getCollection } from 'astro:content';
+
+const allQuotes = await getCollection('quotes');
+const quotes = allQuotes.map((q) => q.data);
+---
+<BaseLayout title="Wiz Theme Playground">
+  <ReelFeed
+    quotes={quotes}
+    feedTitle="Theme Demo"
+    feedType="master"
+    totalChunks={1}
+  />
+</BaseLayout>

@@ -1,0 +1,375 @@
+---
+/**
+ * RightActionRail — Vertical icon stack on the right edge.
+ *
+ * Buttons: Like, Share, Audio Toggle, Explore.
+ * All icons are inline SVG for zero external dependencies.
+ */
+---
+<div
+  id="right-action-rail"
+  class="fixed right-2.5 sm:right-3.5 md:right-4.5 bottom-[max(env(safe-area-inset-bottom,12px),16px)] z-30 flex flex-col items-center gap-3 sm:gap-3.5"
+  style="touch-action: none;"
+>
+  <!-- Like Button -->
+  <button
+    id="like-btn"
+    type="button"
+    class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
+    style="touch-action: none; -webkit-tap-highlight-color: transparent;"
+    aria-label="Like this quote"
+    title="Like"
+  >
+    <div class="w-10 h-10 flex items-center justify-center pointer-events-none">
+      <svg id="like-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] transition-all duration-300 sm:w-[26px] sm:h-[26px]">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+      </svg>
+    </div>
+  </button>
+
+  <!-- Dislike Button -->
+  <button
+    id="dislike-btn"
+    type="button"
+    class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
+    style="touch-action: none; -webkit-tap-highlight-color: transparent;"
+    aria-label="Dislike this quote"
+    title="Dislike"
+  >
+    <div class="w-10 h-10 flex items-center justify-center pointer-events-none">
+      <svg id="dislike-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] transition-all duration-300 sm:w-[26px] sm:h-[26px]">
+        <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+      </svg>
+    </div>
+  </button>
+
+  <!-- Share Button -->
+  <button
+    id="share-btn"
+    type="button"
+    class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
+    style="touch-action: none; -webkit-tap-highlight-color: transparent;"
+    aria-label="Share this quote"
+    title="Share"
+  >
+    <div class="w-10 h-10 flex items-center justify-center pointer-events-none">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] transition-all duration-200 sm:w-[26px] sm:h-[26px]">
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+        <polyline points="16 6 12 2 8 6" />
+        <line x1="12" y1="2" x2="12" y2="15" />
+      </svg>
+    </div>
+  </button>
+
+  <!-- Zen Chime Toggle (Play Once on Quote Arrival) -->
+  <button
+    id="audio-toggle-btn"
+    type="button"
+    class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
+    style="touch-action: none; -webkit-tap-highlight-color: transparent;"
+    aria-label="Enable zen chime sound"
+    title="Chimes Muted (Click to enable)"
+  >
+    <div class="w-10 h-10 flex items-center justify-center pointer-events-none text-white/75 group-hover:text-white transition-all duration-200">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/75 group-hover:text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] sm:w-[26px] sm:h-[26px]">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    </div>
+  </button>
+
+  <!-- Explore Button -->
+  <button
+    id="explore-btn"
+    type="button"
+    class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
+    style="touch-action: none; -webkit-tap-highlight-color: transparent;"
+    aria-label="Explore quotes"
+    title="Explore Quotes"
+  >
+    <div class="w-10 h-10 flex items-center justify-center pointer-events-none relative">
+      <svg id="explore-icon-normal" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] sm:w-[26px] sm:h-[26px] transition-all duration-150">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <svg id="explore-icon-spinner" class="hidden animate-spin w-5 h-5 sm:w-6 sm:h-6 text-amber-300 drop-shadow-[0_2px_6px_rgba(252,211,77,0.7)]" viewBox="0 0 24 24" fill="none">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+        <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </div>
+  </button>
+</div>
+
+<script is:inline>
+  (function() {
+    function setupRightRail() {
+      const likeBtn = document.getElementById('like-btn');
+      const dislikeBtn = document.getElementById('dislike-btn');
+      const shareBtn = document.getElementById('share-btn');
+      const audioBtn = document.getElementById('audio-toggle-btn');
+      const exploreBtn = document.getElementById('explore-btn');
+
+      if (likeBtn) {
+        likeBtn.onclick = (e) => {
+          if (e) e.stopPropagation();
+          const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+          if (!activeSlide) return;
+          const quoteId = activeSlide.dataset.quoteId;
+          if (!quoteId) return;
+
+          const quoteObj = {
+            id: quoteId,
+            content: activeSlide.dataset.content || activeSlide.querySelector('blockquote p')?.textContent?.trim() || '',
+            author: activeSlide.dataset.author || '',
+            authorSlug: activeSlide.dataset.authorSlug || '',
+            category: activeSlide.dataset.category || '',
+            categorySlug: activeSlide.dataset.categorySlug || '',
+            mood: activeSlide.dataset.mood || '',
+            slug: activeSlide.dataset.quoteSlug || quoteId,
+          };
+
+          const isLiked = window.likedQuotes ? window.likedQuotes.toggle(quoteObj) : false;
+          updateLikeUI(isLiked);
+
+          // If liked, remove dislike if previously disliked
+          if (isLiked && window.dislikedQuotes && window.dislikedQuotes.has(quoteId)) {
+            window.dislikedQuotes.toggle(quoteId);
+            updateDislikeUI(false);
+          }
+
+          // Sync with Firebase RTDB
+          if (window.firebaseStats && typeof window.firebaseStats.toggleLike === 'function') {
+            window.firebaseStats.toggleLike(quoteId);
+          }
+
+          if (window.refreshExploreLikes) window.refreshExploreLikes();
+        };
+      }
+
+      if (dislikeBtn) {
+        dislikeBtn.onclick = (e) => {
+          if (e) e.stopPropagation();
+          const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+          if (!activeSlide) return;
+          const quoteId = activeSlide.dataset.quoteId;
+          if (!quoteId) return;
+
+          const isDisliked = window.dislikedQuotes ? window.dislikedQuotes.toggle(quoteId) : false;
+          updateDislikeUI(isDisliked);
+
+          // If disliked, remove like if previously liked
+          if (isDisliked && window.likedQuotes && window.likedQuotes.has(quoteId)) {
+            window.likedQuotes.toggle(quoteId);
+            updateLikeUI(false);
+            if (window.refreshExploreLikes) window.refreshExploreLikes();
+          }
+
+          // Sync with Firebase RTDB
+          if (window.firebaseStats && typeof window.firebaseStats.toggleDislike === 'function') {
+            window.firebaseStats.toggleDislike(quoteId);
+          }
+
+          // Prompt for optional quality feedback on dislike
+          if (isDisliked && typeof window.openDislikeModal === 'function') {
+            const content = activeSlide.dataset.content || activeSlide.querySelector('blockquote p')?.textContent?.trim() || '';
+            const author = activeSlide.dataset.author || '';
+            window.openDislikeModal(quoteId, content, author);
+          }
+        };
+      }
+
+      if (shareBtn) {
+        shareBtn.onclick = (e) => {
+          if (e) e.stopPropagation();
+          const modal = document.getElementById('share-modal');
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+            if (window.updateShareContext && activeSlide) {
+              window.updateShareContext(activeSlide, true);
+            }
+          }
+        };
+      }
+
+      if (exploreBtn) {
+        if (exploreBtn.dataset.bound) return;
+        exploreBtn.dataset.bound = 'true';
+
+        let lastTriggerTime = 0;
+        let isOpeningDrawer = false;
+
+        const setExploreLoading = (isLoading) => {
+          const normal = document.getElementById('explore-icon-normal');
+          const spinner = document.getElementById('explore-icon-spinner');
+          if (isLoading) {
+            if (normal) normal.classList.add('hidden');
+            if (spinner) {
+              spinner.classList.remove('hidden');
+              spinner.classList.add('block');
+            }
+          } else {
+            if (normal) normal.classList.remove('hidden');
+            if (spinner) {
+              spinner.classList.add('hidden');
+              spinner.classList.remove('block');
+            }
+          }
+        };
+
+        const triggerOpenExplore = (e) => {
+          if (e) {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+          }
+          const now = Date.now();
+          if (isOpeningDrawer || now - lastTriggerTime < 350) return;
+          isOpeningDrawer = true;
+          lastTriggerTime = now;
+
+          // 1. Instant visual feedback on button press
+          setExploreLoading(true);
+
+          // 3. Safety timeout: ensure loading state never gets stuck indefinitely
+          setTimeout(() => {
+            if (isOpeningDrawer) {
+              isOpeningDrawer = false;
+              setExploreLoading(false);
+            }
+          }, 500);
+
+          // 2. Schedule drawer opening on next animation frame so button's active state paints immediately
+          requestAnimationFrame(() => {
+            const onDrawerReady = () => {
+              isOpeningDrawer = false;
+              setExploreLoading(false);
+            };
+
+            if (typeof window.openExploreDrawer === 'function') {
+              window.openExploreDrawer(undefined, onDrawerReady);
+            } else {
+              // Robust fallback: activate modern GPU compositor classes
+              const drawer = document.getElementById('explore-drawer');
+              const sheet = document.getElementById('explore-sheet');
+              const backdrop = document.getElementById('explore-backdrop');
+              if (drawer) {
+                drawer.style.display = '';
+                drawer.classList.remove('invisible', 'pointer-events-none', 'opacity-0', 'hidden');
+                drawer.classList.add('visible', 'pointer-events-auto', 'opacity-100');
+                if (backdrop) {
+                  backdrop.classList.remove('pointer-events-none');
+                  backdrop.classList.add('pointer-events-auto');
+                }
+                if (sheet) {
+                  sheet.style.transform = '';
+                  sheet.classList.remove('translate-y-full');
+                  sheet.classList.add('translate-y-0');
+                }
+              }
+              setTimeout(onDrawerReady, 300);
+            }
+          });
+        };
+
+        window.addEventListener('wisdom:close-modals', () => {
+          isOpeningDrawer = false;
+          setExploreLoading(false);
+        });
+
+        // Pointer event handling for rock-solid Android & mobile touch support
+        let startX = 0;
+        let startY = 0;
+        let isDown = false;
+
+        exploreBtn.addEventListener('pointerdown', (e) => {
+          startX = e.clientX;
+          startY = e.clientY;
+          isDown = true;
+        }, { passive: true });
+
+        exploreBtn.addEventListener('pointerup', (e) => {
+          if (!isDown) return;
+          isDown = false;
+          const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
+          // Standard tap slop: under 20px of movement is a tap (handles finger expansion/roll on Android)
+          if (dist < 20) {
+            triggerOpenExplore(e);
+          }
+        }, { passive: false });
+
+        exploreBtn.addEventListener('pointercancel', () => {
+          isDown = false;
+        }, { passive: true });
+
+        // Touch fallback for older WebViews/browsers without pointer events
+        exploreBtn.addEventListener('touchend', (e) => {
+          triggerOpenExplore(e);
+        }, { passive: false });
+
+        // Click fallback for mouse and accessibility tools
+        exploreBtn.addEventListener('click', (e) => {
+          triggerOpenExplore(e);
+        });
+      }
+
+      // Refresh like and dislike status for the currently active slide
+      const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+      if (activeSlide) {
+        const qid = activeSlide.dataset.quoteId;
+        if (window.likedQuotes) {
+          updateLikeUI(window.likedQuotes.has(qid));
+        }
+        if (window.dislikedQuotes) {
+          updateDislikeUI(window.dislikedQuotes.has(qid));
+        }
+      }
+    }
+
+    function updateLikeUI(isLiked) {
+      const icon = document.getElementById('like-icon');
+      const label = document.getElementById('like-count');
+      if (!icon) return;
+      if (isLiked) {
+        icon.setAttribute('fill', '#ef4444');
+        icon.setAttribute('stroke', '#ef4444');
+        icon.style.filter = 'drop-shadow(0 2px 8px rgba(239, 68, 68, 0.75))';
+        icon.style.transform = 'scale(1.25)';
+        setTimeout(() => { icon.style.transform = 'scale(1)'; }, 200);
+        if (label) label.textContent = 'Liked';
+      } else {
+        icon.setAttribute('fill', 'none');
+        icon.setAttribute('stroke', 'currentColor');
+        icon.style.filter = '';
+        if (label) label.textContent = 'Like';
+      }
+    }
+
+    function updateDislikeUI(isDisliked) {
+      const icon = document.getElementById('dislike-icon');
+      if (!icon) return;
+      if (isDisliked) {
+        icon.setAttribute('fill', '#f43f5e');
+        icon.setAttribute('stroke', '#f43f5e');
+        icon.style.filter = 'drop-shadow(0 2px 8px rgba(244, 63, 94, 0.75))';
+        icon.style.transform = 'scale(1.25)';
+        setTimeout(() => { icon.style.transform = 'scale(1)'; }, 200);
+      } else {
+        icon.setAttribute('fill', 'none');
+        icon.setAttribute('stroke', 'currentColor');
+        icon.style.filter = '';
+      }
+    }
+
+    window.updateLikeUI = updateLikeUI;
+    window.updateDislikeUI = updateDislikeUI;
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupRightRail);
+    } else {
+      setupRightRail();
+    }
+    document.addEventListener('astro:page-load', setupRightRail);
+  })();
+</script>
