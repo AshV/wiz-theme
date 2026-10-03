@@ -210,6 +210,13 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
     const container = document.getElementById('reel-container');
     if (!container) return;
 
+    // Prevent browser from restoring stale scroll offset on reload/reopen
+    if ('scrollRestoration' in history) {
+      try {
+        history.scrollRestoration = 'manual';
+      } catch (_) {}
+    }
+
     let initialSlides = Array.from(container.querySelectorAll('.reel-slide'));
     if (initialSlides.length === 0) return;
 
@@ -547,6 +554,15 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
       : [];
     const recentSeenSet = new Set(recentSeenList);
 
+    // On master feed, always clear any leftover hash from previous browsing sessions
+    // so every opening and reload presents a fresh, randomized opening quote.
+    if (targetHash && feedType === 'master') {
+      targetHash = null;
+      if (window.history && window.history.replaceState) {
+        history.replaceState(null, '', window.location.pathname);
+      }
+    }
+
     // If an initial slide hash was requested and exists in initialSlides:
     if (targetHash) {
       const hashNumMatch = targetHash.match(/^q?(\d+)$/i);
@@ -627,14 +643,10 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
           initialSlides[matchedCount].appendChild(bannerDiv);
         }
       } else {
-        // General master feed:
-        // Keep the Daily Quote (initialSlides[0]) as the opening anchor
-        const dailySlide = initialSlides[0];
-        const restSlides = initialSlides.slice(1);
-
-        // Separate remaining into unseen and seen slides
-        let unseen = restSlides.filter(s => !recentSeenSet.has(s.dataset.quoteId));
-        const seen = restSlides.filter(s => recentSeenSet.has(s.dataset.quoteId));
+        // General master feed: randomize all quotes including the opening slide on every visit!
+        // Separate all initial slides into unseen and seen slides
+        let unseen = initialSlides.filter(s => !recentSeenSet.has(s.dataset.quoteId));
+        const seen = initialSlides.filter(s => recentSeenSet.has(s.dataset.quoteId));
 
         // Inject fresh unseen quotes from the eagerly-loaded chunk-1 catalog.
         // loadedQuoteList is now populated before this shuffle runs, so every
@@ -658,11 +670,10 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
         // Sort seen slides by oldest seen first
         seen.sort((a, b) => recentSeenList.indexOf(a.dataset.quoteId) - recentSeenList.indexOf(b.dataset.quoteId));
 
-        const dailyAuthor = dailySlide?.dataset?.authorSlug || null;
         // Streak cap: max 3 consecutive from same author; then author-quota: max 2 per author in the initial 50
-        const streakOrdered = enforceMaxAuthorStreak([...unseen, ...seen], 3, dailyAuthor, 1);
+        const streakOrdered = enforceMaxAuthorStreak([...unseen, ...seen], 3);
         const restOrdered = enforceAuthorQuotaPerBatch(streakOrdered, 2);
-        initialSlides = dailySlide ? [dailySlide, ...restOrdered] : restOrdered;
+        initialSlides = restOrdered;
       }
     }
 
@@ -673,6 +684,11 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
     container.appendChild(fragment);
     // Sync tracked array with the reordered DOM
     allSlides = initialSlides.slice();
+
+    // Ensure feed starts at the very top on fresh sessions
+    if (!targetHash) {
+      container.scrollTop = 0;
+    }
 
     // ── Build a randomised chunk fetch order that spreads across the full ID range ──
     // We fetch chunk-1 first to learn totalChunks, then build a random order.
@@ -1209,11 +1225,13 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
 
           const quoteSlug = slide.dataset.quoteSlug;
 
-          // Update URL hash for natural-language quote permalink
-          if (quoteSlug) {
-            history.replaceState(null, '', `#${quoteSlug}`);
-          } else if (quoteId) {
-            history.replaceState(null, '', `#${quoteId}`);
+          // Update URL hash for natural-language quote permalink on subpages (keep master feed clean)
+          if (feedType !== 'master') {
+            if (quoteSlug) {
+              history.replaceState(null, '', `#${quoteSlug}`);
+            } else if (quoteId) {
+              history.replaceState(null, '', `#${quoteId}`);
+            }
           }
 
           // Update like and dislike button state
@@ -1281,6 +1299,9 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
 
     // Initialize first slide (target quote or freshly randomized top quote)
     if (initialSlides.length > 0) {
+      if (!targetHash) {
+        container.scrollTop = 0;
+      }
       const first = initialSlides[0];
       // Set initial active slide without removing from others (they start inactive)
       _activeSlide = first;
