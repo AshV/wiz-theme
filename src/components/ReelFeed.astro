@@ -1011,21 +1011,41 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
       }
     };
 
-    function applyQuoteThemeToModals(mood) {
-      if (!mood) return;
-      const t = MOOD_MODAL_THEMES[mood] || MOOD_MODAL_THEMES.motivational;
+    function applyQuoteThemeToModals(mood, explicitPalette = null) {
+      const activePalette = explicitPalette || (window.wisdomBackground && window.wisdomBackground.getCurrentPalette && window.wisdomBackground.getCurrentPalette()) || null;
       const root = document.documentElement;
-      root.style.setProperty('--quote-mood', mood);
-      root.style.setProperty('--quote-accent', t.accent);
-      root.style.setProperty('--quote-accent-rgb', t.accentRgb);
-      root.style.setProperty('--quote-accent-dark', t.accentDark);
-      root.style.setProperty('--quote-glow', t.glow);
-      root.style.setProperty('--quote-glow-soft', t.glowSoft);
-      root.style.setProperty('--quote-border', t.border);
-      root.style.setProperty('--quote-modal-bg', t.modalBg);
-      root.style.setProperty('--quote-modal-header-bg', t.headerBg);
-      root.style.setProperty('--quote-modal-glow', t.glowGradient);
-      root.style.setProperty('--quote-badge-bg', t.badgeBg);
+
+      if (activePalette && activePalette.colors && activePalette.colors.length > 0) {
+        const c0 = activePalette.colors[0];
+        const c1 = activePalette.colors[1] || c0;
+        const bgMid = activePalette.bgMid || [20, 16, 40];
+        const bgTop = activePalette.bgTop || [12, 10, 28];
+
+        root.style.setProperty('--quote-mood', mood || 'reflective');
+        root.style.setProperty('--quote-accent', 'rgb(' + c0.join(',') + ')');
+        root.style.setProperty('--quote-accent-rgb', c0.join(','));
+        root.style.setProperty('--quote-accent-dark', 'rgb(' + c1.join(',') + ')');
+        root.style.setProperty('--quote-glow', activePalette.glow1 || 'rgba(168, 85, 247, 0.45)');
+        root.style.setProperty('--quote-glow-soft', activePalette.glowCenter || activePalette.glow2 || 'rgba(168, 85, 247, 0.2)');
+        root.style.setProperty('--quote-border', 'rgba(' + c0.join(',') + ', 0.35)');
+        root.style.setProperty('--quote-modal-bg', 'rgba(' + bgMid.join(',') + ', 0.94)');
+        root.style.setProperty('--quote-modal-header-bg', 'rgba(' + bgTop.join(',') + ', 0.95)');
+        root.style.setProperty('--quote-modal-glow', '0 0 60px ' + (activePalette.glow1 || 'rgba(168, 85, 247, 0.25)'));
+        root.style.setProperty('--quote-badge-bg', 'rgba(' + c0.join(',') + ', 0.18)');
+      } else if (mood) {
+        const t = MOOD_MODAL_THEMES[mood] || MOOD_MODAL_THEMES.motivational;
+        root.style.setProperty('--quote-mood', mood);
+        root.style.setProperty('--quote-accent', t.accent);
+        root.style.setProperty('--quote-accent-rgb', t.accentRgb);
+        root.style.setProperty('--quote-accent-dark', t.accentDark);
+        root.style.setProperty('--quote-glow', t.glow);
+        root.style.setProperty('--quote-glow-soft', t.glowSoft);
+        root.style.setProperty('--quote-border', t.border);
+        root.style.setProperty('--quote-modal-bg', t.modalBg);
+        root.style.setProperty('--quote-modal-header-bg', t.headerBg);
+        root.style.setProperty('--quote-modal-glow', t.glowGradient);
+        root.style.setProperty('--quote-badge-bg', t.badgeBg);
+      }
     }
     window.applyQuoteThemeToModals = applyQuoteThemeToModals;
 
@@ -1169,7 +1189,6 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
 
           // Flip dock metadata pills (mood, category, tags) to match newly active slide
           updateDockPills(slide, false);
-          applyQuoteThemeToModals(mood);
 
           // Update the quote ID pill in the header
           updateQuoteIdPill(quoteId);
@@ -1181,6 +1200,7 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
           if (window.setBackground) {
             window.setBackground(videoSrc, gradientClass, mood, quoteId);
           }
+          applyQuoteThemeToModals(mood);
 
           // Play peaceful Zen chime once on slide arrival (then complete silence)
           if (window.wisdomAudio && mood) {
@@ -1268,12 +1288,12 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
       recordQuoteSeen(first.dataset.quoteId);
       updateHeaderTopicState(first);
       updateDockPills(first, true);
-      applyQuoteThemeToModals(first.dataset.mood);
       updateQuoteIdPill(first.dataset.quoteId);
 
       if (window.setBackground) {
         window.setBackground(first.dataset.videoSrc, first.dataset.gradientClass, first.dataset.mood, first.dataset.quoteId);
       }
+      applyQuoteThemeToModals(first.dataset.mood);
       if (window.likedQuotes && window.updateLikeUI) {
         window.updateLikeUI(window.likedQuotes.has(first.dataset.quoteId));
       }
@@ -1460,6 +1480,7 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
         if (window.setBackground) {
           window.setBackground(match.dataset.videoSrc, match.dataset.gradientClass, match.dataset.mood, match.dataset.quoteId);
         }
+        applyQuoteThemeToModals(match.dataset.mood);
         if (window.wisdomAudio && match.dataset.mood) {
           window.wisdomAudio.playOnce(match.dataset.mood);
         }

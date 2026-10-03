@@ -196,6 +196,19 @@
     const category = quote.category || 'Wisdom';
     const sourceWork = quote.sourceWork || '';
 
+    // Retrieve the exact theme/palette of the shown quote!
+    const activePalette = (window.wisdomBackground && window.wisdomBackground.getPaletteForQuote && window.wisdomBackground.getPaletteForQuote(quote.id, mood))
+      || (window.wisdomBackground && window.wisdomBackground.getCurrentPalette && window.wisdomBackground.getCurrentPalette())
+      || null;
+
+    const accentRgb = (activePalette && activePalette.colors && activePalette.colors[0]) || [251, 191, 36];
+    const glow1 = (activePalette && activePalette.glow1) || 'rgba(251, 191, 36, 0.45)';
+    const glow2 = (activePalette && activePalette.glow2) || 'rgba(236, 72, 153, 0.40)';
+    const glowCenter = (activePalette && activePalette.glowCenter) || 'rgba(167, 139, 250, 0.25)';
+    const bgTop = (activePalette && activePalette.bgTop) || [12, 10, 28];
+    const bgMid = (activePalette && activePalette.bgMid) || [20, 16, 40];
+    const bgBottom = (activePalette && activePalette.bgBottom) || [6, 5, 16];
+
     // Helper: Rounded Rectangle Fallback
     function drawRoundRect(c, x, y, w, h, r) {
       if (typeof c.roundRect === 'function') {
@@ -238,34 +251,21 @@
 
     // Fallback if ambient-canvas was not yet painted:
     if (!hasDrawnCanvas) {
-      const activePalette = (window.wisdomBackground && window.wisdomBackground.getCurrentPalette && window.wisdomBackground.getCurrentPalette()) || null;
-      const bgTop = activePalette ? `rgb(${activePalette.bgTop.join(',')})` : '#0b0f19';
-      const bgMid = activePalette ? `rgb(${activePalette.bgMid.join(',')})` : '#1e1b4b';
-      const bgBottom = activePalette ? `rgb(${activePalette.bgBottom.join(',')})` : '#05070e';
-
       const baseGrad = ctx.createLinearGradient(0, 0, 0, height);
-      baseGrad.addColorStop(0, bgTop);
-      baseGrad.addColorStop(0.5, bgMid);
-      baseGrad.addColorStop(1, bgBottom);
+      baseGrad.addColorStop(0, 'rgb(' + bgTop.join(',') + ')');
+      baseGrad.addColorStop(0.5, 'rgb(' + bgMid.join(',') + ')');
+      baseGrad.addColorStop(1, 'rgb(' + bgBottom.join(',') + ')');
       ctx.fillStyle = baseGrad;
       ctx.fillRect(0, 0, width, height);
 
-      if (activePalette && activePalette.colors) {
-        const c1 = activePalette.colors[0];
-        const r1 = ctx.createRadialGradient(width * 0.35, height * 0.35, 0, width * 0.35, height * 0.35, width * 0.7);
-        r1.addColorStop(0, `rgba(${c1[0]}, ${c1[1]}, ${c1[2]}, 0.28)`);
-        r1.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = r1;
-        ctx.fillRect(0, 0, width, height);
-      }
+      const r1 = ctx.createRadialGradient(width * 0.5, height * 0.45, 0, width * 0.5, height * 0.45, width * 0.7);
+      r1.addColorStop(0, 'rgba(' + accentRgb.join(',') + ', 0.30)');
+      r1.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = r1;
+      ctx.fillRect(0, 0, width, height);
     }
 
-    // ── 2. Atmospheric Soft Light Bloom Overlays (Matching Screen Glows) ──
-    const activePalette = (window.wisdomBackground && window.wisdomBackground.getCurrentPalette && window.wisdomBackground.getCurrentPalette()) || null;
-    const glow1 = activePalette?.glow1 || 'rgba(123, 44, 191, 0.45)';
-    const glow2 = activePalette?.glow2 || 'rgba(0, 245, 212, 0.40)';
-    const glowCenter = activePalette?.glowCenter || 'rgba(167, 139, 250, 0.25)';
-
+    // ── 2. Atmospheric Soft Light Bloom Overlays (Matching Shown Theme) ──
     // Glow 1: Top-Left
     const g1 = ctx.createRadialGradient(width * 0.05, height * 0.05, 0, width * 0.05, height * 0.05, width * 0.85);
     g1.addColorStop(0, glow1);
@@ -287,19 +287,21 @@
     ctx.fillStyle = gc;
     ctx.fillRect(0, 0, width, height);
 
-    // ── 3. Screen Vignette (from-black/88 via-black/45 to-black/72) ──
+    // ── 3. Subtle Atmospheric Vignette (Soft & Radiant, never muddy) ──
+    // Tinted with shown theme's deep tones; protects typography while letting bright luminous line art shine
     const vignette = ctx.createLinearGradient(0, height, 0, 0); // bottom to top
-    vignette.addColorStop(0, 'rgba(0, 0, 0, 0.88)');    // bottom: protects branding
-    vignette.addColorStop(0.35, 'rgba(0, 0, 0, 0.48)');
-    vignette.addColorStop(0.65, 'rgba(0, 0, 0, 0.40)');
-    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.72)');    // top: protects header
+    vignette.addColorStop(0, 'rgba(' + bgBottom.join(',') + ', 0.55)');      // bottom: soft footer protection
+    vignette.addColorStop(0.20, 'rgba(' + bgBottom.join(',') + ', 0.20)');
+    vignette.addColorStop(0.50, 'rgba(0, 0, 0, 0.04)');                     // center: maximum luminosity & clarity
+    vignette.addColorStop(0.80, 'rgba(' + bgTop.join(',') + ', 0.20)');
+    vignette.addColorStop(1, 'rgba(' + bgTop.join(',') + ', 0.48)');         // top: subtle header frame
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, width, height);
 
     // ── 4. Editorial Inner Border Frame (Inset 48px, rounded 32px) ──
     const inset = 48;
     const radius = 32;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.strokeStyle = 'rgba(' + accentRgb.join(',') + ', 0.32)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     drawRoundRect(ctx, inset, inset, width - inset * 2, height - inset * 2, radius);
@@ -307,7 +309,7 @@
 
     // ── 5. Top Brand & Taxonomy Badge ──
     ctx.save();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.70)';
     ctx.font = '700 17px "Inter", -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -317,12 +319,27 @@
 
     if (category) {
       ctx.save();
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.48)';
-      ctx.font = '500 14px "Inter", -apple-system, sans-serif';
+      const badgeY = 186;
+      ctx.font = '600 19px "Inter", -apple-system, sans-serif';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '2.5px';
+      const catText = category.toUpperCase();
+      const textWidth = ctx.measureText(catText).width;
+      const padX = 26;
+      const badgeW = textWidth + padX * 2;
+      const badgeH = 38;
+
+      ctx.fillStyle = 'rgba(' + accentRgb.join(',') + ', 0.18)';
+      ctx.strokeStyle = 'rgba(' + accentRgb.join(',') + ', 0.40)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      drawRoundRect(ctx, (width - badgeW) / 2, badgeY - badgeH / 2, badgeW, badgeH, 19);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(' + accentRgb.join(',') + ', 0.95)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      if ('letterSpacing' in ctx) ctx.letterSpacing = '3px';
-      ctx.fillText(category.toUpperCase(), width / 2, 168);
+      ctx.fillText(catText, width / 2, badgeY + 1);
       ctx.restore();
     }
 
@@ -379,13 +396,15 @@
     let blockStartY = (height - totalBlockHeight) / 2;
     if (blockStartY < 240) blockStartY = 240;
 
-    // Decorative Quotation Mark (Playfair Display, crisp translucent white)
+    // Decorative Quotation Mark in shown theme signature accent
     const quoteMarkY = blockStartY + (quoteMarkHeight / 2);
     ctx.save();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.40)';
+    ctx.fillStyle = 'rgba(' + accentRgb.join(',') + ', 0.85)';
     ctx.font = 'italic 400 100px "Playfair Display", Georgia, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(' + accentRgb.join(',') + ', 0.50)';
+    ctx.shadowBlur = 18;
     ctx.fillText('“', width / 2, quoteMarkY);
     ctx.restore();
 
@@ -438,15 +457,15 @@
     ctx.fillText(`— ${author}`, width / 2, authorY);
     ctx.restore();
 
-    // Pass 2: Sharp foreground
+    // Pass 2: Sharp foreground with theme radiance
     ctx.save();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+    ctx.fillStyle = '#ffffff';
     ctx.font = authorFontStr;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'rgba(' + accentRgb.join(',') + ', 0.35)';
+    ctx.shadowBlur = 8;
     ctx.shadowOffsetY = 0;
     ctx.fillText(`— ${author}`, width / 2, authorY);
     ctx.restore();
@@ -732,8 +751,12 @@
 
       window._currentActiveQuoteId = currentQuoteId;
 
+      const activePalette = (window.wisdomBackground && window.wisdomBackground.getPaletteForQuote && window.wisdomBackground.getPaletteForQuote(currentQuoteId, currentMood))
+        || (window.wisdomBackground && window.wisdomBackground.getCurrentPalette && window.wisdomBackground.getCurrentPalette())
+        || null;
+
       if (window.applyQuoteThemeToModals) {
-        window.applyQuoteThemeToModals(currentMood);
+        window.applyQuoteThemeToModals(currentMood, activePalette);
       }
 
       // Reset preview state

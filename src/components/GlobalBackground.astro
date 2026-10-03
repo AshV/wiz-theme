@@ -1159,25 +1159,13 @@
       const key = quoteId || mood || 'wisdom';
       const hash = djb2(key);
 
-      // 1. Select Palette: strictly exclude last 2 played palettes
-      const eligiblePalettes = PALETTES.filter(p => !recentPalettes.includes(p.name));
-      const chosenPalette = eligiblePalettes.length > 0
-        ? eligiblePalettes[hash % eligiblePalettes.length]
-        : PALETTES[hash % PALETTES.length];
-
+      // Deterministic palette per quote so every quote has a signature, consistent visual identity
+      const chosenPalette = PALETTES[hash % PALETTES.length];
       currentPalette = chosenPalette;
-      recentPalettes.push(chosenPalette.name);
-      if (recentPalettes.length > 2) recentPalettes.shift();
 
-      // 2. Select Line Art Animation: strictly exclude last 2 played animations
-      const eligibleAnims = ANIM_TYPES.filter(a => !recentAnims.includes(a));
-      const chosenAnim = eligibleAnims.length > 0
-        ? eligibleAnims[(hash >> 3) % eligibleAnims.length]
-        : ANIM_TYPES[hash % ANIM_TYPES.length];
-
+      // Deterministic line art animation per quote
+      const chosenAnim = ANIM_TYPES[(hash >> 3) % ANIM_TYPES.length];
       currentAnim = chosenAnim;
-      recentAnims.push(chosenAnim);
-      if (recentAnims.length > 2) recentAnims.shift();
 
       // Update ambient glow overlay CSS
       const g1 = document.getElementById('mood-glow-1');
@@ -1197,6 +1185,11 @@
       getCurrentPalette: () => currentPalette,
       getCurrentAnim: () => currentAnim,
       getCanvas: () => canvas,
+      getPaletteForQuote: (quoteId: string, mood?: string) => {
+        const key = quoteId || mood || 'wisdom';
+        const hash = djb2(key);
+        return PALETTES[hash % PALETTES.length];
+      },
       start: () => { isVisible = true; startLoop(); },
       stop: () => stopLoop(),
       resize: () => resize(),
