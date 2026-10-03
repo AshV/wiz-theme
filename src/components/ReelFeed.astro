@@ -707,10 +707,10 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
       chunkFetchQueue = ordered;
     }
 
-    async function loadNextQuoteChunk() {
+    async function loadNextQuoteChunk(showLoader = false) {
       if (isFetchingChunk) return [];
       isFetchingChunk = true;
-      if (window.zenLoader) window.zenLoader.start('Gathering wisdom...');
+      if (showLoader && window.zenLoader) window.zenLoader.start('Gathering wisdom...');
       try {
         const base = window.__wisdomBaseUrl || '/wisdom';
 
@@ -752,7 +752,7 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
         console.warn('Could not load quote chunk:', e);
       } finally {
         isFetchingChunk = false;
-        if (window.zenLoader) window.zenLoader.stop();
+        if (showLoader && window.zenLoader) window.zenLoader.stop();
       }
       return [];
     }
@@ -761,7 +761,7 @@ const firstMoodInfo = firstQuote ? moodMeta[firstQuote.mood] : null;
     // spread chunk on idle so appendNextBatch always has fresh quotes queued up.
     if (typeof window !== 'undefined') {
       const prewarm = async () => {
-        await loadNextQuoteChunk(); // next chunk from the randomised queue
+        await loadNextQuoteChunk(false); // next chunk from the randomised queue (silent prewarm)
       };
       if ('requestIdleCallback' in window) {
         requestIdleCallback(prewarm);
