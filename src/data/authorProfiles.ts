@@ -52,15 +52,15 @@ export function getAuthorProfile(slug: string, fallbackName?: string, lang: stri
     tradition: t.author?.defaultTradition || 'Wisdom & Philosophy',
     wikipediaUrl: `https://${wikiLang}.wikipedia.org/wiki/${encodeURIComponent(name.replace(/ /g, '_'))}`,
     summary: isHi
-      ? `${name} के अनमोल दार्शनिक विचार और कालजयी सूक्तियां।`
+      ? `${name} के अनमोल विचार और लोकप्रिय कोट्स।`
       : `Curated philosophical reflections and timeless sayings from ${name}.`,
     bio: isHi
-      ? `${name} एक प्रतिष्ठित एवं प्रभावशाली विचारक हैं, जिनके जीवन, लक्ष्य और दर्शन पर आधारित विचार आज भी मानवता का मार्गदर्शन करते हैं।`
+      ? `${name} एक जाने-माने और प्रभावशाली लेखक हैं, जिनके विचार आज भी जीवन में प्रेरणा और सही दिशा देते हैं।`
       : `${name} is an influential thinker whose timeless reflections on life, purpose, and wisdom continue to inspire generations.`,
     keyWorks: [],
     pillars: [],
     whyTimeless: isHi
-      ? `${name} के विचार मानवीय जीवन और आत्मा के शाश्वत सत्यों को उजागर करते हैं।`
+      ? `${name} के विचार आज के समय में भी उतने ही जरूरी और प्रेरणादायी हैं।`
       : `The insights of ${name} speak to enduring questions of human existence.`,
   };
 }
