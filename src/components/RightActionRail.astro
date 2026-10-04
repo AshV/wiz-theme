@@ -5,6 +5,19 @@
  * Buttons: Like, Share, Audio Toggle, Explore.
  * All icons are inline SVG for zero external dependencies.
  */
+import { resolveThemeConfig } from '../config/themeConfig';
+import type { Translations, DeepPartial } from '../i18n/types';
+
+interface Props {
+  lang?: string;
+  translations?: DeepPartial<Translations>;
+}
+
+const config = resolveThemeConfig({
+  language: Astro.props.lang,
+  translations: Astro.props.translations,
+});
+const t = config.translations.rail;
 ---
 <div
   id="right-action-rail"
@@ -17,8 +30,8 @@
     type="button"
     class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
     style="touch-action: none; -webkit-tap-highlight-color: transparent;"
-    aria-label="Like this quote"
-    title="Like"
+    aria-label={t.like}
+    title={t.like}
   >
     <div class="w-10 h-10 flex items-center justify-center pointer-events-none">
       <svg id="like-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] transition-all duration-300 sm:w-[26px] sm:h-[26px]">
@@ -33,8 +46,8 @@
     type="button"
     class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
     style="touch-action: none; -webkit-tap-highlight-color: transparent;"
-    aria-label="Dislike this quote"
-    title="Dislike"
+    aria-label={t.dislike}
+    title={t.dislike}
   >
     <div class="w-10 h-10 flex items-center justify-center pointer-events-none">
       <svg id="dislike-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] transition-all duration-300 sm:w-[26px] sm:h-[26px]">
@@ -49,8 +62,8 @@
     type="button"
     class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
     style="touch-action: none; -webkit-tap-highlight-color: transparent;"
-    aria-label="Share this quote"
-    title="Share"
+    aria-label={t.share}
+    title={t.share}
   >
     <div class="w-10 h-10 flex items-center justify-center pointer-events-none">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] transition-all duration-200 sm:w-[26px] sm:h-[26px]">
@@ -67,8 +80,8 @@
     type="button"
     class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
     style="touch-action: none; -webkit-tap-highlight-color: transparent;"
-    aria-label="Enable zen chime sound"
-    title="Chimes Muted (Click to enable)"
+    aria-label={t.audioEnable}
+    title={t.audioMuted}
   >
     <div class="w-10 h-10 flex items-center justify-center pointer-events-none text-white/75 group-hover:text-white transition-all duration-200">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/75 group-hover:text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] sm:w-[26px] sm:h-[26px]">
@@ -85,8 +98,8 @@
     type="button"
     class="group transition-transform duration-150 active:scale-80 hover:scale-110 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center select-none"
     style="touch-action: none; -webkit-tap-highlight-color: transparent;"
-    aria-label="Explore quotes"
-    title="Explore Quotes"
+    aria-label={t.explore}
+    title={t.explore}
   >
     <div class="w-10 h-10 flex items-center justify-center pointer-events-none relative">
       <svg id="explore-icon-normal" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)] sm:w-[26px] sm:h-[26px] transition-all duration-150">

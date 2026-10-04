@@ -1,10 +1,11 @@
 /**
  * Media Registry — Mood-to-media mappings with deterministic hash selection.
  *
- * Background videos and ambient audio are mapped per mood. The selection
+ * Background visuals and ambient audio are mapped per mood. The selection
  * is deterministic: a quote's string ID is hashed (djb2) and modulo'd
  * against the mood's media pool, so a quote always gets the same visual.
  */
+import { getTranslations } from '../i18n';
 
 export type Mood =
   | 'reflective'
@@ -19,8 +20,6 @@ export type Mood =
 export interface MediaEntry {
   gradient: string;
 }
-
-const BASE = '/wisdom';
 
 /**
  * Mood → visual gradient pool.
@@ -38,18 +37,31 @@ export const moodMedia: Record<Mood, MediaEntry[]> = {
 };
 
 /**
- * Mood → Zen chime audio track (play once on slide arrival).
- * Pristine 16-bit 44.1kHz Tibetan singing bowl strikes in public/media/audio/.
+ * Mood filenames for ambient chimes.
+ */
+export const moodAudioFiles: Record<Mood, string> = {
+  reflective: 'chime-reflective.wav',
+  motivational: 'chime-motivational.wav',
+  serene: 'chime-serene.wav',
+  bold: 'chime-bold.wav',
+  melancholic: 'chime-melancholic.wav',
+  joyful: 'chime-joyful.wav',
+  philosophical: 'chime-philosophical.wav',
+  romantic: 'chime-romantic.wav',
+};
+
+/**
+ * Legacy moodAudio map for backward compatibility.
  */
 export const moodAudio: Record<Mood, string> = {
-  reflective: `${BASE}/media/audio/chime-reflective.wav`,
-  motivational: `${BASE}/media/audio/chime-motivational.wav`,
-  serene: `${BASE}/media/audio/chime-serene.wav`,
-  bold: `${BASE}/media/audio/chime-bold.wav`,
-  melancholic: `${BASE}/media/audio/chime-melancholic.wav`,
-  joyful: `${BASE}/media/audio/chime-joyful.wav`,
-  philosophical: `${BASE}/media/audio/chime-philosophical.wav`,
-  romantic: `${BASE}/media/audio/chime-romantic.wav`,
+  reflective: '/media/audio/chime-reflective.wav',
+  motivational: '/media/audio/chime-motivational.wav',
+  serene: '/media/audio/chime-serene.wav',
+  bold: '/media/audio/chime-bold.wav',
+  melancholic: '/media/audio/chime-melancholic.wav',
+  joyful: '/media/audio/chime-joyful.wav',
+  philosophical: '/media/audio/chime-philosophical.wav',
+  romantic: '/media/audio/chime-romantic.wav',
 };
 
 /**
@@ -68,16 +80,18 @@ function djb2Hash(str: string): number {
  * Same ID + mood = same background, always.
  */
 export function getMediaForQuote(id: string, mood: Mood): MediaEntry {
-  const pool = moodMedia[mood];
+  const pool = moodMedia[mood] || moodMedia.reflective;
   const index = djb2Hash(id) % pool.length;
   return pool[index];
 }
 
 /**
- * Get the ambient audio track for a given mood.
+ * Get the ambient audio track for a given mood, respecting custom baseUrl.
  */
-export function getAudioForMood(mood: Mood): string {
-  return moodAudio[mood];
+export function getAudioForMood(mood: Mood, baseUrl: string = ''): string {
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const file = moodAudioFiles[mood] || 'chime-reflective.wav';
+  return `${cleanBase}/media/audio/${file}`;
 }
 
 /**
@@ -95,7 +109,7 @@ export const allMoods: Mood[] = [
 ];
 
 /**
- * Mood display names and emojis.
+ * Mood display names and emojis (English default).
  */
 export const moodMeta: Record<Mood, { label: string; emoji: string }> = {
   reflective: { label: 'Reflective', emoji: '🌙' },
@@ -107,3 +121,14 @@ export const moodMeta: Record<Mood, { label: string; emoji: string }> = {
   philosophical: { label: 'Philosophical', emoji: '🤔' },
   romantic: { label: 'Romantic', emoji: '💜' },
 };
+
+/**
+ * Get localized mood metadata (label + emoji) for a given language.
+ */
+export function getLocalizedMoodMeta(mood: Mood, lang: string = 'en'): { label: string; emoji: string } {
+  const translations = getTranslations(lang);
+  if (translations.moods && translations.moods[mood]) {
+    return translations.moods[mood];
+  }
+  return moodMeta[mood] || { label: mood, emoji: '✦' };
+}

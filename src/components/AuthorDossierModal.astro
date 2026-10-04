@@ -7,8 +7,23 @@
  * primary sourced literature, and why their voice endures.
  *
  * Universally available across all feeds (main reel, author, category, mood, tag, quote).
- * Author profiles are fetched on-demand from /wisdom/api/authors/[slug].json (2 KB per author).
  */
+import { resolveThemeConfig } from '../config/themeConfig';
+import type { Translations, DeepPartial } from '../i18n/types';
+
+interface Props {
+  lang?: string;
+  base?: string;
+  translations?: DeepPartial<Translations>;
+}
+
+const config = resolveThemeConfig({
+  language: Astro.props.lang,
+  base: Astro.props.base,
+  translations: Astro.props.translations,
+});
+const t = config.translations.author;
+const BASE = config.base;
 ---
 
 <!-- Accessible Author Editorial Dossier Modal -->
@@ -50,13 +65,13 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2">
             <span class="text-[10px] uppercase font-mono tracking-[0.2em] font-semibold transition-colors duration-300" style="color: var(--quote-accent, #fbbf24);">
-              Philosopher Dossier
+              {t.badge}
             </span>
             <span class="hidden sm:inline text-white/30 text-xs">•</span>
             <span id="author-modal-header-era" class="hidden sm:inline text-xs text-white/60 font-mono"></span>
           </div>
           <h2 id="author-modal-header-name" class="text-sm sm:text-base font-serif font-bold text-white tracking-wide truncate">
-            About Author
+            {t.about}
           </h2>
         </div>
       </div>
@@ -66,8 +81,8 @@
           id="author-context-close"
           type="button"
           class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white/70 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95 shadow-sm"
-          aria-label="Close author dossier (Esc)"
-          title="Close (Esc)"
+          aria-label={t.close}
+          title={t.close}
         >
           <svg class="w-4 h-4 group-hover:rotate-90 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -124,7 +139,7 @@
                     class="pill text-[10px] uppercase tracking-wider font-semibold px-3 py-1.5 rounded-full border transition-all duration-300"
                     style="color: var(--quote-accent, #fcd34d); background: var(--quote-badge-bg, rgba(251,191,36,0.1)); border-color: var(--quote-border, rgba(251,191,36,0.3));"
                   >
-                    Philosophy
+                    {t.defaultTradition}
                   </span>
                   <span
                     id="author-modal-era"
@@ -133,7 +148,7 @@
                   </span>
                 </div>
                 <div class="text-xs font-medium flex items-center gap-1.5 text-white/80">
-                  <span id="author-modal-count">100+ Curated Quotes</span>
+                  <span id="author-modal-count">100+ {t.curatedCount}</span>
                   <span class="font-sans" style="color: var(--quote-accent, #fbbf24);">&infin;</span>
                 </div>
               </div>
@@ -160,7 +175,7 @@
                 class="w-full py-3 px-5 rounded-xl text-neutral-950 font-bold text-xs sm:text-sm active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                 style="background: linear-gradient(135deg, var(--quote-accent, #fbbf24), var(--quote-accent-dark, #f59e0b)); box-shadow: 0 0 25px var(--quote-glow-soft, rgba(251,191,36,0.3));"
               >
-                <span>Explore Quotes &amp; Reels</span>
+                <span>{t.exploreCta}</span>
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <polyline points="19 12 12 19 5 12" />
@@ -172,14 +187,14 @@
                   id="author-modal-share-btn"
                   type="button"
                   class="flex-1 py-2 px-3.5 rounded-xl glass border border-white/15 hover:border-white/30 text-white/80 hover:text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
-                  title="Share link to author's quotes"
+                  title={t.shareLink}
                 >
                   <svg class="w-3.5 h-3.5" style="color: var(--quote-accent, #fbbf24);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                     <polyline points="16 6 12 2 8 6" />
                     <line x1="12" y1="2" x2="12" y2="15" />
                   </svg>
-                  <span>Share Link</span>
+                  <span>{t.shareLink}</span>
                 </button>
 
                 <a
@@ -190,7 +205,7 @@
                   class="flex-1 py-2 px-3.5 rounded-xl glass border border-white/15 hover:border-white/30 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors active:scale-95"
                   style="color: var(--quote-accent, #fbbf24);"
                 >
-                  <span>Wikipedia</span>
+                  <span>{t.wikipedia}</span>
                   <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                     <polyline points="15 3 21 3 21 9" />
@@ -212,7 +227,7 @@
             </span>
             <div class="relative z-10 space-y-2.5">
               <div class="flex items-center gap-2 text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] font-semibold transition-colors duration-300" style="color: var(--quote-accent, #fbbf24);">
-                <span>✦</span> Why This Voice Endures
+                <span>✦</span> {t.whyTimeless}
               </div>
               <blockquote
                 id="author-modal-whytimeless"
@@ -232,7 +247,7 @@
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-300/90 font-semibold">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                Biographical Narrative
+                {t.bioTitle}
               </div>
               <div id="author-modal-longname-wrap" style="display: none;">
                 <span
@@ -259,9 +274,9 @@
             <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
               <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-300/90 font-semibold">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                Core Philosophical Pillars
+                {t.pillarsTitle}
               </div>
-              <span class="text-[11px] text-white/50 font-mono">Foundational concepts &amp; principles</span>
+              <span class="text-[11px] text-white/50 font-mono">{t.pillarsSubtitle}</span>
             </div>
             <div id="author-modal-pillars-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             </div>
@@ -272,9 +287,9 @@
             <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
               <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-300/90 font-semibold">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                Primary Sourced Works
+                {t.worksTitle}
               </div>
-              <span class="text-[11px] text-white/50 font-mono">Essential literature &amp; treatises</span>
+              <span class="text-[11px] text-white/50 font-mono">{t.worksSubtitle}</span>
             </div>
             <div id="author-modal-works-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             </div>
@@ -406,8 +421,8 @@
     const heroSummary = document.getElementById('author-modal-summary');
     if (heroSummary) heroSummary.textContent = `"${profile.summary}"`;
 
-    // Photos (progressive load with graceful fallback to crest initials)
-    const photoUrl = profile.photo || `/wisdom/media/authors/${profile.slug}.webp`;
+    const base = window.__wisdomBaseUrl ?? '';
+    const photoUrl = profile.photo || `${base}/media/authors/${profile.slug}.webp`;
     const headerImg = document.getElementById('author-modal-header-img');
     const heroImg = document.getElementById('author-modal-hero-img');
 
@@ -436,7 +451,7 @@
       exploreCta.onclick = () => {
         window.closeAuthorDossierModal();
         const currentPath = window.location.pathname;
-        const targetPath = `/wisdom/author/${profile.slug}/`;
+        const targetPath = `${base}/author/${profile.slug}/`;
         if (currentPath.includes(`/author/${profile.slug}`)) {
           const reel = document.getElementById('reel-container');
           if (reel) reel.scrollTo({ top: 0, behavior: 'smooth' });
@@ -450,10 +465,11 @@
     const shareBtn = document.getElementById('author-modal-share-btn');
     if (shareBtn) {
       shareBtn.onclick = () => {
-        const shareUrl = `https://www.ashishvishwakarma.com/wisdom/author/${profile.slug}/`;
+        const shareUrl = `${window.location.origin}${base}/author/${profile.slug}/`;
         if (navigator.clipboard) {
           navigator.clipboard.writeText(shareUrl).then(() => {
-            if (window.showToast) window.showToast(`Link to ${profile.name}'s profile copied! ✓`);
+            const toastMsg = window.__wizThemeConfig?.translations?.share?.linkCopiedToast || 'Link copied to clipboard!';
+            if (window.showToast) window.showToast(toastMsg);
           }).catch(() => {
             if (window.showToast) window.showToast('Could not copy link');
           });

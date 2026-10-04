@@ -10,6 +10,22 @@
  * 5. Instant PNG Download: 1080×1920 PNG saved directly from pre-generated blob
  * 6. Live 9:16 Card Preview: Visual card thumbnail showing the ready-to-share graphic
  */
+import { resolveThemeConfig } from '../config/themeConfig';
+import type { Translations, DeepPartial } from '../i18n/types';
+
+interface Props {
+  lang?: string;
+  base?: string;
+  translations?: DeepPartial<Translations>;
+}
+
+const config = resolveThemeConfig({
+  language: Astro.props.lang,
+  base: Astro.props.base,
+  translations: Astro.props.translations,
+});
+const t = config.translations.share;
+const BASE = config.base;
 ---
 
 <div
@@ -40,18 +56,18 @@
           </svg>
         </div>
         <div>
-          <h3 class="text-base sm:text-lg font-bold text-white tracking-wide leading-tight">Share Quote Card</h3>
+          <h3 class="text-base sm:text-lg font-bold text-white tracking-wide leading-tight">{t.title}</h3>
           <div class="flex items-center gap-2 mt-1 text-xs text-white/55 font-medium">
-            <span>9:16 Story & Reel</span>
+            <span>{t.storyReel}</span>
             <span class="w-1 h-1 rounded-full bg-white/30"></span>
-            <span class="font-semibold transition-colors duration-300" style="color: var(--quote-accent, #fbbf24);">Ultra-HD Keepsake</span>
+            <span class="font-semibold transition-colors duration-300" style="color: var(--quote-accent, #fbbf24);">{t.keepsake}</span>
           </div>
         </div>
       </div>
       <button
         id="share-close-btn"
         class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center transition-all text-white/70 hover:text-white cursor-pointer border border-white/10 shrink-0"
-        aria-label="Close share modal"
+        aria-label={t.close}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="18" y1="6" x2="6" y2="18" />
@@ -88,11 +104,11 @@
           <!-- Catchy In-Progress Message with smooth fade -->
           <div class="flex flex-col items-center gap-2 px-2">
             <span id="share-loader-status" class="text-xs sm:text-sm font-semibold text-amber-200/95 tracking-wide leading-snug transition-all duration-300 text-center min-h-[2.4rem] flex items-center justify-center">
-              ✦ Weaving timeless wisdom...
+              {t.weaving}
             </span>
             <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] text-white/70 tracking-wider uppercase font-semibold">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Ultra-HD 2160×3840</span>
+              <span>{t.resolution}</span>
             </div>
           </div>
         </div>
@@ -112,7 +128,7 @@
           <polyline points="16 6 12 2 8 6" />
           <line x1="12" y1="2" x2="12" y2="15" />
         </svg>
-        <span>Share Image</span>
+        <span>{t.shareImage}</span>
       </button>
 
       <!-- 2. Secondary Quick Actions Row: Copy Image | Save PNG | Copy Link -->
@@ -121,7 +137,7 @@
         <button
           id="copy-image-btn"
           class="flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-2xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-white/30 active:scale-95 transition-all text-white/90 hover:text-white cursor-pointer shadow-md shadow-black/20 group"
-          title="Copy image to clipboard"
+          title={t.copyImage}
         >
           <div class="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-400/25 flex items-center justify-center group-hover:scale-110 transition-transform">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-purple-300">
@@ -129,14 +145,14 @@
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
             </svg>
           </div>
-          <span class="text-xs font-medium leading-tight text-center">Copy Image</span>
+          <span class="text-xs font-medium leading-tight text-center">{t.copyImage}</span>
         </button>
 
         <!-- Save PNG -->
         <button
           id="download-image-btn"
           class="flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-2xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-white/30 active:scale-95 transition-all text-white/90 hover:text-white cursor-pointer shadow-md shadow-black/20 group"
-          title="Download PNG image"
+          title={t.savePng}
         >
           <div class="w-8 h-8 rounded-xl bg-pink-500/20 border border-pink-400/25 flex items-center justify-center group-hover:scale-110 transition-transform">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-pink-300">
@@ -145,14 +161,14 @@
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
           </div>
-          <span class="text-xs font-medium leading-tight text-center">Save PNG</span>
+          <span class="text-xs font-medium leading-tight text-center">{t.savePng}</span>
         </button>
 
         <!-- Copy Link -->
         <button
           id="share-link-btn"
           class="flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-2xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-white/30 active:scale-95 transition-all text-white/90 hover:text-white cursor-pointer shadow-md shadow-black/20 group"
-          title="Share or copy quote link"
+          title={t.copyLink}
         >
           <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/25 flex items-center justify-center group-hover:scale-110 transition-transform">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-amber-300">
@@ -160,7 +176,7 @@
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
           </div>
-          <span class="text-xs font-medium leading-tight text-center">Copy Link</span>
+          <span class="text-xs font-medium leading-tight text-center">{t.copyLink}</span>
         </button>
       </div>
     </div>
@@ -308,19 +324,24 @@
     ctx.stroke();
 
     // ── 5. Top Brand & Taxonomy Badge ──
+    const themeCfg = window.__wizThemeConfig || {};
+    const typoCfg = themeCfg.typography || {};
+    const sansFont = typoCfg.sansCanvasFont || '"Inter", -apple-system, sans-serif';
+
     ctx.save();
     ctx.fillStyle = 'rgba(255, 255, 255, 0.70)';
-    ctx.font = '700 17px "Inter", -apple-system, sans-serif';
+    ctx.font = `700 17px ${sansFont}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     if ('letterSpacing' in ctx) ctx.letterSpacing = '6px';
-    ctx.fillText('WISDOM', width / 2, 130);
+    const brandName = (themeCfg.siteTitle || 'WISDOM').toUpperCase();
+    ctx.fillText(brandName, width / 2, 130);
     ctx.restore();
 
     if (category) {
       ctx.save();
       const badgeY = 186;
-      ctx.font = '600 19px "Inter", -apple-system, sans-serif';
+      ctx.font = `600 19px ${sansFont}`;
       if ('letterSpacing' in ctx) ctx.letterSpacing = '2.5px';
       const catText = category.toUpperCase();
       const textWidth = ctx.measureText(catText).width;
@@ -365,7 +386,8 @@
       lineHeight = 64;
     }
 
-    ctx.font = `400 ${fontSize}px "Playfair Display", "Cormorant Garamond", Georgia, serif`;
+    const quoteFont = typoCfg.quoteCanvasFont || '"Playfair Display", "Cormorant Garamond", Georgia, serif';
+    ctx.font = `400 ${fontSize}px ${quoteFont}`;
     const maxTextWidth = 880;
     const words = content.split(/\s+/);
     const lines = [];
@@ -400,17 +422,18 @@
     const quoteMarkY = blockStartY + (quoteMarkHeight / 2);
     ctx.save();
     ctx.fillStyle = 'rgba(' + accentRgb.join(',') + ', 0.85)';
-    ctx.font = 'italic 400 100px "Playfair Display", Georgia, serif';
+    ctx.font = `400 100px ${quoteFont}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = 'rgba(' + accentRgb.join(',') + ', 0.50)';
     ctx.shadowBlur = 18;
-    ctx.fillText('“', width / 2, quoteMarkY);
+    const quoteMarkChar = themeCfg.translations?.slide?.quoteMarkOpen || '“';
+    ctx.fillText(quoteMarkChar, width / 2, quoteMarkY);
     ctx.restore();
 
     // Quote Text Lines: Two-Pass Rendering for Ultra-Sharp Foreground Letterforms
     const quoteStartY = blockStartY + quoteMarkHeight + quoteMarkGap;
-    const quoteFontStr = `400 ${fontSize}px "Playfair Display", "Cormorant Garamond", Georgia, serif`;
+    const quoteFontStr = `400 ${fontSize}px ${quoteFont}`;
 
     // Pass 1: Cinematic drop shadow underneath (protects contrast on bright blooms)
     ctx.save();
@@ -440,9 +463,10 @@
     }
     ctx.restore();
 
-    // Author Attribution: Two-Pass Rendering for Crisp Italic Serif
+    // Author Attribution: Two-Pass Rendering for Crisp Typography
     const authorY = quoteStartY + totalQuoteTextHeight + authorGap;
-    const authorFontStr = 'italic 400 44px "Cormorant Garamond", "Playfair Display", Georgia, serif';
+    const rawAuthorFont = typoCfg.authorCanvasFont || 'italic 400 44px "Cormorant Garamond", "Playfair Display", Georgia, serif';
+    const authorFontStr = rawAuthorFont.includes('px') ? rawAuthorFont : `400 44px ${rawAuthorFont}`;
 
     // Pass 1: Depth shadow
     ctx.save();
@@ -502,16 +526,17 @@
       ctx.restore();
     }
 
-    // ── 7. Footer Domain Watermark with Direct Quote URL (Without "/quote") ──
+    // ── 7. Footer Domain Watermark with Direct Quote URL ──
     ctx.save();
     ctx.fillStyle = 'rgba(255, 255, 255, 0.60)';
-    ctx.font = '500 20px "Inter", -apple-system, sans-serif';
+    ctx.font = `500 20px ${sansFont}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
+    const brandingDomain = themeCfg.brandingText || 'wiz-theme';
     const watermarkText = quote.id
-      ? `ashishvishwakarma.com/wisdom/${quote.id.toLowerCase()}`
-      : 'ashishvishwakarma.com/wisdom';
+      ? `${brandingDomain}/${quote.id.toLowerCase()}`
+      : brandingDomain;
     ctx.fillText(watermarkText, width / 2, height - 90);
     ctx.restore();
 
@@ -569,17 +594,22 @@
 
     const genPromise = (async () => {
       try {
-        // Ensure web fonts are completely loaded so Playfair, Cormorant & Inter render pin-sharp
+        // Ensure web fonts are completely loaded
         if (document.fonts) {
           try {
-            await Promise.all([
-              document.fonts.load('400 78px "Playfair Display"'),
-              document.fonts.load('italic 400 100px "Playfair Display"'),
-              document.fonts.load('italic 400 44px "Cormorant Garamond"'),
-              document.fonts.load('500 20px "Inter"'),
-              document.fonts.load('700 17px "Inter"'),
-              document.fonts.ready,
-            ]);
+            const fontsToLoad = window.__wizThemeConfig?.typography?.fontsToPreload;
+            if (fontsToLoad && fontsToLoad.length > 0) {
+              await Promise.all(fontsToLoad.map((f) => document.fonts.load(f)));
+            } else {
+              await Promise.all([
+                document.fonts.load('400 78px "Playfair Display"'),
+                document.fonts.load('italic 400 100px "Playfair Display"'),
+                document.fonts.load('italic 400 44px "Cormorant Garamond"'),
+                document.fonts.load('500 20px "Inter"'),
+                document.fonts.load('700 17px "Inter"'),
+              ]);
+            }
+            if (document.fonts.ready) await document.fonts.ready;
           } catch (_) {
             if (document.fonts.ready) await document.fonts.ready;
           }
@@ -828,9 +858,10 @@
           return;
         }
 
-        const origin = window.location.origin.includes('localhost') ? window.location.origin : 'https://www.ashishvishwakarma.com';
+        const origin = window.__wizThemeConfig?.siteUrl || window.location.origin;
+        const base = window.__wisdomBaseUrl ?? '';
         const quoteSlug = currentQuoteSlug || currentQuoteId;
-        const url = `${origin}/wisdom/quote/${quoteSlug}/`;
+        const url = `${origin}${base}/quote/${quoteSlug}/`;
         const shareData = {
           title: `"${currentQuoteText}" — ${currentAuthor}`,
           text: url,
@@ -923,9 +954,10 @@
     // 4. Quick Action: Share Link
     if (linkBtn) {
       linkBtn.onclick = async () => {
-        const origin = window.location.origin.includes('localhost') ? window.location.origin : 'https://www.ashishvishwakarma.com';
+        const origin = window.__wizThemeConfig?.siteUrl || window.location.origin;
+        const base = window.__wisdomBaseUrl ?? '';
         const quoteSlug = currentQuoteSlug || currentQuoteId;
-        const url = `${origin}/wisdom/quote/${quoteSlug}/`;
+        const url = `${origin}${base}/quote/${quoteSlug}/`;
         const shareData = {
           title: `"${currentQuoteText}" — ${currentAuthor}`,
           text: `"${currentQuoteText}" — ${currentAuthor}`,

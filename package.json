@@ -10,7 +10,9 @@
     "./layouts/*": "./src/layouts/*",
     "./styles/*": "./src/styles/*",
     "./utils/*": "./src/utils/*",
-    "./data/*": "./src/data/*"
+    "./data/*": "./src/data/*",
+    "./i18n/*": "./src/i18n/*",
+    "./config/*": "./src/config/*"
   },
   "files": [
     "src"

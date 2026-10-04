@@ -15,11 +15,36 @@
  * 6. Rituals (Contemplation schedules)
  */
 import { getExploreCatalog } from '../data/exploreCatalog';
-import { moodMeta, allMoods } from '../data/mediaRegistry';
+import { moodMeta, allMoods, getLocalizedMoodMeta } from '../data/mediaRegistry';
 import { authorProfiles } from '../data/authorProfiles';
 import { slugifyQuote } from '../utils/slug';
+import { resolveThemeConfig } from '../config/themeConfig';
+import type { WizThemeConfig } from '../config/themeConfig';
+import type { Translations } from '../i18n/types';
 
-const BASE = '/wisdom';
+interface Props {
+  lang?: string;
+  base?: string;
+  translations?: Translations;
+  themeConfig?: WizThemeConfig;
+}
+
+const {
+  lang,
+  base: propBase,
+  translations: propTranslations,
+  themeConfig: propConfig,
+} = Astro.props;
+
+const config = resolveThemeConfig({
+  lang,
+  base: propBase,
+  translations: propTranslations,
+  ...propConfig,
+});
+
+const BASE = config.base;
+const t = config.translations;
 
 const {
   totalQuotesCount,
@@ -49,14 +74,14 @@ const categoryIcons: Record<string, string> = {
 
 // Rich semantic keywords for mood matching
 const moodKeywords: Record<string, string> = {
-  reflective: 'reflective reflection introspective contemplation thought thinking deep inner mind soul quiet solitary',
-  motivational: 'motivational motivation inspire inspiration ambitious drive purpose courage energy strength action strive grit',
-  serene: 'serene serenity peace calm stillness tranquil tranquility nature zen quiet sanctuary rest peace of mind',
-  bold: 'bold courage bravery fearless strength warrior confidence power resilience grit daring bold resolve',
-  melancholic: 'melancholic melancholy sorrow grief sadness longing darkness poignant depth solace redemptive pain',
-  joyful: 'joyful joy happiness bliss cheer celebration delight ecstasy light grateful gratitude smile wonder laughter',
-  philosophical: 'philosophical philosophy wisdom truth intellect reason knowledge thinker logic insight inquiry ethics',
-  romantic: 'romantic romance love devotion heart passion affection beauty beloved tenderness kindred romance soulful',
+  reflective: 'reflective reflection introspective contemplation thought thinking deep inner mind soul quiet solitary चिंतन मनन आत्ममंथन विचार गहराई शांति',
+  motivational: 'motivational motivation inspire inspiration ambitious drive purpose courage energy strength action strive grit प्रेरणा उत्साह साहस ऊर्जा संकल्प कर्म',
+  serene: 'serene serenity peace calm stillness tranquil tranquility nature zen quiet sanctuary rest peace of mind शांति सुकून ठहराव स्तब्ध प्रकृति मौन',
+  bold: 'bold courage bravery fearless strength warrior confidence power resilience grit daring bold resolve निर्भीक साहस वीरता शक्ति पराक्रम आत्मबल दृढ़ता',
+  melancholic: 'melancholic melancholy sorrow grief sadness longing darkness poignant depth solace redemptive pain वेदना विरह दर्द उदासी शोक गहराई संवेदनशीलता',
+  joyful: 'joyful joy happiness bliss cheer celebration delight ecstasy light grateful gratitude smile wonder laughter आनंद हर्ष उल्लास प्रसन्नता खुशी उत्सव मुस्कान',
+  philosophical: 'philosophical philosophy wisdom truth intellect reason knowledge thinker logic insight inquiry ethics दर्शन विवेक ज्ञान सत्य प्रज्ञा विचार मीमांसा तत्त्वज्ञान',
+  romantic: 'romantic romance love devotion heart passion affection beauty beloved tenderness kindred romance soulful प्रेम अनुराग प्रीति समर्पण स्नेह हृदय भक्ति',
 };
 ---
 
@@ -104,7 +129,7 @@ const moodKeywords: Record<string, string> = {
             </svg>
           </div>
           <div>
-            <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight truncate">Explore Wisdom</h2>
+            <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight truncate">{t.explore.title}</h2>
           </div>
         </div>
         <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
@@ -113,21 +138,21 @@ const moodKeywords: Record<string, string> = {
             type="button"
             style="display: none;"
             class="hidden items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 hover:bg-amber-400/25 hover:text-amber-200 text-xs font-medium tracking-wide transition-all cursor-pointer shadow-sm"
-            title="Install Wisdom App to Home Screen"
+            title={t.pwa.installTitle}
           >
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            <span class="hidden sm:inline">Install App</span>
+            <span class="hidden sm:inline">{t.explore.installApp}</span>
           </button>
           <button
             id="explore-search-toggle-btn"
             type="button"
             class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/8 hover:bg-white/18 active:scale-90 flex items-center justify-center transition-all text-white/70 hover:text-white cursor-pointer border border-white/10 shadow-sm"
-            aria-label="Search Wisdom"
-            title="Search (Press / to search)"
+            aria-label={t.explore.searchAria}
+            title={t.explore.searchAria}
           >
             <svg class="w-4 h-4 sm:w-[18px] sm:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8" />
@@ -137,7 +162,7 @@ const moodKeywords: Record<string, string> = {
           <button
             id="explore-close-btn"
             class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/8 hover:bg-white/18 active:scale-90 flex items-center justify-center transition-all text-white/60 hover:text-white cursor-pointer border border-white/10"
-            aria-label="Close Explore"
+            aria-label={t.explore.close}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -153,8 +178,8 @@ const moodKeywords: Record<string, string> = {
           id="explore-search-back-btn"
           type="button"
           class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/8 hover:bg-white/18 active:scale-90 flex items-center justify-center transition-all text-white/70 hover:text-white cursor-pointer border border-white/10 shrink-0"
-          aria-label="Back to Explore"
-          title="Back"
+          aria-label={t.explore.close}
+          title={t.explore.close}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="15 18 9 12 15 6" />
@@ -175,7 +200,7 @@ const moodKeywords: Record<string, string> = {
           <input
             id="explore-search"
             type="text"
-            placeholder="Search authors, moods, categories, or keywords..."
+            placeholder={t.explore.searchPlaceholder}
             style="padding-left: 42px; padding-right: 42px;"
             class="w-full py-2 sm:py-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] focus:bg-white/[0.14] border border-amber-400/35 focus:border-amber-400 text-sm sm:text-base text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-amber-400/25 transition-all leading-normal shadow-inner"
             autocomplete="off"
@@ -184,7 +209,7 @@ const moodKeywords: Record<string, string> = {
             id="explore-search-clear"
             type="button"
             class="absolute right-2.5 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white hidden items-center justify-center cursor-pointer transition-colors z-10"
-            aria-label="Clear search"
+            aria-label={t.explore.close}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -198,7 +223,7 @@ const moodKeywords: Record<string, string> = {
           type="button"
           class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold text-amber-300 hover:text-amber-200 hover:bg-white/8 transition-colors cursor-pointer shrink-0"
         >
-          Done
+          {t.explore.done}
         </button>
       </div>
     </div>
@@ -217,7 +242,7 @@ const moodKeywords: Record<string, string> = {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-red-400">
           <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
         </svg>
-        <span>Liked</span>
+        <span>{t.explore.tabs.liked}</span>
         <span id="liked-tab-badge" class="pill-sm text-[10px] font-bold px-2 py-1.5 rounded-full bg-white/10 text-white/60 ml-0.5 min-w-[20px] text-center inline-flex items-center justify-center leading-none">0</span>
       </button>
 
@@ -226,7 +251,7 @@ const moodKeywords: Record<string, string> = {
         data-tab="authors"
       >
         <span>✍️</span>
-        <span>Authors</span>
+        <span>{t.explore.tabs.authors}</span>
         <span class="text-[11px] text-white/40 font-normal">({totalAuthorsCount})</span>
       </button>
 
@@ -235,7 +260,7 @@ const moodKeywords: Record<string, string> = {
         data-tab="moods"
       >
         <span>✨</span>
-        <span>Moods</span>
+        <span>{t.explore.tabs.moods}</span>
         <span class="text-[11px] text-white/40 font-normal">({allMoods.length})</span>
       </button>
 
@@ -244,7 +269,7 @@ const moodKeywords: Record<string, string> = {
         data-tab="categories"
       >
         <span>📂</span>
-        <span>Categories</span>
+        <span>{t.explore.tabs.categories}</span>
         <span class="text-[11px] text-white/40 font-normal">({categories.length})</span>
       </button>
 
@@ -253,7 +278,7 @@ const moodKeywords: Record<string, string> = {
         data-tab="tags"
       >
         <span>🏷️</span>
-        <span>Tags</span>
+        <span>{t.explore.tabs.tags}</span>
         <span class="text-[11px] text-white/40 font-normal">({totalTagsCount})</span>
       </button>
     </div>
@@ -274,10 +299,10 @@ const moodKeywords: Record<string, string> = {
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-amber-300">Quote Quick Jump</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-300">{t.explore.quickJumpTitle}</span>
                 <span id="quickjump-number-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 font-bold text-amber-300">#42</span>
               </div>
-              <p id="quickjump-prompt" class="text-xs text-white/70 mt-0.5">Jump directly to reflection #42</p>
+              <p id="quickjump-prompt" class="text-xs text-white/70 mt-0.5">#42</p>
             </div>
           </div>
           <button
@@ -285,7 +310,7 @@ const moodKeywords: Record<string, string> = {
             type="button"
             class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer flex-shrink-0"
           >
-            <span>Open Quote</span>
+            <span>{t.explore.openQuote}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -299,7 +324,7 @@ const moodKeywords: Record<string, string> = {
         <div class="search-section-header hidden items-center justify-between mb-4 pb-2 border-b border-rose-500/25 text-rose-300">
           <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
             <span>❤️</span>
-            <span>Matching Liked Quotes</span>
+            <span>{t.explore.matchingLiked}</span>
           </div>
           <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-rose-500/20 font-semibold text-rose-300"></span>
         </div>
@@ -314,15 +339,15 @@ const moodKeywords: Record<string, string> = {
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
           </div>
-          <h3 class="text-lg sm:text-xl font-bold text-white mb-2 font-serif">Your Sanctuary Awaits</h3>
+          <h3 class="text-lg sm:text-xl font-bold text-white mb-2 font-serif">{t.explore.sanctuaryTitle}</h3>
           <p class="text-sm text-white/50 max-w-md leading-relaxed mb-6">
-            Double-tap any quote or tap the heart in the action rail while browsing to save timeless reflections here for offline contemplation.
+            {t.explore.sanctuaryDesc}
           </p>
           <button
             id="liked-browse-btn"
             class="px-6 py-3 rounded-full bg-white/12 hover:bg-white/20 active:scale-95 text-sm font-semibold text-white border border-white/15 transition-all cursor-pointer shadow-lg hover:shadow-white/5"
           >
-            Explore Authors &amp; Moods
+            {t.explore.exploreCta}
           </button>
         </div>
       </div>
@@ -333,7 +358,7 @@ const moodKeywords: Record<string, string> = {
         <div class="search-section-header hidden items-center justify-between pb-2 border-b border-amber-500/25 text-amber-300">
           <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
             <span>✍️</span>
-            <span>Matching Authors</span>
+            <span>{t.explore.matchingAuthors}</span>
           </div>
           <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-amber-500/20 font-semibold text-amber-300"></span>
         </div>
@@ -369,7 +394,7 @@ const moodKeywords: Record<string, string> = {
                 </span>
                 <div class="flex-1 min-w-0">
                   <span class="text-sm font-bold text-white block group-hover:text-amber-200 transition-colors truncate mb-0.5">{auth.name}</span>
-                  <span class="text-xs text-white/50">{auth.count} {auth.count === 1 ? 'timeless quote' : 'timeless quotes'}</span>
+                  <span class="text-xs text-white/50">{auth.count} {auth.count === 1 ? t.explore.singleQuoteSuffix : t.explore.quotesCountSuffix}</span>
                 </div>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white/25 group-hover:text-white/80 group-hover:translate-x-1 transition-all flex-shrink-0">
                   <polyline points="9 18 15 12 9 6" />
@@ -386,35 +411,37 @@ const moodKeywords: Record<string, string> = {
         <div class="search-section-header hidden items-center justify-between pb-2 border-b border-purple-500/25 text-purple-300">
           <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
             <span>✨</span>
-            <span>Matching Moods</span>
+            <span>{t.explore.matchingMoods}</span>
           </div>
           <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-purple-500/20 font-semibold text-purple-300"></span>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3.5 sm:gap-4">
-          {allMoods.map((mood) => (
+          {allMoods.map((mood) => {
+            const meta = getLocalizedMoodMeta(mood, config.lang, t);
+            return (
             <a
               href={`${BASE}/mood/${mood}/`}
               class={`explore-item mood-pill-${mood} rounded-2xl sm:rounded-3xl flex flex-col justify-between min-h-[180px] sm:min-h-[190px] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-xl group border border-white/15 hover:border-white/30 relative overflow-hidden`}
               style="padding: 1.25rem 1.25rem 2rem 1.25rem;"
-              data-search-text={`${moodMeta[mood].label} ${mood} mood ${moodKeywords[mood] || ''}`}
+              data-search-text={`${meta.label} ${mood} mood ${moodKeywords[mood] || ''}`}
             >
               <div class="flex items-center justify-between z-10">
-                <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-300 select-none">{moodMeta[mood].emoji}</span>
+                <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-300 select-none">{meta.emoji}</span>
                 <span class="text-xs font-bold text-white/95 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/15 min-w-[32px] text-center inline-flex items-center justify-center leading-none">
                   {moodCounts[mood] || 0}
                 </span>
               </div>
               <div class="z-10 mt-auto pt-4">
-                <span class="text-base sm:text-lg font-bold text-white block capitalize tracking-tight leading-tight mb-1">{moodMeta[mood].label}</span>
+                <span class="text-base sm:text-lg font-bold text-white block capitalize tracking-tight leading-tight mb-1">{meta.label}</span>
                 <span class="text-xs text-white/80 group-hover:text-white font-medium flex items-center gap-1 transition-colors">
-                  Explore stream <span class="group-hover:translate-x-1 transition-transform">→</span>
+                  {t.explore.exploreStream} <span class="group-hover:translate-x-1 transition-transform">→</span>
                 </span>
               </div>
               <!-- Subtle bottom contrast vignette -->
               <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none"></div>
             </a>
-          ))}
+          );})}
         </div>
       </div>
 
@@ -424,7 +451,7 @@ const moodKeywords: Record<string, string> = {
         <div class="search-section-header hidden items-center justify-between pb-2 border-b border-sky-500/25 text-sky-300">
           <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
             <span>📂</span>
-            <span>Matching Categories</span>
+            <span>{t.explore.matchingCategories}</span>
           </div>
           <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-sky-500/20 font-semibold text-sky-300"></span>
         </div>
@@ -442,7 +469,7 @@ const moodKeywords: Record<string, string> = {
                 </span>
                 <div class="min-w-0">
                   <span class="text-sm font-bold text-white group-hover:text-amber-200 transition-colors block mb-0.5 truncate">{cat.name}</span>
-                  <span class="text-xs text-white/50">{cat.count} quotes</span>
+                  <span class="text-xs text-white/50">{cat.count} {cat.count === 1 ? t.explore.singleQuoteSuffix : t.explore.quotesCountSuffix}</span>
                 </div>
               </div>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white/30 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0">
@@ -459,7 +486,7 @@ const moodKeywords: Record<string, string> = {
         <div class="search-section-header hidden items-center justify-between pb-2 border-b border-emerald-500/25 text-emerald-300">
           <div class="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider">
             <span>🏷️</span>
-            <span>Matching Tags &amp; Topics</span>
+            <span>{t.explore.matchingTags}</span>
           </div>
           <span class="pill-sm search-section-badge text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 font-semibold text-emerald-300"></span>
         </div>
@@ -493,13 +520,13 @@ const moodKeywords: Record<string, string> = {
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
         </svg>
-        <p class="text-base font-semibold text-white/70 mb-1">No matches found</p>
-        <p class="text-xs text-white/40 mt-1 max-w-sm">Try searching by author (e.g. Rumi, Emerson, Seneca), mood (e.g. Serene, Bold), category (e.g. Nature, Wisdom), or topic.</p>
+        <p class="text-base font-semibold text-white/70 mb-1">{t.explore.noResultsTitle}</p>
+        <p class="text-xs text-white/40 mt-1 max-w-sm">{t.explore.noResultsHint}</p>
         <button
           id="explore-reset-search-btn"
           class="mt-5 px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-xs text-white/80 hover:text-white font-medium cursor-pointer transition-colors border border-white/12"
         >
-          Clear search filter
+          {t.explore.clearFilter}
         </button>
       </div>
 
@@ -508,8 +535,8 @@ const moodKeywords: Record<string, string> = {
 </div>
 
 <!-- Base URL & total quotes configuration -->
-<script is:inline define:vars={{ totalQuotesCount }}>
-  window.__wisdomBaseUrl = '/wisdom';
+<script is:inline define:vars={{ totalQuotesCount, BASE }}>
+  window.__wisdomBaseUrl = window.__wisdomBaseUrl ?? BASE;
   window.__wisdomTotalQuotes = totalQuotesCount;
 </script>
 
@@ -586,7 +613,7 @@ const moodKeywords: Record<string, string> = {
       if (likedEmpty) likedEmpty.classList.add('hidden');
 
       // Render cards in reverse chronological order (newest likes first)
-      const base = window.__wisdomBaseUrl || '/wisdom';
+      const base = window.__wisdomBaseUrl ?? '';
 
       allLikes.slice().reverse().forEach((item) => {
         const quote = (typeof item === 'object' && item !== null) ? item : (window.__wisdomQuoteMap ? window.__wisdomQuoteMap[item] : null);
@@ -621,12 +648,14 @@ const moodKeywords: Record<string, string> = {
         const actionRow = document.createElement('div');
         actionRow.className = 'pt-2 border-t border-white/8 flex items-center justify-between';
 
+        const openQuoteLabel = (window.__wizThemeConfig && window.__wizThemeConfig.translations && window.__wizThemeConfig.translations.explore && window.__wizThemeConfig.translations.explore.openQuote) || 'Open Quote';
+
         // Navigate button
         const jumpBtn = document.createElement('button');
         jumpBtn.className =
           'inline-flex items-center gap-1.5 text-xs font-medium text-amber-300 hover:text-white transition-colors cursor-pointer';
         jumpBtn.innerHTML = `
-          <span>Open Quote</span>
+          <span>${escapeHtml(openQuoteLabel)}</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
@@ -693,7 +722,7 @@ const moodKeywords: Record<string, string> = {
       if (typeof window.__wisdomNavigateToQuote === 'function') {
         window.__wisdomNavigateToQuote(targetHash, quote).then((success) => {
           if (!success) {
-            const base = window.__wisdomBaseUrl || '/wisdom';
+            const base = window.__wisdomBaseUrl ?? '';
             window.location.href = `${base}/#${targetHash}`;
           }
         });
@@ -715,7 +744,7 @@ const moodKeywords: Record<string, string> = {
       }
 
       // If not in DOM or on a subpage, navigate to root feed with hash
-      const base = window.__wisdomBaseUrl || '/wisdom';
+      const base = window.__wisdomBaseUrl ?? '';
       setTimeout(() => {
         window.location.href = `${base}/#${targetHash}`;
       }, 300);
@@ -840,12 +869,12 @@ const moodKeywords: Record<string, string> = {
               if (window.__wisdomNavigateToQuote) {
                 window.__wisdomNavigateToQuote(paddedId).then((success) => {
                   if (!success) {
-                    const base = window.__wisdomBaseUrl || '/wisdom';
+                    const base = window.__wisdomBaseUrl ?? '';
                     window.location.href = `${base}/#${paddedId}`;
                   }
                 });
               } else {
-                const base = window.__wisdomBaseUrl || '/wisdom';
+                const base = window.__wisdomBaseUrl ?? '';
                 window.location.href = `${base}/#${paddedId}`;
               }
             };

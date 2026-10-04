@@ -1,21 +1,36 @@
 import type { AstroIntegration } from 'astro';
+import type { WizThemeConfig } from './config/themeConfig';
 
-export interface WizThemeOptions {
-  siteTitle?: string;
-}
+export type WizThemeOptions = WizThemeConfig;
 
-export function wizTheme(options: WizThemeOptions = {}): AstroIntegration {
+export function wizTheme(options: WizThemeConfig = {}): AstroIntegration {
   return {
     name: 'wiz-theme',
     hooks: {
-      'astro:config:setup': () => {
-        // Theme initialization
+      'astro:config:setup': ({ updateConfig }) => {
+        updateConfig({
+          vite: {
+            define: {
+              __WIZ_THEME_INTEGRATION_OPTIONS__: JSON.stringify(options),
+            },
+          },
+        });
       },
     },
   };
 }
 
 export default wizTheme;
+
+// Configuration & Typography
+export * from './config/typography';
+export * from './config/themeConfig';
+
+// Internationalization & Locales
+export * from './i18n/types';
+export * from './i18n/index';
+export { enTranslations } from './i18n/locales/en';
+export { hiTranslations } from './i18n/locales/hi';
 
 // Layouts
 export { default as BaseLayout } from './layouts/BaseLayout.astro';

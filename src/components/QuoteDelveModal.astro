@@ -7,7 +7,22 @@
  * - Clear author and source context in top header
  * - Uninterrupted editorial prose with actionable insight and reflection prompt
  */
-const BASE = '/wisdom';
+import { resolveThemeConfig } from '../config/themeConfig';
+import type { Translations, DeepPartial } from '../i18n/types';
+
+interface Props {
+  lang?: string;
+  base?: string;
+  translations?: DeepPartial<Translations>;
+}
+
+const config = resolveThemeConfig({
+  language: Astro.props.lang,
+  base: Astro.props.base,
+  translations: Astro.props.translations,
+});
+const t = config.translations.delve;
+const BASE = config.base;
 ---
 
 <!-- Accessible Quote Delve Modal -->
@@ -47,11 +62,11 @@ const BASE = '/wisdom';
             class="text-[10px] sm:text-[11px] uppercase font-mono tracking-[0.2em] font-semibold block truncate transition-colors duration-500"
             style="color: var(--quote-accent, #fcd34d);"
           >
-            Philosophical Breakdown
+            {t.badge}
           </span>
           <div class="flex items-center gap-2 flex-wrap min-w-0">
             <h2 id="delve-modal-title" class="text-sm sm:text-base font-serif font-bold text-white tracking-wide truncate">
-              Delve into Wisdom
+              {t.title}
             </h2>
             <span class="text-white/30 text-xs hidden sm:inline">&bull;</span>
             <span id="delve-header-author" class="text-xs sm:text-sm font-sans font-medium truncate transition-colors duration-500" style="color: var(--quote-accent, #fcd34d);"></span>
@@ -65,8 +80,8 @@ const BASE = '/wisdom';
         type="button"
         class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 text-white/70 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95 shadow-sm shrink-0 ml-2"
         style="border: 1px solid var(--quote-border, rgba(255, 255, 255, 0.1));"
-        aria-label="Close delve modal (Esc)"
-        title="Close (Esc)"
+        aria-label={t.close}
+        title={t.close}
       >
         <svg class="w-4 h-4 group-hover:rotate-90 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18" />
@@ -83,7 +98,7 @@ const BASE = '/wisdom';
           id="delve-explanation-text"
           class="delve-prose text-white/90 text-sm sm:text-base font-sans pt-1"
         >
-          Explanation loading...
+          {t.loading}
         </div>
 
         <!-- 2. Practical Insight & Contemplation (Clean Flush Alignment with Generous Spacing) -->
@@ -96,7 +111,7 @@ const BASE = '/wisdom';
                 style="background-color: var(--quote-badge-bg, rgba(245, 158, 11, 0.15)); border: 1px solid var(--quote-border, rgba(245, 158, 11, 0.3)); color: var(--quote-accent, #fcd34d);"
               >
                 <span class="text-xs">⚡</span>
-                <span>Actionable Insight</span>
+                <span>{t.actionableInsight}</span>
               </span>
             </div>
             <p id="delve-practical-text" class="text-white/90 text-sm sm:text-[15px] leading-relaxed font-sans pt-0.5"></p>
@@ -107,7 +122,7 @@ const BASE = '/wisdom';
             <div class="flex items-center">
               <span class="pill inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/90 font-mono font-semibold uppercase tracking-wider text-[10px] sm:text-[11px]">
                 <span class="text-xs">🌿</span>
-                <span>Daily Contemplation</span>
+                <span>{t.dailyContemplation}</span>
               </span>
             </div>
             <p id="delve-prompt-text" class="text-sm sm:text-[15px] leading-relaxed italic font-serif tracking-wide pt-0.5 transition-colors duration-500" style="color: var(--quote-accent, #fcd34d);"></p>
@@ -122,7 +137,7 @@ const BASE = '/wisdom';
             class="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2.5 py-3.5 px-5 rounded-xl sm:rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-medium transition-all active:scale-[0.98] cursor-pointer shadow-sm text-center"
           >
             <span class="text-sm">✍️</span>
-            <span>Explore Author Dossier</span>
+            <span>{t.exploreAuthor}</span>
           </button>
 
           <button
@@ -136,7 +151,7 @@ const BASE = '/wisdom';
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
-            <span>Share Quote Card</span>
+            <span>{t.shareCard}</span>
           </button>
         </div>
       </article>

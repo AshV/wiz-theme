@@ -3,6 +3,9 @@ import '../styles/global.css';
 import GlobalBackground from '../components/GlobalBackground.astro';
 import ZenLoader from '../components/ZenLoader.astro';
 import { ClientRouter } from 'astro:transitions';
+import { resolveThemeConfig } from '../config/themeConfig';
+import type { Translations, DeepPartial } from '../i18n/types';
+import type { TypographyConfig } from '../config/typography';
 
 interface Props {
   title?: string;
@@ -12,12 +15,37 @@ interface Props {
   keywords?: string[];
   breadcrumbs?: Array<{ name: string; url: string }>;
   robots?: string;
+  // Theme Configuration & Localization props
+  lang?: string;
+  locale?: string;
+  dir?: 'ltr' | 'rtl';
+  base?: string;
+  siteTitle?: string;
+  siteUrl?: string;
+  author?: string;
+  brandingText?: string;
+  translations?: DeepPartial<Translations>;
+  typography?: Partial<TypographyConfig>;
 }
 
+const themeConfig = resolveThemeConfig({
+  language: Astro.props.lang,
+  locale: Astro.props.locale,
+  dir: Astro.props.dir,
+  base: Astro.props.base,
+  siteTitle: Astro.props.siteTitle,
+  siteDescription: Astro.props.description,
+  siteUrl: Astro.props.siteUrl,
+  author: Astro.props.author,
+  brandingText: Astro.props.brandingText,
+  translations: Astro.props.translations,
+  typography: Astro.props.typography,
+});
+
 const {
-  title = 'Wisdom — Timeless Quotes, Reimagined',
-  description = 'Experience the world\'s greatest quotes as immersive, full-screen reels. Swipe through wisdom from Rumi, Seneca, Angelou, Shakespeare, and more.',
-  image = '/wisdom/og-image.jpg',
+  title = themeConfig.siteTitle,
+  description = themeConfig.siteDescription,
+  image = `${themeConfig.base || ''}/og-image.jpg`,
   ogType = 'website',
   keywords = [
     'wisdom',
@@ -28,36 +56,30 @@ const {
     'stoicism',
     'mindfulness',
     'life quotes',
-    'rumi',
-    'marcus aurelius',
-    'seneca',
-    'maya angelou',
-    'steve jobs',
-    'albert einstein',
     'quote reels',
   ],
   breadcrumbs = [],
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 } = Astro.props;
 
-const siteUrl = Astro.site ? new URL(Astro.site).origin : (Astro.url.origin || "https://localhost:4321");
+const BASE = themeConfig.base;
+const siteUrl = themeConfig.siteUrl || (Astro.site ? new URL(Astro.site).origin : (Astro.url.origin || "https://localhost:4321"));
 const canonicalURL = new URL(Astro.url.pathname, siteUrl);
-const BASE = '/wisdom';
 const ogImageUrl = image.startsWith("http") ? image : new URL(image, siteUrl).toString();
 
 // Base WebSite Schema for Search Engines
 const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'Wisdom',
-  url: 'https://www.ashishvishwakarma.com/wisdom/',
-  description: 'Timeless quotes, reimagined as immersive visual reels.',
+  name: themeConfig.siteTitle,
+  url: `${siteUrl}${BASE}/`,
+  description: description,
   author: {
     '@type': 'Person',
-    name: 'Ashish Vishwakarma',
-    url: 'https://www.ashishvishwakarma.com',
+    name: themeConfig.author,
+    url: siteUrl,
   },
-  inLanguage: 'en-US',
+  inLanguage: themeConfig.locale,
 };
 
 // Breadcrumbs Schema if provided
@@ -68,8 +90,8 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
     {
       '@type': 'ListItem',
       position: 1,
-      name: 'Wisdom',
-      item: 'https://www.ashishvishwakarma.com/wisdom/',
+      name: themeConfig.siteTitle,
+      item: `${siteUrl}${BASE}/`,
     },
     ...breadcrumbs.map((b, idx) => ({
       '@type': 'ListItem',
@@ -81,20 +103,20 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
 } : null;
 ---
 <!doctype html>
-<html lang="en">
+<html lang={themeConfig.language} dir={themeConfig.dir}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
     <meta name="theme-color" content="#13141f" />
     <meta name="description" content={description} />
     <meta name="keywords" content={keywords.join(', ')} />
-    <meta name="author" content="Ashish Vishwakarma" />
+    <meta name="author" content={themeConfig.author} />
     <meta name="robots" content={robots} />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
     <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
-    <meta property="og:site_name" content="Wisdom" />
+    <meta property="og:site_name" content={themeConfig.siteTitle} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
@@ -102,15 +124,15 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="675" />
-    <meta property="og:image:alt" content="Wisdom — Timeless Quotes, Reimagined" />
-    <meta property="og:locale" content="en_US" />
+    <meta property="og:image:alt" content={themeConfig.siteTitle} />
+    <meta property="og:locale" content={themeConfig.locale} />
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
-    <meta name="twitter:image:alt" content="Wisdom — Timeless Quotes, Reimagined" />
+    <meta name="twitter:image:alt" content={themeConfig.siteTitle} />
 
     <link rel="canonical" href={canonicalURL} />
     <link rel="icon" href={`${BASE}/favicon.ico`} sizes="any" />
@@ -119,7 +141,7 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
     <link rel="icon" type="image/png" sizes="32x32" href={`${BASE}/favicon.png`} />
     <link rel="apple-touch-icon" sizes="180x180" href={`${BASE}/icons/apple-touch-icon.png`} />
     <link rel="manifest" href={`${BASE}/manifest.webmanifest`} />
-    <meta name="application-name" content="Wisdom" />
+    <meta name="application-name" content={themeConfig.siteTitle} />
     <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Schema.org JSON-LD Structured Data -->
@@ -128,15 +150,40 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
       <script type="application/ld+json" set:html={JSON.stringify(breadcrumbsSchema)} />
     )}
 
-    <!-- Google Fonts: Inter, Playfair Display, Cormorant Garamond -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Dynamic Google Fonts -->
+    {themeConfig.typography.googleFontsUrl && (
+      <>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href={themeConfig.typography.googleFontsUrl} rel="stylesheet" />
+      </>
+    )}
+
+    <!-- Dynamic Typography Theme Tokens -->
+    <style define:vars={{
+      fontSans: themeConfig.typography.sansFont,
+      fontQuote: themeConfig.typography.quoteFont,
+      fontDisplay: themeConfig.typography.displayFont,
+      fontEditorial: themeConfig.typography.editorialFont,
+    }}>
+      :root {
+        --font-sans: var(--fontSans) !important;
+        --font-quote: var(--fontQuote) !important;
+        --font-display: var(--fontDisplay) !important;
+        --font-editorial: var(--fontEditorial) !important;
+      }
+    </style>
 
     <title>{title}</title>
     <ClientRouter />
   </head>
   <body class="bg-surface text-text-primary overflow-hidden no-select">
+    <!-- Inject Global Client Theme Configuration -->
+    <script is:inline define:vars={{ configJson: JSON.stringify(themeConfig) }}>
+      window.__wizThemeConfig = JSON.parse(configJson);
+      window.__wisdomBaseUrl = window.__wizThemeConfig.base || '';
+    </script>
+
     <!-- Global Atmospheric Canvas & Fluid Aura -->
     <GlobalBackground />
 
@@ -182,7 +229,7 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
       aria-live="polite"
     >
       <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span>Offline Sanctuary Active</span>
+      <span>{themeConfig.translations.pwa.offlineSanctuary}</span>
     </div>
 
     <!-- Engagement-Gated PWA Install Toast -->
@@ -192,10 +239,10 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
       role="alert"
     >
       <div class="flex items-center gap-3 min-w-0">
-        <img src={`${BASE}/icons/icon-192.png`} alt="Wisdom" class="w-10 h-10 rounded-xl shadow-md shrink-0 border border-white/10" />
+        <img src={`${BASE}/icons/icon-192.png`} alt={themeConfig.siteTitle} class="w-10 h-10 rounded-xl shadow-md shrink-0 border border-white/10" />
         <div class="leading-tight truncate">
-          <div class="text-xs font-semibold text-white">Install Wisdom App</div>
-          <div class="text-[11px] text-white/60 truncate">Meditate anytime, even offline.</div>
+          <div class="text-xs font-semibold text-white">{themeConfig.translations.pwa.installTitle}</div>
+          <div class="text-[11px] text-white/60 truncate">{themeConfig.translations.pwa.installDesc}</div>
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
@@ -204,14 +251,14 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
           type="button"
           class="pill px-3.5 py-2.5 rounded-full text-white/50 hover:text-white text-xs font-medium transition-colors cursor-pointer"
         >
-          Later
+          {themeConfig.translations.pwa.later}
         </button>
         <button
           id="pwa-install-btn"
           type="button"
           class="pill pill-lg px-5 py-2.5 rounded-full bg-amber-400 text-black text-xs font-semibold hover:bg-amber-300 active:scale-95 transition-all shadow-md cursor-pointer whitespace-nowrap"
         >
-          Install
+          {themeConfig.translations.pwa.install}
         </button>
       </div>
     </div>
@@ -232,7 +279,7 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
           this.currentMood = 'reflective';
           this.lastChimeTime = 0;
           this.pendingTimer = null;
-          this.base = '/wisdom';
+          this.base = window.__wisdomBaseUrl || '';
           this.recentChimes = [];
           this.allChimes = [
             'chime-reflective',
@@ -629,7 +676,7 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
 
       // ── Progressive Web App (PWA) & Offline Sanctuary Controller ──
       (function() {
-        const BASE = '/wisdom';
+        const BASE = window.__wisdomBaseUrl || '';
 
         // 1. Register Service Worker
         if ('serviceWorker' in navigator) {

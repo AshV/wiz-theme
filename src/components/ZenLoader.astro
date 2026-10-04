@@ -13,6 +13,23 @@
  * 4. Smart Zero-Flicker Debounce: Never flashes on fast (<120ms) cached actions.
  * 5. Persists across page transitions via transition:persist="zen-loader".
  */
+import { resolveThemeConfig } from '../config/themeConfig';
+import type { WizThemeConfig } from '../config/themeConfig';
+import type { Translations } from '../i18n/types';
+
+interface Props {
+  lang?: string;
+  translations?: Translations;
+  themeConfig?: WizThemeConfig;
+}
+
+const { lang, translations: propTranslations, themeConfig: propConfig } = Astro.props;
+const config = resolveThemeConfig({
+  lang,
+  translations: propTranslations,
+  ...propConfig,
+});
+const t = config.translations;
 ---
 <div
   id="zen-loader-root"
@@ -100,7 +117,7 @@
         class="text-amber-100/90 font-serif italic text-xs tracking-widest uppercase"
         style="letter-spacing: 0.18em;"
       >
-        Gathering Wisdom
+        {t.loader.gatheringWisdom}
       </span>
     </div>
   </div>
@@ -181,7 +198,14 @@
       }, 200);
     }
 
-    function start(message = 'Gathering Wisdom') {
+    function getDefaultMessage() {
+      return (window.__wizThemeConfig && window.__wizThemeConfig.translations && window.__wizThemeConfig.translations.loader && window.__wizThemeConfig.translations.loader.gatheringWisdom) || 'Gathering Wisdom';
+    }
+
+    function start(message) {
+      if (!message) {
+        message = getDefaultMessage();
+      }
       activeCount++;
       const { text } = getEls();
       if (text && message) {
@@ -280,15 +304,16 @@
 
     // ── Astro View Transitions / ClientRouter Navigation Hooks ──
     document.addEventListener('astro:before-preparation', (e) => {
-      let label = 'Navigating...';
+      let label = getDefaultMessage();
       try {
         if (e.to) {
           const path = e.to.pathname || '';
-          if (path.includes('/author/')) label = 'Loading Author';
-          else if (path.includes('/category/')) label = 'Loading Category';
-          else if (path.includes('/tag/')) label = 'Loading Reflections';
-          else if (path.includes('/mood/')) label = 'Loading Mood';
-          else label = 'Gathering Wisdom';
+          const t = window.__wizThemeConfig?.translations;
+          if (path.includes('/author/')) label = t?.author?.title || 'Loading Author';
+          else if (path.includes('/category/')) label = t?.explore?.tabs?.categories || 'Loading Category';
+          else if (path.includes('/tag/')) label = t?.explore?.tabs?.tags || 'Loading Reflections';
+          else if (path.includes('/mood/')) label = t?.explore?.tabs?.moods || 'Loading Mood';
+          else label = getDefaultMessage();
         }
       } catch {}
       start(label);
@@ -307,7 +332,7 @@
     });
 
     window.addEventListener('beforeunload', () => {
-      start('Loading Wisdom');
+      start(window.__wizThemeConfig?.translations?.loader?.loadingWisdom || 'Loading Wisdom');
     });
   })();
 </script>
