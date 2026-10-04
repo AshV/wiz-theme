@@ -39,6 +39,8 @@ interface QuoteData {
 interface Props {
   quotes: QuoteData[];
   feedTitle?: string;
+  feedSubtitle?: string;
+  subtitle?: string;
   feedType?: string;
   matchedCount?: number;
   filterLabel?: string;
@@ -51,6 +53,8 @@ interface Props {
 const {
   quotes,
   feedTitle,
+  feedSubtitle,
+  subtitle: propSubtitle,
   feedType = 'master',
   matchedCount,
   filterLabel,
@@ -68,7 +72,8 @@ const config = resolveThemeConfig({
 
 const BASE = config.base;
 const t = config.translations;
-const displayFeedTitle = feedTitle || t.site.title;
+const displayFeedTitle = feedTitle || config.siteTitle || t.site.title;
+const displayFeedSubtitle = feedSubtitle || propSubtitle;
 const effectiveMatchedCount = matchedCount ?? (feedType === 'quote' ? 1 : (feedType === 'master' ? 0 : quotes.length));
 const firstQuote = quotes.length > 0 ? quotes[0] : null;
 const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.language) : null;
@@ -97,6 +102,11 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
       >
         {displayFeedTitle}
       </h1>
+      {displayFeedSubtitle && (
+        <p class="text-[10px] text-white/50 truncate -mt-0.5 font-normal tracking-normal">
+          {displayFeedSubtitle}
+        </p>
+      )}
     </div>
     <div class="w-16 sm:w-20 flex justify-end pointer-events-auto">
       <!-- Quote Number Label: shows current quote number -->

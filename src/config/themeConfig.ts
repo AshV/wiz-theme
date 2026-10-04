@@ -8,7 +8,10 @@ export interface WizThemeConfig {
   locale?: string;
   dir?: 'ltr' | 'rtl';
   siteTitle?: string;
+  siteName?: string;
   siteDescription?: string;
+  subtitle?: string;
+  tagline?: string;
   siteUrl?: string;
   base?: string;
   author?: string;
@@ -22,7 +25,10 @@ export interface ResolvedThemeConfig {
   locale: string;
   dir: 'ltr' | 'rtl';
   siteTitle: string;
+  siteName: string;
   siteDescription: string;
+  subtitle: string;
+  tagline: string;
   siteUrl: string;
   base: string;
   author: string;
@@ -67,10 +73,13 @@ export function resolveThemeConfig(
   const translations = getTranslations(language, merged.translations);
   const typography = getTypographyConfig(language, merged.typography);
 
-  const siteTitle = merged.siteTitle || translations.site.title;
+  const siteTitle = merged.siteName || merged.siteTitle || translations.site.title;
+  const siteName = siteTitle;
+  const subtitle = merged.subtitle || merged.tagline || translations.site.tagline;
+  const tagline = subtitle;
   const siteDescription = merged.siteDescription || translations.site.description;
   const author = merged.author || translations.site.author;
-  const brandingText = merged.brandingText || translations.site.brandingText;
+  const brandingText = merged.brandingText || siteTitle || translations.site.brandingText;
   const siteUrl = merged.siteUrl || '';
   const base = merged.base !== undefined ? merged.base : '';
 
@@ -79,6 +88,9 @@ export function resolveThemeConfig(
     locale,
     dir,
     siteTitle,
+    siteName,
+    subtitle,
+    tagline,
     siteDescription,
     siteUrl,
     base,

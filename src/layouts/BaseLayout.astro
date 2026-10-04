@@ -10,6 +10,8 @@ import type { TypographyConfig } from '../config/typography';
 interface Props {
   title?: string;
   description?: string;
+  subtitle?: string;
+  tagline?: string;
   image?: string;
   ogType?: string;
   keywords?: string[];
@@ -21,6 +23,7 @@ interface Props {
   dir?: 'ltr' | 'rtl';
   base?: string;
   siteTitle?: string;
+  siteName?: string;
   siteUrl?: string;
   author?: string;
   brandingText?: string;
@@ -33,7 +36,10 @@ const themeConfig = resolveThemeConfig({
   locale: Astro.props.locale,
   dir: Astro.props.dir,
   base: Astro.props.base,
-  siteTitle: Astro.props.siteTitle,
+  siteTitle: Astro.props.siteName || Astro.props.siteTitle,
+  siteName: Astro.props.siteName || Astro.props.siteTitle,
+  subtitle: Astro.props.subtitle || Astro.props.tagline,
+  tagline: Astro.props.subtitle || Astro.props.tagline,
   siteDescription: Astro.props.description,
   siteUrl: Astro.props.siteUrl,
   author: Astro.props.author,
@@ -42,8 +48,12 @@ const themeConfig = resolveThemeConfig({
   typography: Astro.props.typography,
 });
 
+const defaultTitle = themeConfig.subtitle
+  ? `${themeConfig.siteTitle} — ${themeConfig.subtitle}`
+  : themeConfig.siteTitle;
+
 const {
-  title = themeConfig.siteTitle,
+  title = defaultTitle,
   description = themeConfig.siteDescription,
   image = `${themeConfig.base || ''}/og-image.jpg`,
   ogType = 'website',
