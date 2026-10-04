@@ -39,10 +39,10 @@ export default defineConfig({
   },
   integrations: [
     wizTheme({
-      siteName: 'सुविचार',
-      subtitle: 'हर दिन नई प्रेरणा',
-      siteDescription: 'संत कबीर, स्वामी विवेकानंद और गौतम बुद्ध के अनमोल विचार',
-      brandingText: 'सुविचार',
+      siteName: 'तत्व',
+      subtitle: 'जीवन का सार',
+      siteDescription: 'संत कबीर, स्वामी विवेकानंद और गौतम बुद्ध के अनमोल विचार — जीवन का सार',
+      brandingText: 'तत्व',
       language: 'hi',
     }),
   ],
@@ -67,21 +67,21 @@ const quotes = [/* your quotes */];
 ---
 
 <BaseLayout
-  siteName="सुविचार"
-  subtitle="अनमोल विचार और कोट्स"
-  description="कबीर दास, स्वामी विवेकानंद और गौतम बुद्ध के अनमोल विचार"
+  siteName="तत्व"
+  subtitle="जीवन का सार"
+  description="संत कबीर, स्वामी विवेकानंद और गौतम बुद्ध के अनमोल विचार — जीवन का सार"
   lang="hi"
 >
   <ReelFeed
     quotes={quotes}
-    feedTitle="सुविचार"
-    feedSubtitle="हर दिन नई प्रेरणा"
+    feedTitle="तत्व"
+    feedSubtitle="जीवन का सार"
   />
 </BaseLayout>
 ```
 
 When specified:
-- `<title>` automatically formats as: `सुविचार — अनमोल विचार और कोट्स`
+- `<title>` automatically formats as: `तत्व — जीवन का सार`
 - Social OpenGraph (`og:site_name`, `og:title`) and Twitter card tags update automatically.
 - Schema.org JSON-LD structured data adopts the site name and description.
 - The top header bar displays both the site title and subtitle.
@@ -118,8 +118,8 @@ The reel feed header supports both a title and subtitle:
 ```astro
 <ReelFeed
   quotes={quotes}
-  feedTitle="सुविचार"
-  feedSubtitle="हर दिन नई प्रेरणा"
+  feedTitle="तत्व"
+  feedSubtitle="जीवन का सार"
 />
 ```
 
@@ -132,9 +132,9 @@ To customize site text within the translation dictionary:
   lang="hi"
   translations={{
     site: {
-      title: 'सुविचार',
-      tagline: 'हर दिन नई प्रेरणा',
-      description: 'महान विचारकों के अनमोल विचार और कोट्स।',
+      title: 'तत्व',
+      tagline: 'जीवन का सार',
+      description: 'महान विचारकों के अनमोल विचार और जीवन का सार।',
     },
   }}
 >
@@ -148,7 +148,7 @@ You can pass configuration options either to `wizTheme({...})` in `astro.config.
 
 | Property | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `siteName` / `siteTitle` | `string` | `'Wisdom'` / `'सुविचार'` | Brand or site name. Appears in `<title>`, OpenGraph tags, header, and structured data. |
+| `siteName` / `siteTitle` | `string` | `'Wisdom'` / `'तत्व'` | Brand or site name. Appears in `<title>`, OpenGraph tags, header, and structured data. |
 | `subtitle` / `tagline` | `string` | `''` | Secondary site subtitle or motto. Automatically concatenated into `<title>` (`Site — Subtitle`). |
 | `brandingText` | `string` | *(falls back to `siteName`)* | Watermark branding text printed at the bottom of generated 9:16 quote card images. |
 | `description` | `string` | *Localized default* | Meta description tag, OpenGraph summary, and Schema.org description. |
@@ -201,15 +201,15 @@ const hindiQuotes = [
 ---
 
 <BaseLayout
-  siteName="सुविचार"
-  subtitle="अनमोल विचार और कोट्स"
-  description="संत कबीर, स्वामी विवेकानंद और गौतम बुद्ध के अनमोल विचार"
+  siteName="तत्व"
+  subtitle="जीवन का सार"
+  description="संत कबीर, स्वामी विवेकानंद और गौतम बुद्ध के अनमोल विचार — जीवन का सार"
   lang="hi"
 >
   <ReelFeed
     quotes={hindiQuotes}
-    feedTitle="सुविचार"
-    feedSubtitle="हर दिन नई प्रेरणा"
+    feedTitle="तत्व"
+    feedSubtitle="जीवन का सार"
     lang="hi"
   />
 </BaseLayout>

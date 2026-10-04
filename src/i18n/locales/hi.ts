@@ -2,12 +2,12 @@ import type { Translations } from '../types';
 
 export const hiTranslations: Translations = {
   site: {
-    title: 'सुविचार — हर दिन नई प्रेरणा',
+    title: 'तत्व — जीवन का सार',
     description:
-      'महान विचारकों के अनमोल विचार और कोट्स, एक नए और खूबसूरत अंदाज में।',
-    author: 'सुविचार टीम',
-    brandingText: 'suvichar.app',
-    tagline: 'हर दिन नई प्रेरणा',
+      'महान विचारकों के अनमोल विचार और जीवन का सार, एक नए और खूबसूरत अंदाज में।',
+    author: 'तत्व',
+    brandingText: 'तत्व',
+    tagline: 'जीवन का सार',
   },
   header: {
     back: 'वापस',
