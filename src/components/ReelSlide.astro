@@ -120,8 +120,20 @@ if (len < 55) {
       0% { opacity: 0; filter: blur(12px); transform: translateY(20px) scale(0.95); }
       100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
     }
+    /* Word-by-word: the <p> itself is always visible; words animate individually */
+    @keyframes wordReveal {
+      0%   { opacity: 0; filter: blur(10px); transform: translateY(16px); }
+      100% { opacity: 1; filter: blur(0);    transform: translateY(0);     }
+    }
     .reel-slide.is-active .quote-text {
-      animation: quoteReveal 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      /* Don't animate the block; words animate instead */
+      opacity: 1;
+    }
+    .reel-slide.is-active .quote-word {
+      animation: wordReveal 0.48s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+    .reel-slide:not(.is-active) .quote-word {
+      opacity: 0;
     }
     .reel-slide.is-active .delve-pill-btn,
     .reel-slide.is-active .on-screen-share-btn {
@@ -224,7 +236,12 @@ if (len < 55) {
         class="font-display font-normal tracking-[-0.01em] text-white text-shadow-artistic select-none quote-text"
         style={`${quoteSizeStyle} font-family: var(--font-display);`}
       >
-        {content}
+        {content.split(/\s+/).map((word, i) => (
+          <span
+            class="quote-word inline"
+            style={`animation-delay: ${i * 120}ms;`}
+          >{word}{' '}</span>
+        ))}
       </p>
 
       <!-- Author Attribution & Delve Pill -->
