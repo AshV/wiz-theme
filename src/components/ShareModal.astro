@@ -85,12 +85,12 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
         <!-- Ambient multi-layered luminous glow behind preview card -->
         <div id="share-preview-glow" class="absolute -inset-8 rounded-full blur-3xl opacity-80 pointer-events-none transition-all duration-700" style="background: radial-gradient(circle, var(--quote-glow, rgba(168,85,247,0.4)) 0%, transparent 70%);"></div>
 
-        <img
-          id="share-preview-image"
-          src=""
-          alt="Quote Card Preview"
-          class="w-full h-full object-contain transition-all duration-500 opacity-0 relative z-10 rounded-[22px] sm:rounded-[28px]"
-        />
+        <!-- Animated canvas preview (replaces static img) -->
+        <canvas
+          id="share-preview-canvas"
+          class="w-full h-full object-contain transition-opacity duration-500 opacity-0 relative z-10 rounded-[22px] sm:rounded-[28px]"
+          style="display:block;"
+        ></canvas>
 
         <!-- Catchy In-Progress State during image generation -->
         <div id="share-preview-loader" class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/85 backdrop-blur-md p-5 text-center transition-all duration-300 z-20 rounded-[22px] sm:rounded-[28px]">
@@ -761,7 +761,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
 
         // Update modal UI if currently active quote matches
         if (window._currentActiveQuoteId === id) {
-          updateModalPreviewUI(entry);
+          updateModalPreviewUI({ id, slug, content, author, mood, category, sourceWork });
         }
 
         return entry;
@@ -823,17 +823,106 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
     }
   }
 
-  // Helper: Update modal preview when image is ready
-  function updateModalPreviewUI(entry) {
-    const previewImg = document.getElementById('share-preview-image');
+  // Helper: Update modal preview with animated word-by-word canvas
+  let _previewAnimRAF = null;
+  function updateModalPreviewUI(quote) {
+    const previewCanvas = document.getElementById('share-preview-canvas');
     const previewLoader = document.getElementById('share-preview-loader');
+    if (!previewCanvas || !quote) return;
 
-    if (previewImg && entry && entry.objectUrl) {
-      stopProgressMessages();
-      previewImg.src = entry.objectUrl;
-      previewImg.classList.remove('opacity-0');
-      if (previewLoader) previewLoader.classList.add('opacity-0', 'pointer-events-none');
+    // Cancel any previous animation
+    if (_previewAnimRAF) { cancelAnimationFrame(_previewAnimRAF); _previewAnimRAF = null; }
+
+    stopProgressMessages();
+    if (previewLoader) previewLoader.classList.add('opacity-0', 'pointer-events-none');
+
+    const overlayResult = renderQuoteCard9x16(quote, false, true);
+    if (!overlayResult) return;
+    const { canvas: overlayCanvas, extractedWordsData, quoteFontStr } = overlayResult;
+    const wordCount = extractedWordsData.length;
+
+    // Size the display canvas to match the overlay
+    const W = overlayCanvas.width;
+    const H = overlayCanvas.height;
+    previewCanvas.width = W;
+    previewCanvas.height = H;
+    const pCtx = previewCanvas.getContext('2d');
+
+    previewCanvas.classList.remove('opacity-0');
+
+    const STATIC_DUR = 500;
+    const WORDS_DUR  = 3500;
+    const WORD_ANIM  = 500;
+    const startTime  = Date.now();
+
+    function drawPreviewFrame() {
+      if (!pCtx) return;
+      const elapsed = Date.now() - startTime;
+      pCtx.clearRect(0, 0, W, H);
+
+      // Static overlay (bg + chrome) fades in
+      const staticP    = Math.min(elapsed / STATIC_DUR, 1.0);
+      const staticEase = 1 - Math.pow(1 - staticP, 3);
+      pCtx.save();
+      pCtx.globalAlpha = staticEase;
+      pCtx.drawImage(overlayCanvas, 0, 0, W, H);
+      pCtx.restore();
+
+      // Word-by-word kinetic typography
+      if (wordCount > 0 && elapsed > STATIC_DUR * 0.4) {
+        const wordsElapsed = elapsed - STATIC_DUR * 0.4;
+        // Compute scale ratio: overlay is at 2× supersampling
+        const scale = W / 1080;
+        pCtx.save();
+        pCtx.font = quoteFontStr.replace(/(\d+)px/, (_, px) => `${parseInt(px) * scale}px`);
+        pCtx.textAlign = 'left';
+        pCtx.textBaseline = 'middle';
+
+        for (let w = 0; w < wordCount; w++) {
+          const wordStartTime = (w / wordCount) * WORDS_DUR;
+          const wordElapsed   = wordsElapsed - wordStartTime;
+          const wordP    = Math.max(0, Math.min(wordElapsed / WORD_ANIM, 1.0));
+          const wordEase = 1 - Math.pow(1 - wordP, 4);
+          if (wordEase <= 0) continue;
+
+          const { text, x, y } = extractedWordsData[w];
+          const sx      = x * scale;
+          const sy      = y * scale;
+          const offsetY = 22 * scale * (1 - wordEase);
+          const blurPx  = 10 * (1 - wordEase);
+
+          pCtx.save();
+          pCtx.globalAlpha = wordEase;
+          if (blurPx > 0.4) pCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
+          pCtx.translate(sx, sy + offsetY);
+
+          // Shadow pass
+          pCtx.fillStyle   = 'rgba(0,0,0,0.70)';
+          pCtx.shadowColor = 'rgba(0,0,0,0.95)';
+          pCtx.shadowBlur  = 20 * scale;
+          pCtx.shadowOffsetY = 5 * scale;
+          pCtx.fillText(text, 0, 0);
+
+          // Crisp foreground
+          pCtx.filter       = 'none';
+          pCtx.shadowColor  = 'transparent';
+          pCtx.shadowBlur   = 0;
+          pCtx.shadowOffsetY = 0;
+          pCtx.fillStyle    = '#ffffff';
+          pCtx.fillText(text, 0, 0);
+          pCtx.restore();
+        }
+        pCtx.restore();
+      }
+
+      // Keep animating until last word fully appeared
+      const allWordsEnd = STATIC_DUR * 0.4 + WORDS_DUR + WORD_ANIM;
+      if (elapsed < allWordsEnd) {
+        _previewAnimRAF = requestAnimationFrame(drawPreviewFrame);
+      }
     }
+
+    drawPreviewFrame();
   }
 
   // ── Share Modal Controller ──
@@ -906,14 +995,15 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
       }
 
       // Reset preview state
-      const previewImg = document.getElementById('share-preview-image');
+      const previewCanvas = document.getElementById('share-preview-canvas');
       const previewLoader = document.getElementById('share-preview-loader');
+      if (_previewAnimRAF) { cancelAnimationFrame(_previewAnimRAF); _previewAnimRAF = null; }
 
       if (isOpeningModal) {
         if (window.wisdomBackground && typeof window.wisdomBackground.stop === 'function') {
           window.wisdomBackground.stop();
         }
-        if (previewImg) previewImg.classList.add('opacity-0');
+        if (previewCanvas) previewCanvas.classList.add('opacity-0');
         if (previewLoader) previewLoader.classList.remove('opacity-0', 'pointer-events-none');
         startProgressMessages();
 
@@ -924,10 +1014,11 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
         return;
       }
 
+      const currentQuote = { id: currentQuoteId, slug: currentQuoteSlug, content: currentQuoteText, author: currentAuthor, mood: currentMood, category: currentCategory, sourceWork: currentSourceWork };
       if (window.quoteCardCache.has(currentQuoteId)) {
-        updateModalPreviewUI(window.quoteCardCache.get(currentQuoteId));
+        updateModalPreviewUI(currentQuote);
       } else {
-        if (previewImg) previewImg.classList.add('opacity-0');
+        if (previewCanvas) previewCanvas.classList.add('opacity-0');
         if (previewLoader) previewLoader.classList.remove('opacity-0', 'pointer-events-none');
         startProgressMessages();
         // Immediately trigger background preparation
@@ -1075,10 +1166,10 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
           let isRecording = true;
           let rAF = null;
           const startTime = Date.now();
-          // Total animation window: 400ms static elements fade-in + words stagger over 2.0s
-          const STATIC_DUR = 400;  // ms for non-text elements (bg, brand, border)
-          const WORDS_DUR  = 2000; // ms over which words stagger
-          const WORD_ANIM  = 280;  // ms each word takes to go 0→1
+          // Total animation: 600ms static fade-in + words stagger over 4.5s
+          const STATIC_DUR = 600;
+          const WORDS_DUR  = 4500; // spread words more slowly
+          const WORD_ANIM  = 550;  // each word takes longer to resolve
 
           function drawFrame() {
             if (!isRecording) return;
