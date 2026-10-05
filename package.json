@@ -4,6 +4,9 @@
   "description": "High-performance immersive quote reel theme for Astro with dynamic shaders, ambient audio, and editorial modals",
   "type": "module",
   "main": "./src/index.ts",
+  "bin": {
+    "wiz-theme": "./bin/generate.js"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./components/*": "./src/components/*",
