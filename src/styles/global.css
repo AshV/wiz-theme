@@ -328,36 +328,36 @@ body {
 }
 
 .pill-flipping-out {
-  animation: pill-flip-out 0.14s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: pill-flip-out 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .pill-flipping-in {
-  animation: pill-flip-in 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: pill-flip-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 @keyframes pill-flip-out {
   0% {
-    transform: perspective(600px) rotateX(0deg) scale(1);
+    transform: translateY(0) scale(1);
     opacity: 1;
+    filter: blur(0);
   }
   100% {
-    transform: perspective(600px) rotateX(-90deg) scale(0.92);
-    opacity: 0.15;
+    transform: translateY(-8px) scale(0.95);
+    opacity: 0;
+    filter: blur(8px);
   }
 }
 
 @keyframes pill-flip-in {
   0% {
-    transform: perspective(600px) rotateX(90deg) scale(0.92);
-    opacity: 0.15;
-  }
-  70% {
-    transform: perspective(600px) rotateX(-8deg) scale(1.02);
-    opacity: 1;
+    transform: translateY(16px) scale(0.95);
+    opacity: 0;
+    filter: blur(12px);
   }
   100% {
-    transform: perspective(600px) rotateX(0deg) scale(1);
+    transform: translateY(0) scale(1);
     opacity: 1;
+    filter: blur(0);
   }
 }
 

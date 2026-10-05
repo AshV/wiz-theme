@@ -123,7 +123,15 @@ if (len < 55) {
     .reel-slide.is-active .quote-text {
       animation: quoteReveal 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
-    .reel-slide:not(.is-active) .quote-text {
+    .reel-slide.is-active .delve-pill-btn,
+    .reel-slide.is-active .on-screen-share-btn {
+      animation: quoteReveal 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      animation-delay: 0.1s;
+      opacity: 0;
+    }
+    .reel-slide:not(.is-active) .quote-text,
+    .reel-slide:not(.is-active) .delve-pill-btn,
+    .reel-slide:not(.is-active) .on-screen-share-btn {
       opacity: 0;
     }
     @keyframes heartBurst {
