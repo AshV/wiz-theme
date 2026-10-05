@@ -174,7 +174,7 @@ if (len < 55) {
     class="relative z-20 flex-1 flex flex-col items-center justify-center pointer-events-none text-center w-full my-auto"
     style="padding-right: clamp(1.75rem, 6vw, 4.5rem); padding-left: clamp(1.75rem, 6vw, 4.5rem);"
   >
-    <div class={`${maxContainerClass} w-full flex flex-col items-center justify-center`}>
+    <div class={`${maxContainerClass} w-full flex flex-col items-center justify-center quote-content-container`}>
       <!-- Artistic Decorative Quote Mark -->
       <div class="text-4xl sm:text-5xl md:text-6xl leading-none text-white/30 font-serif select-none mb-3 font-display">
         {t.slide.quoteMarkOpen}
@@ -233,10 +233,10 @@ if (len < 55) {
     <div class="h-9 sm:h-10 w-full max-w-md pointer-events-none"></div>
   </div>
 
-  <!-- Prominent On-Screen Share CTA (above the clearance spacer) -->
+  <!-- Prominent On-Screen Share CTA (above the clearance spacer, dynamically hidden if overlapping) -->
   <button
     type="button"
-    class="on-screen-share-btn absolute bottom-32 sm:bottom-36 left-1/2 -translate-x-1/2 z-30 pointer-events-auto flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all active:scale-95 cursor-pointer"
+    class="on-screen-share-btn absolute bottom-32 sm:bottom-36 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all duration-300 active:scale-95 cursor-pointer opacity-0 pointer-events-none"
     data-quote-id={id}
   >
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-white drop-shadow-md">
@@ -246,6 +246,7 @@ if (len < 55) {
     </svg>
     <span class="text-sm sm:text-base font-semibold tracking-wide shadow-black/50 drop-shadow-md">Share to Story</span>
   </button>
+
 
   <!-- Watermark for organic screenshots -->
   <div class="absolute bottom-[max(env(safe-area-inset-bottom,12px),16px)] left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-40 flex flex-col items-center gap-1 mix-blend-overlay">
@@ -263,6 +264,31 @@ if (len < 55) {
 <script>
   // Simple logic to trigger share modal and double-tap heart burst
   if (typeof window !== 'undefined') {
+    // Dynamic Share Button Visibility logic
+    const updateShareVisibility = () => {
+      document.querySelectorAll('.reel-slide').forEach(slide => {
+        const container = slide.querySelector('.quote-content-container');
+        const shareBtn = slide.querySelector('.on-screen-share-btn');
+        if (container && shareBtn) {
+          // Hide button if the quote container requires too much vertical space
+          if (container.offsetHeight > slide.offsetHeight - 380) {
+            shareBtn.style.opacity = '0';
+            shareBtn.style.pointerEvents = 'none';
+          } else {
+            shareBtn.style.opacity = '1';
+            shareBtn.style.pointerEvents = 'auto';
+          }
+        }
+      });
+    };
+
+    window.addEventListener('resize', updateShareVisibility);
+    setTimeout(updateShareVisibility, 50);
+    setTimeout(updateShareVisibility, 500);
+    // Observe resize of the document for reliable updates
+    const resizeObserver = new ResizeObserver(() => updateShareVisibility());
+    resizeObserver.observe(document.body);
+
     document.addEventListener('click', (e) => {
       const target = e.target;
       if (target && target.closest) {
@@ -301,7 +327,14 @@ if (len < 55) {
             // Trigger like logic if right rail exists
             const likeBtn = document.getElementById('like-btn');
             if (likeBtn) {
-              likeBtn.click();
+              const quoteId = zone.dataset.doubletapZone;
+              if (window.likedQuotes && quoteId) {
+                if (!window.likedQuotes.has(quoteId)) {
+                  likeBtn.click();
+                }
+              } else {
+                likeBtn.click();
+              }
             }
           }
         }
@@ -329,7 +362,14 @@ if (len < 55) {
               }
               const likeBtn = document.getElementById('like-btn');
               if (likeBtn) {
-                likeBtn.click();
+                const quoteId = zone.dataset.doubletapZone;
+                if (window.likedQuotes && quoteId) {
+                  if (!window.likedQuotes.has(quoteId)) {
+                    likeBtn.click();
+                  }
+                } else {
+                  likeBtn.click();
+                }
               }
             }
           }
