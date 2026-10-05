@@ -253,6 +253,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
 
     // ── 1. Live Screen Background Canvas Snapshot ──
     const ambientCanvas = document.getElementById('ambient-canvas');
+    const particlesCanvas = document.getElementById('particles-canvas');
     let hasDrawnCanvas = false;
 
     if (!transparentBg && ambientCanvas && ambientCanvas.width > 0 && ambientCanvas.height > 0) {
@@ -272,6 +273,15 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
         }
 
         ctx.drawImage(ambientCanvas, sx, sy, sw, sh, 0, 0, width, height);
+        
+        if (particlesCanvas && particlesCanvas.width > 0) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          ctx.globalAlpha = 0.7;
+          ctx.drawImage(particlesCanvas, sx, sy, sw, sh, 0, 0, width, height);
+          ctx.restore();
+        }
+        
         hasDrawnCanvas = true;
       } catch (err) {
         console.warn('Live canvas snapshot fallback:', err);
@@ -983,6 +993,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
           const vCtx = videoCanvas.getContext('2d');
           
           const ambientCanvas = document.getElementById('ambient-canvas');
+          const particlesCanvas = document.getElementById('particles-canvas');
           if (window.wisdomBackground && typeof window.wisdomBackground.start === 'function') {
             window.wisdomBackground.start();
           }
@@ -1008,6 +1019,14 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
                  sy = (ch - sh) / 2;
                }
                vCtx.drawImage(ambientCanvas, sx, sy, sw, sh, 0, 0, 1080, 1920);
+               
+               if (particlesCanvas && particlesCanvas.width > 0) {
+                 vCtx.save();
+                 vCtx.globalCompositeOperation = 'screen';
+                 vCtx.globalAlpha = 0.7;
+                 vCtx.drawImage(particlesCanvas, sx, sy, sw, sh, 0, 0, 1080, 1920);
+                 vCtx.restore();
+               }
             }
             
             vCtx.drawImage(overlayCanvas, 0, 0, 1080, 1920);
