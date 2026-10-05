@@ -1205,10 +1205,10 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
             [allNewPills[i], allNewPills[j]] = [allNewPills[j], allNewPills[i]];
           }
 
-          // Apply staggered animation delays (starting after Delve which is 0.1s)
+          // Apply staggered animation delays (starting around 1.0s to follow Delve which is at 1.0s absolute)
           allNewPills.forEach((p, idx) => {
             p.classList.remove('pill-flipping-out');
-            p.style.animationDelay = `${0.2 + (idx * 0.15)}s`;
+            p.style.animationDelay = `${1.0 + (idx * 0.15)}s`;
             p.classList.add('pill-flipping-in');
           });
 
