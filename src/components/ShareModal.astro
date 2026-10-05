@@ -1167,12 +1167,11 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
           let rAF = null;
           const startTime = Date.now();
           // Timing scales with word count — 120ms stagger per word, 550ms per word resolve
-          const STATIC_DUR      = 600;
+          const STATIC_DUR       = 600;
           const PER_WORD_STAGGER = 120;  // ms between each word starting
           const WORD_ANIM        = 550;  // ms each word takes to fully resolve
-          // Video runs for: static fade + all words staggered + last word resolve + 1.5s hold
-          const animEndMs = STATIC_DUR * 0.5 + (wordCount - 1) * PER_WORD_STAGGER + WORD_ANIM;
-          const videoDurationMs = Math.round(animEndMs + 1500); // 1.5s hold after last word
+          // Video is always 10s: animation finishes when it finishes, rest is live hold
+          const videoDurationMs  = 10000;
 
           function drawFrame() {
             if (!isRecording) return;
