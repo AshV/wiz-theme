@@ -1061,7 +1061,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
           
           drawFrame();
 
-          const stream = videoCanvas.captureStream(30);
+          const stream = videoCanvas.captureStream(60); // 60 FPS for ultra fluid animation
           
           let mimeType = 'video/mp4';
           let extension = 'mp4';
@@ -1071,7 +1071,8 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
             extension = 'webm';
           }
 
-          const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 4500000 });
+          // 10 Mbps bitrate to prevent pixelation at 60 FPS with gradients and particles
+          const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 10000000 });
           const chunks = [];
           recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
           
