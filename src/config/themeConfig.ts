@@ -16,6 +16,8 @@ export interface WizThemeConfig {
   base?: string;
   author?: string;
   brandingText?: string;
+  logoUrl?: string;
+  faviconUrl?: string;
   typography?: Partial<TypographyConfig>;
   translations?: DeepPartial<Translations>;
 }
@@ -33,6 +35,8 @@ export interface ResolvedThemeConfig {
   base: string;
   author: string;
   brandingText: string;
+  logoUrl: string;
+  faviconUrl: string;
   typography: TypographyConfig;
   translations: Translations;
 }
@@ -80,6 +84,8 @@ export function resolveThemeConfig(
   const siteDescription = merged.siteDescription || translations.site.description;
   const author = merged.author || translations.site.author;
   const brandingText = merged.brandingText || siteTitle || translations.site.brandingText;
+  const logoUrl = merged.logoUrl || '';
+  const faviconUrl = merged.faviconUrl || '/favicon.svg';
   const siteUrl = merged.siteUrl || '';
   const base = merged.base !== undefined ? merged.base : '';
 
@@ -96,6 +102,8 @@ export function resolveThemeConfig(
     base,
     author,
     brandingText,
+    logoUrl,
+    faviconUrl,
     typography,
     translations,
   };

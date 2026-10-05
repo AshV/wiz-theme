@@ -27,6 +27,8 @@ interface Props {
   siteUrl?: string;
   author?: string;
   brandingText?: string;
+  logoUrl?: string;
+  faviconUrl?: string;
   translations?: DeepPartial<Translations>;
   typography?: Partial<TypographyConfig>;
 }
@@ -44,6 +46,8 @@ const themeConfig = resolveThemeConfig({
   siteUrl: Astro.props.siteUrl,
   author: Astro.props.author,
   brandingText: Astro.props.brandingText,
+  logoUrl: Astro.props.logoUrl,
+  faviconUrl: Astro.props.faviconUrl,
   translations: Astro.props.translations,
   typography: Astro.props.typography,
 });
@@ -146,10 +150,9 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
     <meta name="twitter:image:alt" content={themeConfig.siteTitle} />
 
     <link rel="canonical" href={canonicalURL} />
-    <link rel="icon" href={`${BASE}/favicon.ico`} sizes="any" />
-    <link rel="icon" type="image/svg+xml" href={`${BASE}/favicon.svg`} />
-    <link rel="icon" type="image/png" sizes="64x64" href={`${BASE}/icons/favicon-64.png`} />
-    <link rel="icon" type="image/png" sizes="32x32" href={`${BASE}/favicon.png`} />
+    {themeConfig.faviconUrl && (
+      <link rel="icon" href={themeConfig.faviconUrl.startsWith('http') ? themeConfig.faviconUrl : `${BASE}${themeConfig.faviconUrl}`} />
+    )}
     <link rel="apple-touch-icon" sizes="180x180" href={`${BASE}/icons/apple-touch-icon.png`} />
     <link rel="manifest" href={`${BASE}/manifest.webmanifest`} />
     <meta name="application-name" content={themeConfig.siteTitle} />
