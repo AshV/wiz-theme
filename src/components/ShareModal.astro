@@ -200,7 +200,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
   // ── High-Performance Canvas 2D 9:16 Quote Card Generator ──
   // Renders a stunning 2160×3840 Ultra-HD 9:16 Story/Reel card (2x supersampling for razor sharpness)
   // matching the exact visual style, colors, and live ambient background shown on screen.
-  function renderQuoteCard9x16(quote, transparentBg = false) {
+  function renderQuoteCard9x16(quote, transparentBg = false, extractWords = false) {
     const width = 1080;
     const height = 1920;
     const scale = 2; // 2x supersampling for ultra-crisp Retina and 4K display sharpness
@@ -459,34 +459,56 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
     // Quote Text Lines: Two-Pass Rendering for Ultra-Sharp Foreground Letterforms
     const quoteStartY = blockStartY + quoteMarkHeight + quoteMarkGap;
     const quoteFontStr = `400 ${fontSize}px ${quoteFont}`;
+    const extractedWordsData = [];
 
-    // Pass 1: Cinematic drop shadow underneath (protects contrast on bright blooms)
-    ctx.save();
-    ctx.font = quoteFontStr;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.60)';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.92)';
-    ctx.shadowBlur = 24;
-    ctx.shadowOffsetY = 6;
-    for (let i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i], width / 2, quoteStartY + (i * lineHeight) + (lineHeight / 2));
-    }
-    ctx.restore();
+    if (extractWords) {
+      ctx.save();
+      ctx.font = quoteFontStr;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < lines.length; i++) {
+        const lineStr = lines[i];
+        const lineY = quoteStartY + (i * lineHeight) + (lineHeight / 2);
+        const lineWidth = ctx.measureText(lineStr).width;
+        let currentX = (width - lineWidth) / 2;
+        
+        const lineWords = lineStr.split(' ');
+        for (let w = 0; w < lineWords.length; w++) {
+          const word = lineWords[w];
+          extractedWordsData.push({ text: word, x: currentX, y: lineY });
+          currentX += ctx.measureText(word + ' ').width;
+        }
+      }
+      ctx.restore();
+    } else {
+      // Pass 1: Cinematic drop shadow underneath (protects contrast on bright blooms)
+      ctx.save();
+      ctx.font = quoteFontStr;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.60)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.92)';
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetY = 6;
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], width / 2, quoteStartY + (i * lineHeight) + (lineHeight / 2));
+      }
+      ctx.restore();
 
-    // Pass 2: Razor-sharp, pure white foreground text (Zero shadow blur on glyph edges)
-    ctx.save();
-    ctx.font = quoteFontStr;
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
-    for (let i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i], width / 2, quoteStartY + (i * lineHeight) + (lineHeight / 2));
+      // Pass 2: Razor-sharp, pure white foreground text (Zero shadow blur on glyph edges)
+      ctx.save();
+      ctx.font = quoteFontStr;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], width / 2, quoteStartY + (i * lineHeight) + (lineHeight / 2));
+      }
+      ctx.restore();
     }
-    ctx.restore();
 
     // Author Attribution: Two-Pass Rendering for Crisp Typography
     const authorY = quoteStartY + totalQuoteTextHeight + authorGap;
@@ -564,7 +586,10 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
       : brandingDomain;
     ctx.fillText(watermarkText, width / 2, height - 90);
     ctx.restore();
-
+    if (extractWords) {
+      return { canvas, extractedWordsData, quoteFontStr };
+    }
+    
     return canvas;
   }
 
@@ -984,8 +1009,10 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
             };
           }
           
-          const overlayCanvas = renderQuoteCard9x16(quote, true);
-          if (!overlayCanvas) throw new Error('Overlay rendering failed');
+          const overlayResult = renderQuoteCard9x16(quote, true, true);
+          if (!overlayResult) throw new Error('Overlay rendering failed');
+          const { canvas: overlayCanvas, extractedWordsData, quoteFontStr } = overlayResult;
+          const wordCount = extractedWordsData.length;
 
           const videoCanvas = document.createElement('canvas');
           videoCanvas.width = 1080;
@@ -1001,11 +1028,17 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
           let isRecording = true;
           let rAF = null;
           const startTime = Date.now();
+          // Total animation window: 400ms static elements fade-in + words stagger over 2.0s
+          const STATIC_DUR = 400;  // ms for non-text elements (bg, brand, border)
+          const WORDS_DUR  = 2000; // ms over which words stagger
+          const WORD_ANIM  = 280;  // ms each word takes to go 0→1
 
           function drawFrame() {
             if (!isRecording) return;
             vCtx.clearRect(0, 0, 1080, 1920);
-            
+            const elapsed = Date.now() - startTime;
+
+            // ── 1. Composite live background layers ──
             if (ambientCanvas && ambientCanvas.width > 0) {
                const cw = ambientCanvas.width;
                const ch = ambientCanvas.height;
@@ -1030,31 +1063,57 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
                }
             }
             
-            // Calculate animation progress (0.0 to 1.0 over 1200ms)
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / 1200, 1.0);
-            
-            // Easing (easeOutQuart) for smooth deceleration
-            const ease = 1 - Math.pow(1 - progress, 4);
-            
-            const currentAlpha = ease;
-            const currentBlur = 12 * (1 - ease);
-            const currentY = 40 * (1 - ease);
-            const currentScale = 0.95 + (0.05 * ease);
-            
+            // ── 2. Static overlay (brand, category, border, author) fades in first ──
+            const staticP = Math.min(elapsed / STATIC_DUR, 1.0);
+            const staticEase = 1 - Math.pow(1 - staticP, 3);
             vCtx.save();
-            vCtx.globalAlpha = currentAlpha;
-            if (currentBlur > 0.1) {
-              vCtx.filter = `blur(${currentBlur}px)`;
-            }
-            
-            // Transform around center
-            vCtx.translate(1080 / 2, 1920 / 2 + currentY);
-            vCtx.scale(currentScale, currentScale);
-            vCtx.translate(-1080 / 2, -1920 / 2);
-            
+            vCtx.globalAlpha = staticEase;
             vCtx.drawImage(overlayCanvas, 0, 0, 1080, 1920);
             vCtx.restore();
+
+            // ── 3. Word-by-word kinetic typography ──
+            if (wordCount > 0 && elapsed > STATIC_DUR * 0.5) {
+              const wordsElapsed = elapsed - STATIC_DUR * 0.5;
+              vCtx.save();
+              vCtx.font = quoteFontStr;
+              vCtx.textAlign = 'left';
+              vCtx.textBaseline = 'middle';
+
+              for (let w = 0; w < wordCount; w++) {
+                const wordStartTime = (w / wordCount) * WORDS_DUR;
+                const wordElapsed = wordsElapsed - wordStartTime;
+                const wordP = Math.max(0, Math.min(wordElapsed / WORD_ANIM, 1.0));
+                const wordEase = 1 - Math.pow(1 - wordP, 4); // easeOutQuart
+
+                if (wordEase <= 0) continue;
+
+                const { text, x, y } = extractedWordsData[w];
+                const offsetY = 18 * (1 - wordEase);
+                const blurPx = 8 * (1 - wordEase);
+
+                vCtx.save();
+                vCtx.globalAlpha = wordEase;
+                if (blurPx > 0.3) vCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
+                vCtx.translate(x, y + offsetY);
+
+                // Shadow pass
+                vCtx.fillStyle = 'rgba(0,0,0,0.70)';
+                vCtx.shadowColor = 'rgba(0,0,0,0.95)';
+                vCtx.shadowBlur = 20;
+                vCtx.shadowOffsetY = 5;
+                vCtx.fillText(text, 0, 0);
+
+                // Sharp foreground pass (no blur on letter edges)
+                vCtx.filter = 'none';
+                vCtx.shadowColor = 'transparent';
+                vCtx.shadowBlur = 0;
+                vCtx.shadowOffsetY = 0;
+                vCtx.fillStyle = '#ffffff';
+                vCtx.fillText(text, 0, 0);
+                vCtx.restore();
+              }
+              vCtx.restore();
+            }
             
             rAF = requestAnimationFrame(drawFrame);
           }
