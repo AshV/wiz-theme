@@ -411,8 +411,8 @@
       ctx.save();
       const cx = width * 0.5;
       const cy = height * 0.5;
-      const rx = Math.max(width * 0.46, Math.min(width, height) * 0.44);
-      const ry = Math.max(height * 0.32, Math.min(width, height) * 0.38);
+      const rx = Math.max(width * 0.46, Math.max(width, height) * 0.44);
+      const ry = Math.max(height * 0.32, Math.max(width, height) * 0.38);
 
       ctx.lineWidth = 1.1;
 
@@ -559,8 +559,8 @@
       ctx.save();
       const cx = width * 0.5;
       const cy = height * 0.5;
-      const a = Math.max(width * 0.46, Math.min(width, height) * 0.44);
-      const b = Math.max(height * 0.32, Math.min(width, height) * 0.38);
+      const a = Math.max(width * 0.46, Math.max(width, height) * 0.44);
+      const b = Math.max(height * 0.32, Math.max(width, height) * 0.38);
 
       ctx.lineWidth = 1.0;
       ctx.strokeStyle = createStrokeGradient(cx - a, cy - b, cx + a, cy + b, 0.18);
@@ -597,8 +597,8 @@
       ctx.save();
       const cx = width * 0.5;
       const cy = height * 0.5;
-      const rx = Math.max(width * 0.46, Math.min(width, height) * 0.44);
-      const ry = Math.max(height * 0.32, Math.min(width, height) * 0.38);
+      const rx = Math.max(width * 0.46, Math.max(width, height) * 0.44);
+      const ry = Math.max(height * 0.32, Math.max(width, height) * 0.38);
       const rotY = time * 0.12;
       const rotX = Math.PI / 6;
 
@@ -737,8 +737,8 @@
       ctx.save();
       const cx = width * 0.5;
       const cy = height * 0.5;
-      const R = Math.min(width, height) * 0.38;
-      const r = Math.min(width, height) * 0.18;
+      const R = Math.max(width, height) * 0.38;
+      const r = Math.max(width, height) * 0.18;
       const rotY = time * 0.15;
       const rotX = Math.PI / 4 + Math.sin(time * 0.1) * 0.15;
 
@@ -796,7 +796,7 @@
       ctx.save();
       const cx = width * 0.5;
       const cy = height * 0.5;
-      const maxR = Math.max(width * 0.44, Math.min(width, height) * 0.44);
+      const maxR = Math.max(width * 0.44, Math.max(width, height) * 0.44);
 
       ctx.lineWidth = 1.0;
       const petalLayers = 4;
@@ -915,7 +915,7 @@
       ctx.save();
       const cx = width * 0.5;
       const cy = height * 0.5;
-      const baseR = Math.max(width * 0.44, Math.min(width, height) * 0.42);
+      const baseR = Math.max(width * 0.44, Math.max(width, height) * 0.42);
 
       ctx.lineWidth = 1.0;
       const polyConfigs = [
@@ -963,7 +963,7 @@
       ctx.save();
       const cx = width * 0.5;
       const cy = height * 0.5;
-      const maxR = Math.max(width * 0.46, Math.min(width, height) * 0.44);
+      const maxR = Math.max(width * 0.46, Math.max(width, height) * 0.44);
       ctx.lineWidth = 1.0;
 
       const rings = 8;
@@ -1025,7 +1025,7 @@
       ctx.save();
       const cx = width * 0.5;
       const cy = height * 0.5;
-      const diskR = Math.max(width * 0.44, Math.min(width, height) * 0.42);
+      const diskR = Math.max(width * 0.44, Math.max(width, height) * 0.42);
 
       ctx.lineWidth = 1.0;
       ctx.strokeStyle = createStrokeGradient(cx - diskR, cy, cx + diskR, cy, 0.18);
@@ -1060,7 +1060,7 @@
       ctx.save();
       const cx = width * 0.5;
       const cy = height * 0.5;
-      const maxR = Math.max(width * 0.45, Math.min(width, height) * 0.42);
+      const maxR = Math.max(width * 0.45, Math.max(width, height) * 0.42);
       ctx.lineWidth = 1.0;
 
       const rings = 9;
