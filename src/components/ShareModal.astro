@@ -131,6 +131,19 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
         <span>{t.shareImage}</span>
       </button>
 
+      <!-- 1b. Action: Share Video (Pill-shaped) -->
+      <button
+        id="share-video-btn"
+        class="w-full min-h-[54px] sm:min-h-[58px] py-4 px-8 rounded-full text-white font-bold text-base sm:text-lg flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer shadow-lg active:scale-[0.98] leading-normal tracking-wide border border-white/25"
+        style="background: linear-gradient(135deg, var(--quote-accent-dark, #ec4899), var(--quote-accent, #8b5cf6)); box-shadow: 0 10px 25px var(--quote-glow-soft, rgba(139,92,246,0.4));"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polygon points="23 7 16 12 23 17 23 7" />
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+        </svg>
+        <span>Share Video</span>
+      </button>
+
       <!-- 2. Secondary Quick Actions Row: Copy Image | Save PNG | Copy Link -->
       <div class="grid grid-cols-3 gap-3 sm:gap-3.5 px-0.5">
         <!-- Copy Image to Clipboard -->
@@ -187,7 +200,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
   // ── High-Performance Canvas 2D 9:16 Quote Card Generator ──
   // Renders a stunning 2160×3840 Ultra-HD 9:16 Story/Reel card (2x supersampling for razor sharpness)
   // matching the exact visual style, colors, and live ambient background shown on screen.
-  function renderQuoteCard9x16(quote) {
+  function renderQuoteCard9x16(quote, transparentBg = false) {
     const width = 1080;
     const height = 1920;
     const scale = 2; // 2x supersampling for ultra-crisp Retina and 4K display sharpness
@@ -242,7 +255,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
     const ambientCanvas = document.getElementById('ambient-canvas');
     let hasDrawnCanvas = false;
 
-    if (ambientCanvas && ambientCanvas.width > 0 && ambientCanvas.height > 0) {
+    if (!transparentBg && ambientCanvas && ambientCanvas.width > 0 && ambientCanvas.height > 0) {
       try {
         const cw = ambientCanvas.width;
         const ch = ambientCanvas.height;
@@ -266,7 +279,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
     }
 
     // Fallback if ambient-canvas was not yet painted:
-    if (!hasDrawnCanvas) {
+    if (!transparentBg && !hasDrawnCanvas) {
       const baseGrad = ctx.createLinearGradient(0, 0, 0, height);
       baseGrad.addColorStop(0, 'rgb(' + bgTop.join(',') + ')');
       baseGrad.addColorStop(0.5, 'rgb(' + bgMid.join(',') + ')');
@@ -282,37 +295,39 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
     }
 
     // ── 2. Atmospheric Soft Light Bloom Overlays (Matching Shown Theme) ──
-    // Glow 1: Top-Left
-    const g1 = ctx.createRadialGradient(width * 0.05, height * 0.05, 0, width * 0.05, height * 0.05, width * 0.85);
-    g1.addColorStop(0, glow1);
-    g1.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = g1;
-    ctx.fillRect(0, 0, width, height);
+    if (!transparentBg) {
+      // Glow 1: Top-Left
+      const g1 = ctx.createRadialGradient(width * 0.05, height * 0.05, 0, width * 0.05, height * 0.05, width * 0.85);
+      g1.addColorStop(0, glow1);
+      g1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g1;
+      ctx.fillRect(0, 0, width, height);
 
-    // Glow 2: Bottom-Right
-    const g2 = ctx.createRadialGradient(width * 0.95, height * 0.95, 0, width * 0.95, height * 0.95, width * 0.90);
-    g2.addColorStop(0, glow2);
-    g2.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = g2;
-    ctx.fillRect(0, 0, width, height);
+      // Glow 2: Bottom-Right
+      const g2 = ctx.createRadialGradient(width * 0.95, height * 0.95, 0, width * 0.95, height * 0.95, width * 0.90);
+      g2.addColorStop(0, glow2);
+      g2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g2;
+      ctx.fillRect(0, 0, width, height);
 
-    // Glow Center: Soft ambient illumination
-    const gc = ctx.createRadialGradient(width * 0.5, height * 0.48, 0, width * 0.5, height * 0.48, width * 0.65);
-    gc.addColorStop(0, glowCenter);
-    gc.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = gc;
-    ctx.fillRect(0, 0, width, height);
+      // Glow Center: Soft ambient illumination
+      const gc = ctx.createRadialGradient(width * 0.5, height * 0.48, 0, width * 0.5, height * 0.48, width * 0.65);
+      gc.addColorStop(0, glowCenter);
+      gc.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = gc;
+      ctx.fillRect(0, 0, width, height);
 
-    // ── 3. Subtle Atmospheric Vignette (Soft & Radiant, never muddy) ──
-    // Tinted with shown theme's deep tones; protects typography while letting bright luminous line art shine
-    const vignette = ctx.createLinearGradient(0, height, 0, 0); // bottom to top
-    vignette.addColorStop(0, 'rgba(' + bgBottom.join(',') + ', 0.55)');      // bottom: soft footer protection
-    vignette.addColorStop(0.20, 'rgba(' + bgBottom.join(',') + ', 0.20)');
-    vignette.addColorStop(0.50, 'rgba(0, 0, 0, 0.04)');                     // center: maximum luminosity & clarity
-    vignette.addColorStop(0.80, 'rgba(' + bgTop.join(',') + ', 0.20)');
-    vignette.addColorStop(1, 'rgba(' + bgTop.join(',') + ', 0.48)');         // top: subtle header frame
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, width, height);
+      // ── 3. Subtle Atmospheric Vignette (Soft & Radiant, never muddy) ──
+      // Tinted with shown theme's deep tones; protects typography while letting bright luminous line art shine
+      const vignette = ctx.createLinearGradient(0, height, 0, 0); // bottom to top
+      vignette.addColorStop(0, 'rgba(' + bgBottom.join(',') + ', 0.55)');      // bottom: soft footer protection
+      vignette.addColorStop(0.20, 'rgba(' + bgBottom.join(',') + ', 0.20)');
+      vignette.addColorStop(0.50, 'rgba(0, 0, 0, 0.04)');                     // center: maximum luminosity & clarity
+      vignette.addColorStop(0.80, 'rgba(' + bgTop.join(',') + ', 0.20)');
+      vignette.addColorStop(1, 'rgba(' + bgTop.join(',') + ', 0.48)');         // top: subtle header frame
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, width, height);
+    }
 
     // ── 4. Editorial Inner Border Frame (Inset 48px, rounded 32px) ──
     const inset = 48;
@@ -746,6 +761,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
     const closeBtn = document.getElementById('share-close-btn');
     const linkBtn = document.getElementById('share-link-btn');
     const imageBtn = document.getElementById('share-image-btn');
+    const videoBtn = document.getElementById('share-video-btn');
     const copyImageBtn = document.getElementById('copy-image-btn');
     const downloadImageBtn = document.getElementById('download-image-btn');
 
@@ -924,6 +940,164 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
           window.firebaseStats.recordShare(currentQuoteId, 'download');
         }
         closeModal();
+    }
+
+    // 1b. Primary: Native Share Video (MediaRecorder API)
+    if (videoBtn) {
+      videoBtn.onclick = async () => {
+        const previewImg = document.getElementById('share-preview-image');
+        const previewLoader = document.getElementById('share-preview-loader');
+        const statusEl = document.getElementById('share-loader-status');
+
+        if (previewImg) previewImg.classList.add('opacity-0');
+        if (previewLoader) previewLoader.classList.remove('opacity-0', 'pointer-events-none');
+        if (statusEl) {
+          statusEl.style.color = '';
+          statusEl.textContent = 'Generating Video... (5s)';
+          statusEl.style.opacity = '1';
+        }
+        stopProgressMessages();
+
+        try {
+          const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
+          let quote = { id: currentQuoteId, slug: currentQuoteSlug, content: currentQuoteText, author: currentAuthor, mood: currentMood, category: currentCategory, sourceWork: currentSourceWork };
+          if (activeSlide && activeSlide.dataset.quoteId === currentQuoteId) {
+            quote = {
+              id: activeSlide.dataset.quoteId,
+              slug: activeSlide.dataset.quoteSlug || activeSlide.dataset.quoteId,
+              content: activeSlide.dataset.content || (activeSlide.querySelector('.quote-text')?.textContent.trim() || ''),
+              author: activeSlide.dataset.author || (activeSlide.querySelector('.author-name-text')?.textContent.trim() || ''),
+              mood: activeSlide.dataset.mood || 'reflective',
+              category: activeSlide.dataset.category || (activeSlide.querySelector('.glass.rounded-full')?.textContent.trim() || 'Wisdom'),
+              sourceWork: activeSlide.dataset.sourceWork || ''
+            };
+          }
+          
+          const overlayCanvas = renderQuoteCard9x16(quote, true);
+          if (!overlayCanvas) throw new Error('Overlay rendering failed');
+
+          const videoCanvas = document.createElement('canvas');
+          videoCanvas.width = 1080;
+          videoCanvas.height = 1920;
+          const vCtx = videoCanvas.getContext('2d');
+          
+          const ambientCanvas = document.getElementById('ambient-canvas');
+          if (window.wisdomBackground && typeof window.wisdomBackground.start === 'function') {
+            window.wisdomBackground.start();
+          }
+
+          let isRecording = true;
+          let rAF = null;
+
+          function drawFrame() {
+            if (!isRecording) return;
+            vCtx.clearRect(0, 0, 1080, 1920);
+            
+            if (ambientCanvas && ambientCanvas.width > 0) {
+               const cw = ambientCanvas.width;
+               const ch = ambientCanvas.height;
+               const targetRatio = 1080 / 1920;
+               const srcRatio = cw / ch;
+               let sx = 0, sy = 0, sw = cw, sh = ch;
+               if (srcRatio > targetRatio) {
+                 sw = ch * targetRatio;
+                 sx = (cw - sw) / 2;
+               } else {
+                 sh = cw / targetRatio;
+                 sy = (ch - sh) / 2;
+               }
+               vCtx.drawImage(ambientCanvas, sx, sy, sw, sh, 0, 0, 1080, 1920);
+            }
+            
+            vCtx.drawImage(overlayCanvas, 0, 0, 1080, 1920);
+            rAF = requestAnimationFrame(drawFrame);
+          }
+          
+          drawFrame();
+
+          const stream = videoCanvas.captureStream(30);
+          
+          let mimeType = 'video/mp4';
+          let extension = 'mp4';
+          if (!window.MediaRecorder) throw new Error('MediaRecorder not supported');
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'video/webm';
+            extension = 'webm';
+          }
+
+          const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 4500000 });
+          const chunks = [];
+          recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+          
+          recorder.onstop = async () => {
+            isRecording = false;
+            cancelAnimationFrame(rAF);
+            if (window.wisdomBackground && typeof window.wisdomBackground.stop === 'function') {
+              window.wisdomBackground.stop();
+            }
+            
+            const blob = new Blob(chunks, { type: mimeType });
+            const file = new File([blob], `wisdom-${currentQuoteId}-video.${extension}`, { type: mimeType });
+            
+            if (statusEl) {
+              statusEl.textContent = 'Video Ready!';
+            }
+            
+            const origin = window.__wizThemeConfig?.siteUrl || window.location.origin;
+            const base = window.__wisdomBaseUrl ?? '';
+            const quoteSlug = currentQuoteSlug || currentQuoteId;
+            const url = `${origin}${base}/quote/${quoteSlug}/`;
+            const shareData = {
+              title: `"${currentQuoteText}" — ${currentAuthor}`,
+              text: url,
+              files: [file],
+            };
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share(shareData);
+                if (window.firebaseStats && typeof window.firebaseStats.recordShare === 'function') {
+                  window.firebaseStats.recordShare(currentQuoteId, 'video');
+                }
+                closeModal();
+                return;
+              } catch (err) {
+                if (err.name === 'AbortError') { closeModal(); return; }
+                console.warn('Native video share failed, falling back:', err);
+              }
+            }
+
+            const link = document.createElement('a');
+            link.download = file.name;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            if (window.showToast) window.showToast('Video saved! ✓');
+            closeModal();
+          };
+
+          let countdown = 5;
+          if (statusEl) statusEl.textContent = `Generating Video... (${countdown}s)`;
+          
+          const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0 && statusEl && isRecording) {
+              statusEl.textContent = `Generating Video... (${countdown}s)`;
+            }
+          }, 1000);
+
+          recorder.start();
+          setTimeout(() => {
+            clearInterval(countdownInterval);
+            if (isRecording) recorder.stop();
+          }, 5000);
+          
+        } catch (err) {
+          console.warn('Video generation error:', err);
+          if (statusEl) {
+            statusEl.textContent = 'Failed: ' + (err.message || 'Unknown error');
+            statusEl.style.color = '#fca5a5';
+          }
+        }
       };
     }
 
