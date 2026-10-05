@@ -1155,71 +1155,73 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
         return;
       }
 
-      // ── 3D Perspective Flip-in-Place Sequence ──
-      // 1. Mood Badge Flip (starts at 0ms - first in visual order)
-      if (moodPill) {
-        moodPill.classList.remove('pill-flipping-in');
-        moodPill.classList.add('pill-flipping-out');
-        setTimeout(() => {
-          if (thisToken !== flipToken) return;
+      // ── Sequential/Random Reveal Sequence ──
+      const allOldPills = [];
+      if (moodPill) allOldPills.push(moodPill);
+      if (catPill) allOldPills.push(catPill);
+      if (tagsContainer) {
+        allOldPills.push(...Array.from(tagsContainer.querySelectorAll('.dock-pill')));
+      }
+
+      // 1. Flip out all pills immediately
+      allOldPills.forEach(p => {
+        p.classList.remove('pill-flipping-in');
+        p.style.animationDelay = '0s';
+        p.classList.add('pill-flipping-out');
+      });
+
+      // 2. Wait for flip-out to finish (200ms), update contents, then flip in randomly
+      setTimeout(() => {
+        if (thisToken !== flipToken) return;
+
+        // Update contents
+        if (moodPill) {
           moodPill.href = `${base}/mood/${mood}/`;
-          moodPill.className = `pill pill-lg pointer-events-auto mood-pill-${mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-105 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal dock-pill pill-flipping-in`;
+          moodPill.className = `pill pill-lg pointer-events-auto mood-pill-${mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-105 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal dock-pill`;
           if (moodEmojiSpan) moodEmojiSpan.textContent = moodEmoji;
           if (moodLabelSpan) moodLabelSpan.textContent = moodLabel;
-          setTimeout(() => {
-            if (thisToken !== flipToken) return;
-            moodPill.classList.remove('pill-flipping-in');
-          }, 240);
-        }, 140);
-      }
+        }
+        if (catPill) {
+          catPill.textContent = category;
+          catPill.href = `${base}/category/${categorySlug}/`;
+        }
+        if (tagsContainer) {
+          tagsContainer.innerHTML = renderDockTagsHtml(tags, true);
+        }
 
-      // 2. Category Pill Flip (starts at 35ms - second in visual order)
-      if (catPill) {
+        // Slight tick for DOM to register updates before animating in
         setTimeout(() => {
           if (thisToken !== flipToken) return;
-          catPill.classList.remove('pill-flipping-in');
-          catPill.classList.add('pill-flipping-out');
-          setTimeout(() => {
-            if (thisToken !== flipToken) return;
-            catPill.textContent = category;
-            catPill.href = `${base}/category/${categorySlug}/`;
-            catPill.classList.remove('pill-flipping-out');
-            catPill.classList.add('pill-flipping-in');
-            setTimeout(() => {
-              if (thisToken !== flipToken) return;
-              catPill.classList.remove('pill-flipping-in');
-            }, 240);
-          }, 140);
-        }, 35);
-      }
-
-      // 3. Tag Chips Flip (starts at 70ms)
-      if (tagsContainer) {
-        setTimeout(() => {
-          if (thisToken !== flipToken) return;
-          const oldTagPills = Array.from(tagsContainer.querySelectorAll('.dock-pill'));
-          if (oldTagPills.length > 0) {
-            oldTagPills.forEach((p, idx) => {
-              p.classList.remove('pill-flipping-in');
-              p.style.animationDelay = `${idx * 25}ms`;
-              p.classList.add('pill-flipping-out');
-            });
+          const allNewPills = [];
+          if (moodPill) allNewPills.push(moodPill);
+          if (catPill) allNewPills.push(catPill);
+          if (tagsContainer) {
+            allNewPills.push(...Array.from(tagsContainer.querySelectorAll('.dock-pill')));
           }
 
+          // Shuffle the pills array to randomize the appearance order
+          for (let i = allNewPills.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allNewPills[i], allNewPills[j]] = [allNewPills[j], allNewPills[i]];
+          }
+
+          // Apply staggered animation delays (starting after Delve which is 0.1s)
+          allNewPills.forEach((p, idx) => {
+            p.classList.remove('pill-flipping-out');
+            p.style.animationDelay = `${0.2 + (idx * 0.15)}s`;
+            p.classList.add('pill-flipping-in');
+          });
+
+          // Cleanup classes after longest possible animation finishes
           setTimeout(() => {
             if (thisToken !== flipToken) return;
-            tagsContainer.innerHTML = renderDockTagsHtml(tags, true);
-            setTimeout(() => {
-              if (thisToken !== flipToken) return;
-              const newPills = Array.from(tagsContainer.querySelectorAll('.dock-pill'));
-              newPills.forEach(p => {
-                p.classList.remove('pill-flipping-in');
-                p.style.animationDelay = '';
-              });
-            }, 240 + (tags.length * 30));
-          }, oldTagPills.length > 0 ? 140 : 0);
-        }, 70);
-      }
+            allNewPills.forEach(p => {
+              p.classList.remove('pill-flipping-in');
+              p.style.animationDelay = '';
+            });
+          }, 1200);
+        }, 30);
+      }, 200);
     }
 
     // ── IntersectionObserver for active slide detection ──
