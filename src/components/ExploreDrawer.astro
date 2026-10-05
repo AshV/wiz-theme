@@ -418,7 +418,7 @@ const moodKeywords: Record<string, string> = {
 
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3.5 sm:gap-4">
           {allMoods.map((mood) => {
-            const meta = getLocalizedMoodMeta(mood, config.lang, t);
+            const meta = getLocalizedMoodMeta(mood, config.language);
             return (
             <a
               href={`${BASE}/mood/${mood}/`}
