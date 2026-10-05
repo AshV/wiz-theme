@@ -23,7 +23,7 @@ const config = resolveThemeConfig({
   translations: Astro.props.translations,
 });
 const t = config.translations.author;
-const BASE = config.base;
+const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <!-- Accessible Author Editorial Dossier Modal -->

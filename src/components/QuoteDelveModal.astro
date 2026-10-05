@@ -22,7 +22,7 @@ const config = resolveThemeConfig({
   translations: Astro.props.translations,
 });
 const t = config.translations.delve;
-const BASE = config.base;
+const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <!-- Accessible Quote Delve Modal -->
