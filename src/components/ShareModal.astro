@@ -1000,6 +1000,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
 
           let isRecording = true;
           let rAF = null;
+          const startTime = Date.now();
 
           function drawFrame() {
             if (!isRecording) return;
@@ -1029,7 +1030,32 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
                }
             }
             
+            // Calculate animation progress (0.0 to 1.0 over 1200ms)
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / 1200, 1.0);
+            
+            // Easing (easeOutQuart) for smooth deceleration
+            const ease = 1 - Math.pow(1 - progress, 4);
+            
+            const currentAlpha = ease;
+            const currentBlur = 12 * (1 - ease);
+            const currentY = 40 * (1 - ease);
+            const currentScale = 0.95 + (0.05 * ease);
+            
+            vCtx.save();
+            vCtx.globalAlpha = currentAlpha;
+            if (currentBlur > 0.1) {
+              vCtx.filter = `blur(${currentBlur}px)`;
+            }
+            
+            // Transform around center
+            vCtx.translate(1080 / 2, 1920 / 2 + currentY);
+            vCtx.scale(currentScale, currentScale);
+            vCtx.translate(-1080 / 2, -1920 / 2);
+            
             vCtx.drawImage(overlayCanvas, 0, 0, 1080, 1920);
+            vCtx.restore();
+            
             rAF = requestAnimationFrame(drawFrame);
           }
           
