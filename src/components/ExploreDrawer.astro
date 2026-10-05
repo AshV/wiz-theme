@@ -37,7 +37,7 @@ const {
 } = Astro.props;
 
 const config = resolveThemeConfig({
-  lang,
+  language: lang,
   base: propBase,
   translations: propTranslations,
   ...propConfig,
@@ -371,7 +371,7 @@ const moodKeywords: Record<string, string> = {
             const searchTokens = `${auth.name} ${auth.slug} ${prof?.tradition || ''} ${prof?.whyTimeless || ''} author thinker`.toLowerCase();
             return (
               <a
-                href={`${BASE}/author/${auth.slug}/`}
+                href={`${BASE}/author/${auth.slug}`}
                 class="explore-item author-card glass rounded-2xl p-4 flex items-center gap-3.5 hover:bg-white/[0.09] active:scale-[0.98] border border-white/8 hover:border-white/20 transition-all duration-200 group cursor-pointer"
                 data-search-text={searchTokens}
                 data-author-slug={auth.slug}
@@ -421,7 +421,7 @@ const moodKeywords: Record<string, string> = {
             const meta = getLocalizedMoodMeta(mood, config.language);
             return (
             <a
-              href={`${BASE}/mood/${mood}/`}
+              href={`${BASE}/mood/${mood}`}
               class={`explore-item mood-pill-${mood} rounded-2xl sm:rounded-3xl flex flex-col justify-between min-h-[180px] sm:min-h-[190px] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-xl group border border-white/15 hover:border-white/30 relative overflow-hidden`}
               style="padding: 1.25rem 1.25rem 2rem 1.25rem;"
               data-search-text={`${meta.label} ${mood} mood ${moodKeywords[mood] || ''}`}
@@ -459,7 +459,7 @@ const moodKeywords: Record<string, string> = {
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-3.5">
           {categories.map((cat) => (
             <a
-              href={`${BASE}/category/${cat.slug}/`}
+              href={`${BASE}/category/${cat.slug}`}
               class="explore-item glass rounded-2xl px-4 py-3.5 sm:py-4 flex items-center justify-between hover:bg-white/[0.09] active:scale-[0.98] border border-white/8 hover:border-white/20 transition-all duration-200 group"
               data-search-text={`${cat.name} ${cat.slug} category wisdom`}
             >
@@ -496,7 +496,7 @@ const moodKeywords: Record<string, string> = {
             const isHighCount = count >= 3;
             return (
               <a
-                href={`${BASE}/tag/${tag}/`}
+                href={`${BASE}/tag/${tag}`}
                 class={`pill pill-lg explore-item rounded-full px-4 py-2.5 text-xs sm:text-sm font-medium transition-all duration-200 inline-flex items-center gap-2.5 active:scale-95 border leading-normal ${
                   isHighCount
                     ? 'bg-white/12 hover:bg-white/22 text-white border-white/20 shadow-sm'

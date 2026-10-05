@@ -178,7 +178,7 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
       {firstQuote.tags.map((tag) => (
         <div class="flip-pill-wrapper inline-flex" data-dock-tag-wrapper>
           <a
-            href={`${BASE}/tag/${encodeURIComponent(tag)}/`}
+            href={`${BASE}/tag/${encodeURIComponent(tag)}`}
             class="pill pill-lg pointer-events-auto text-xs font-medium text-white/60 hover:text-white transition-colors duration-200 bg-white/10 hover:bg-white/20 active:scale-95 px-3.5 py-2 rounded-full backdrop-blur-md border border-white/15 cursor-pointer shadow-md inline-flex items-center leading-normal dock-pill"
           >
             #{tag}
@@ -204,8 +204,8 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
       <div id="dock-mood-wrapper" class="flip-pill-wrapper inline-flex shrink-0 snap-start">
         <a
           id="dock-mood-pill"
-          href={`${BASE}/mood/${firstQuote.mood}/`}
-          class={`pill pill-lg pointer-events-auto mood-pill-${firstQuote.mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-105 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal dock-pill`}
+          href={`${BASE}/mood/${firstQuote.mood}`}
+          class={`pill pill-lg pointer-events-auto mood-pill-${firstQuote.mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-[1.02] active:scale-95 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal dock-pill`}
         >
           <span id="dock-mood-emoji" class="shrink-0 text-sm leading-none">{firstMoodInfo?.emoji}</span>
           <span id="dock-mood-label" class="whitespace-nowrap tracking-wide leading-normal">{firstMoodInfo?.label}</span>
@@ -216,8 +216,8 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
       <div id="dock-category-wrapper" class="flip-pill-wrapper inline-flex shrink-0 snap-start">
         <a
           id="dock-category-pill"
-          href={`${BASE}/category/${firstQuote.categorySlug}/`}
-          class="pill pill-lg pointer-events-auto glass rounded-full px-4.5 py-2 text-xs font-medium text-white/90 hover:text-white hover:bg-white/20 transition-all duration-200 shadow-sm whitespace-nowrap inline-flex items-center leading-normal dock-pill"
+          href={`${BASE}/category/${firstQuote.categorySlug}`}
+          class="pill pill-lg pointer-events-auto glass rounded-full px-4.5 py-2 text-xs font-medium text-white/90 hover:text-white hover:bg-white/20 active:scale-95 transition-all duration-200 shadow-sm whitespace-nowrap inline-flex items-center leading-normal dock-pill"
         >
           {firstQuote.category}
         </a>
@@ -243,16 +243,16 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
 <DislikeFeedbackModal lang={config.language} base={BASE} translations={translations} />
 
 <script is:inline define:vars={{ moodMetaClient: config.translations.moods, initialQuotesData: quotes }}>
+  // Prevent browser from restoring stale scroll offset on reload/reopen BEFORE setupReelFeed runs
+  if ('scrollRestoration' in history) {
+    try {
+      history.scrollRestoration = 'manual';
+    } catch (_) {}
+  }
+
   async function setupReelFeed() {
     const container = document.getElementById('reel-container');
     if (!container) return;
-
-    // Prevent browser from restoring stale scroll offset on reload/reopen
-    if ('scrollRestoration' in history) {
-      try {
-        history.scrollRestoration = 'manual';
-      } catch (_) {}
-    }
 
     let initialSlides = Array.from(container.querySelectorAll('.reel-slide'));
     if (initialSlides.length === 0) return;
@@ -498,16 +498,16 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
       // Category pill
       const categoryLink = clone.querySelector('a[href*="/category/"]');
       if (categoryLink) {
-        categoryLink.className = 'pill pill-lg pointer-events-auto glass rounded-full px-4.5 py-2.5 text-xs font-medium text-white/90 hover:text-white hover:bg-white/20 transition-all duration-200 shadow-sm whitespace-nowrap inline-flex items-center leading-normal';
-        categoryLink.href = `${base}/category/${quote.categorySlug}/`;
+        categoryLink.className = 'pill pill-lg pointer-events-auto glass rounded-full px-4.5 py-2.5 text-xs font-medium text-white/90 hover:text-white hover:bg-white/20 active:scale-95 transition-all duration-200 shadow-sm whitespace-nowrap inline-flex items-center leading-normal';
+        categoryLink.href = `${base}/category/${quote.categorySlug}`;
         categoryLink.textContent = quote.category;
       }
 
       // Mood pill
       const moodLink = clone.querySelector('a[href*="/mood/"]');
       if (moodLink) {
-        moodLink.className = `pill pill-lg pointer-events-auto mood-pill-${quote.mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-105 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal`;
-        moodLink.href = `${base}/mood/${quote.mood}/`;
+        moodLink.className = `pill pill-lg pointer-events-auto mood-pill-${quote.mood} rounded-full px-4.5 py-2 text-xs font-semibold hover:scale-[1.02] active:scale-95 transition-all duration-200 shadow-md shadow-black/20 inline-flex items-center gap-2 whitespace-nowrap shrink-0 leading-normal`;
+        moodLink.href = `${base}/mood/${quote.mood}`;
         moodLink.innerHTML = `<span class="shrink-0 text-sm leading-none">${moodInfo.emoji}</span><span class="whitespace-nowrap tracking-wide leading-normal">${moodInfo.label}</span>`;
       }
 
@@ -515,7 +515,7 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
       const tagContainer = clone.querySelector('[data-tags-container]') || clone.querySelector('.flex.flex-wrap');
       if (tagContainer) {
         tagContainer.innerHTML = (quote.tags || []).map(t =>
-          `<a href="${base}/tag/${encodeURIComponent(t)}/" class="pill pill-lg pointer-events-auto text-xs font-medium text-white/75 hover:text-white transition-colors duration-200 bg-white/10 hover:bg-white/20 active:scale-95 px-4 py-2 rounded-full backdrop-blur-sm border border-white/15 cursor-pointer shadow-sm inline-flex items-center leading-normal">#${escapeHtml(t)}</a>`
+          `<a href="${base}/tag/${encodeURIComponent(t)}" class="pill pill-lg pointer-events-auto text-xs font-medium text-white/75 hover:text-white transition-colors duration-200 bg-white/10 hover:bg-white/20 active:scale-95 px-4 py-2 rounded-full backdrop-blur-sm border border-white/15 cursor-pointer shadow-sm inline-flex items-center leading-normal">#${escapeHtml(t)}</a>`
         ).join('');
       }
 
@@ -965,7 +965,7 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
     function renderDockTagsHtml(tagsArray, isFlipping = false) {
       return tagsArray.map((t, idx) => `
         <div class="flip-pill-wrapper inline-flex" data-dock-tag-wrapper>
-          <a href="${base}/tag/${encodeURIComponent(t)}/"
+          <a href="${base}/tag/${encodeURIComponent(t)}"
              class="pill pill-lg pointer-events-auto text-xs font-medium text-white/60 hover:text-white transition-colors duration-200 bg-white/10 hover:bg-white/20 active:scale-95 px-3.5 py-2 rounded-full backdrop-blur-md border border-white/15 cursor-pointer shadow-md inline-flex items-center leading-normal dock-pill ${isFlipping ? 'pill-flipping-in' : ''}"
              ${isFlipping ? `style="animation-delay: ${idx * 30}ms;"` : ''}>
             #${escapeHtml(t)}
@@ -1336,8 +1336,7 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
       }
     }
 
-    initialSlides.forEach(slide => observer.observe(slide));
-
+    // (Observer observation is delayed until after initial layout/scroll is set)
     // ── Quote ID Pill controller ──
     function updateQuoteIdPill(quoteId) {
       const label = document.getElementById('quote-id-pill-label');
@@ -1388,6 +1387,9 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
         window.wisdomAudio.setMood(first.dataset.mood);
         window.wisdomAudio.playOnce(first.dataset.mood);
       }
+
+      // Start observing AFTER we've forcefully set scrollTop=0 to prevent observing the fly-by
+      initialSlides.forEach(slide => observer.observe(slide));
 
       // Sync URL hash with the first quote only if explicit targetHash was requested or on filtered pages
       if (targetHash) {
