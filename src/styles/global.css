@@ -337,12 +337,10 @@ body {
 
 @keyframes pill-flip-out {
   0% {
-    transform: translateY(0) scale(1);
     opacity: 1;
     filter: blur(0);
   }
   100% {
-    transform: translateY(-8px) scale(0.95);
     opacity: 0;
     filter: blur(8px);
   }
@@ -350,12 +348,10 @@ body {
 
 @keyframes pill-flip-in {
   0% {
-    transform: translateY(16px) scale(0.95);
     opacity: 0;
     filter: blur(12px);
   }
   100% {
-    transform: translateY(0) scale(1);
     opacity: 1;
     filter: blur(0);
   }
