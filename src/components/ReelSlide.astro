@@ -243,6 +243,22 @@ if (len < 55) {
             </span>
           )}
         </a>
+
+        {quoteExplanation && (
+          <button
+            type="button"
+            class="pill pill-lg delve-pill-btn pointer-events-auto mt-1 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 hover:border-amber-400/40 text-xs sm:text-[13px] text-amber-200/90 hover:text-amber-100 font-sans tracking-wide transition-all duration-200 active:scale-95 shadow-md group cursor-pointer backdrop-blur-md"
+            data-quote-id={id}
+            title={t.slide.delveTitle}
+            style="animation-delay: 0.1s"
+          >
+            <span class="text-amber-300 text-xs group-hover:scale-110 transition-transform animate-pulse-soft">✦</span>
+            <span class="font-medium">{t.slide.delve}</span>
+            <svg class="w-3.5 h-3.5 text-white/40 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   </div>
@@ -257,20 +273,8 @@ if (len < 55) {
     <div class="h-9 sm:h-10 w-full max-w-md pointer-events-none"></div>
   </div>
 
-  <!-- Floating Actions Dock (Delve & Share) -->
+  <!-- Prominent On-Screen Share CTA -->
   <div class="on-screen-actions-dock absolute bottom-32 sm:bottom-36 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 transition-all duration-300 opacity-0 pointer-events-none">
-    {quoteExplanation && (
-      <button
-        type="button"
-        class="pill pill-lg delve-pill-btn pointer-events-auto flex items-center gap-1.5 px-5 py-3 rounded-full bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 hover:border-amber-400/40 text-sm sm:text-base text-amber-200/90 hover:text-amber-100 font-sans tracking-wide transition-all duration-200 active:scale-95 shadow-[0_8px_30px_rgba(0,0,0,0.5)] backdrop-blur-md cursor-pointer"
-        data-quote-id={id}
-        title={t.slide.delveTitle}
-        style="animation-delay: 0.1s"
-      >
-        <span class="text-amber-300 group-hover:scale-110 transition-transform animate-pulse-soft">✦</span>
-        <span class="font-medium shadow-black/50 drop-shadow-md">{t.slide.delve}</span>
-      </button>
-    )}
     <button
       type="button"
       class="on-screen-share-btn pointer-events-auto flex items-center gap-2 px-5 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all duration-200 active:scale-95 cursor-pointer"
