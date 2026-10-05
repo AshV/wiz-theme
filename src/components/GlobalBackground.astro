@@ -336,6 +336,37 @@
       }
     }
     
+    // ── Interaction State for Particles ──
+    let targetTiltX = 0;
+    let targetTiltY = 0;
+    let currentTiltX = 0;
+    let currentTiltY = 0;
+    let mouseX = -1000;
+    let mouseY = -1000;
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('mousemove', (e) => {
+        targetTiltX = (e.clientX / window.innerWidth - 0.5) * 2;
+        targetTiltY = (e.clientY / window.innerHeight - 0.5) * 2;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      window.addEventListener('deviceorientation', (e) => {
+        if (e.gamma !== null && e.beta !== null) {
+          targetTiltX = Math.max(-1, Math.min(1, e.gamma / 45));
+          targetTiltY = Math.max(-1, Math.min(1, (e.beta - 45) / 45));
+        }
+      });
+      
+      window.addEventListener('mouseleave', () => {
+        targetTiltX = 0;
+        targetTiltY = 0;
+        mouseX = -1000;
+        mouseY = -1000;
+      });
+    }
+
     // ── Particle Engine ──
     let particles: { x: number, y: number, vx: number, vy: number, size: number, alpha: number, color: string, blur: number }[] = [];
     
@@ -365,26 +396,49 @@
       if (!pCtx) return;
       
       pCtx.clearRect(0, 0, width, height);
+
+      currentTiltX += (targetTiltX - currentTiltX) * 0.05;
+      currentTiltY += (targetTiltY - currentTiltY) * 0.05;
       
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
         
-        if (p.y < -20) p.y = height + 20;
-        if (p.x < -20) p.x = width + 20;
-        if (p.x > width + 20) p.x = -20;
+        if (p.y < -60) p.y = height + 60;
+        if (p.y > height + 60) p.y = -60;
+        if (p.x < -60) p.x = width + 60;
+        if (p.x > width + 60) p.x = -60;
+
+        const parallaxX = currentTiltX * (p.size * 6);
+        const parallaxY = currentTiltY * (p.size * 6);
+
+        let repulsionX = 0;
+        let repulsionY = 0;
+        if (mouseX > -1) {
+          const dx = (p.x + parallaxX) - mouseX;
+          const dy = (p.y + parallaxY) - mouseY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 180) {
+            const force = Math.pow((180 - dist) / 180, 2);
+            repulsionX = (dx / dist) * force * (p.size * 4);
+            repulsionY = (dy / dist) * force * (p.size * 4);
+          }
+        }
+
+        const renderX = p.x + parallaxX + repulsionX;
+        const renderY = p.y + parallaxY + repulsionY;
         
         const flicker = Math.sin(time * 1.5 + i) * 0.25;
         const currentAlpha = Math.max(0, Math.min(1, p.alpha + flicker));
         
         pCtx.beginPath();
-        const radGrad = pCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size + p.blur);
+        const radGrad = pCtx.createRadialGradient(renderX, renderY, 0, renderX, renderY, p.size + p.blur);
         radGrad.addColorStop(0, p.color + currentAlpha + ')');
         radGrad.addColorStop(0.4, p.color + (currentAlpha * 0.5) + ')');
         radGrad.addColorStop(1, p.color + '0)');
         pCtx.fillStyle = radGrad;
-        pCtx.arc(p.x, p.y, p.size + p.blur, 0, Math.PI * 2);
+        pCtx.arc(renderX, renderY, p.size + p.blur, 0, Math.PI * 2);
         pCtx.fill();
       }
     }
