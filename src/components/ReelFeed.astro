@@ -242,7 +242,7 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
 <!-- Dislike & Quality Feedback Modal -->
 <DislikeFeedbackModal lang={config.language} base={BASE} translations={translations} />
 
-<script is:inline define:vars={{ moodMetaClient: config.translations.moods }}>
+<script is:inline define:vars={{ moodMetaClient: config.translations.moods, initialQuotesData: quotes }}>
   async function setupReelFeed() {
     const container = document.getElementById('reel-container');
     if (!container) return;
@@ -260,7 +260,7 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
     let viewDebounceTimer = null;
     let batchNumber = 1;
     let isFetchingChunk = false;
-    let loadedQuoteList = [];
+    let loadedQuoteList = initialQuotesData ? [...initialQuotesData] : [];
     // Tracks which chunk pages have been fetched, to avoid duplicates
     const fetchedChunkPages = new Set();
     // Total chunks will be populated after the first fetch
