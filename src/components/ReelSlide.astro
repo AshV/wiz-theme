@@ -233,20 +233,6 @@ if (len < 55) {
     <div class="h-9 sm:h-10 w-full max-w-md pointer-events-none"></div>
   </div>
 
-  <!-- Prominent On-Screen Share CTA (above the clearance spacer) -->
-  <button
-    type="button"
-    class="on-screen-share-btn absolute bottom-32 sm:bottom-36 left-1/2 -translate-x-1/2 z-30 pointer-events-auto flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all active:scale-95 cursor-pointer"
-    data-quote-id={id}
-  >
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-white drop-shadow-md">
-      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-      <polyline points="16 6 12 2 8 6" />
-      <line x1="12" y1="2" x2="12" y2="15" />
-    </svg>
-    <span class="text-sm sm:text-base font-semibold tracking-wide shadow-black/50 drop-shadow-md">Share to Story</span>
-  </button>
-
   <!-- Watermark for organic screenshots -->
   <div class="absolute bottom-[max(env(safe-area-inset-bottom,12px),16px)] left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-40 flex flex-col items-center gap-1 mix-blend-overlay">
     <span class="text-[10px] uppercase tracking-[0.3em] font-medium text-white/80">{config.base === '/wiz-theme' ? 'wiz-theme' : 'Wisdom'}</span>
@@ -263,25 +249,6 @@ if (len < 55) {
 <script>
   // Simple logic to trigger share modal and double-tap heart burst
   if (typeof window !== 'undefined') {
-    document.addEventListener('click', (e) => {
-      const target = e.target;
-      if (target && target.closest) {
-        const shareBtn = target.closest('.on-screen-share-btn');
-        if (shareBtn) {
-          e.stopPropagation();
-          const modal = document.getElementById('share-modal');
-          if (modal) {
-            modal.classList.remove('hidden');
-            modal.style.display = 'flex';
-            const slide = shareBtn.closest('.reel-slide');
-            if (window.updateShareContext && slide) {
-              window.updateShareContext(slide, true);
-            }
-          }
-        }
-      }
-    });
-
     // Double tap handling logic
     document.addEventListener('dblclick', (e) => {
       const target = e.target;
