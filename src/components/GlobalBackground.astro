@@ -21,6 +21,9 @@
   <!-- Dynamic Generative Visual Canvas -->
   <canvas id="ambient-canvas" class="absolute inset-0 w-full h-full"></canvas>
 
+  <!-- Ambient Floating Particles -->
+  <canvas id="particles-canvas" class="absolute inset-0 w-full h-full pointer-events-none mix-blend-screen opacity-70"></canvas>
+
   <!-- Atmospheric Light Bloom Overlays -->
   <div
     id="mood-glow-1"
@@ -303,6 +306,15 @@
       currentCanvas.height = Math.floor(height * dpr);
       currentCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
       initNodes();
+      
+      const pCanvas = document.getElementById('particles-canvas') as HTMLCanvasElement;
+      if (pCanvas) {
+        pCanvas.width = Math.floor(width * dpr);
+        pCanvas.height = Math.floor(height * dpr);
+        const pCtx = pCanvas.getContext('2d');
+        if (pCtx) pCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      initParticles();
     }
 
     function lerp(a: number, b: number, t: number) {
@@ -321,6 +333,52 @@
           phase: Math.random() * Math.PI * 2,
         });
       }
+    }
+    
+    // ── Particle Engine ──
+    let particles: { x: number, y: number, vx: number, vy: number, size: number, alpha: number }[] = [];
+    
+    function initParticles() {
+      particles = [];
+      const numParticles = 40;
+      for (let i = 0; i < numParticles; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: Math.random() * -0.5 - 0.1,
+          size: Math.random() * 1.5 + 0.5,
+          alpha: Math.random() * 0.5 + 0.1
+        });
+      }
+    }
+    
+    function drawParticles() {
+      const pCanvas = document.getElementById('particles-canvas') as HTMLCanvasElement;
+      if (!pCanvas) return;
+      const pCtx = pCanvas.getContext('2d');
+      if (!pCtx) return;
+      
+      pCtx.clearRect(0, 0, width, height);
+      pCtx.fillStyle = '#ffffff';
+      
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        
+        if (p.y < -10) p.y = height + 10;
+        if (p.x < -10) p.x = width + 10;
+        if (p.x > width + 10) p.x = -10;
+        
+        const flicker = Math.sin(time * 2 + i) * 0.2;
+        pCtx.globalAlpha = Math.max(0, Math.min(1, p.alpha + flicker));
+        
+        pCtx.beginPath();
+        pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        pCtx.fill();
+      }
+      pCtx.globalAlpha = 1.0;
     }
 
     // ── Helper: Create a smooth multi-stop linear gradient across line art ──
@@ -1092,6 +1150,9 @@
       time += 0.016;
 
       try {
+        // 0. Render ambient particles overlay
+        drawParticles();
+
         // 1. Render Living Liquid Gradient Mesh
         drawLivingGradientMesh();
 

@@ -115,11 +115,41 @@ if (len < 55) {
   data-practical-insight={practicalInsight || ''}
   data-reflection-prompt={reflectionPrompt || ''}
 >
+  <style is:global>
+    @keyframes quoteReveal {
+      0% { opacity: 0; filter: blur(12px); transform: translateY(20px) scale(0.95); }
+      100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+    }
+    .reel-slide.is-active .quote-text {
+      animation: quoteReveal 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    .reel-slide:not(.is-active) .quote-text {
+      opacity: 0;
+    }
+    @keyframes heartBurst {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      15% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(-5deg); }
+      30% { transform: translate(-50%, -50%) scale(1) rotate(5deg); }
+      45% { transform: translate(-50%, -50%) scale(1.1) rotate(0deg); }
+      80% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); filter: blur(10px); }
+    }
+    .heart-burst.animate {
+      animation: heartBurst 1s ease-out forwards;
+    }
+  </style>
   <!-- Double-tap detection zone across entire slide -->
   <div
     class="absolute inset-0 z-10 cursor-pointer"
     data-doubletap-zone={id}
   ></div>
+
+  <!-- Double-tap Heart Burst Element -->
+  <div class="heart-burst absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 pointer-events-none opacity-0 flex items-center justify-center">
+    <svg width="140" height="140" viewBox="0 0 24 24" fill="#ef4444" class="drop-shadow-2xl" style="filter: drop-shadow(0 0 40px rgba(239,68,68,0.8));">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+  </div>
 
   <!-- Top spacer to balance the fixed header bar and top tags dock -->
   <div
@@ -203,6 +233,25 @@ if (len < 55) {
     <div class="h-9 sm:h-10 w-full max-w-md pointer-events-none"></div>
   </div>
 
+  <!-- Prominent On-Screen Share CTA (above the clearance spacer) -->
+  <button
+    type="button"
+    class="on-screen-share-btn absolute bottom-32 sm:bottom-36 left-1/2 -translate-x-1/2 z-30 pointer-events-auto flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all active:scale-95 cursor-pointer"
+    data-quote-id={id}
+  >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="text-white drop-shadow-md">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+      <polyline points="16 6 12 2 8 6" />
+      <line x1="12" y1="2" x2="12" y2="15" />
+    </svg>
+    <span class="text-sm sm:text-base font-semibold tracking-wide shadow-black/50 drop-shadow-md">Share to Story</span>
+  </button>
+
+  <!-- Watermark for organic screenshots -->
+  <div class="absolute bottom-[max(env(safe-area-inset-bottom,12px),16px)] left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-40 flex flex-col items-center gap-1 mix-blend-overlay">
+    <span class="text-[10px] uppercase tracking-[0.3em] font-medium text-white/80">{config.base === '/wiz-theme' ? 'wiz-theme' : 'Wisdom'}</span>
+  </div>
+
   <!-- Accessible Screen Reader & SEO Metadata -->
   <div class="sr-only">
     <span>{t.slide.srCategory}: {category}</span>
@@ -210,3 +259,83 @@ if (len < 55) {
     <span>{t.slide.srTags}: {tags.map(t => `#${t}`).join(' ')}</span>
   </div>
 </section>
+
+<script>
+  // Simple logic to trigger share modal and double-tap heart burst
+  if (typeof window !== 'undefined') {
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      if (target && target.closest) {
+        const shareBtn = target.closest('.on-screen-share-btn');
+        if (shareBtn) {
+          e.stopPropagation();
+          const modal = document.getElementById('share-modal');
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            const slide = shareBtn.closest('.reel-slide');
+            if (window.updateShareContext && slide) {
+              window.updateShareContext(slide, true);
+            }
+          }
+        }
+      }
+    });
+
+    // Double tap handling logic
+    document.addEventListener('dblclick', (e) => {
+      const target = e.target;
+      if (target && target.closest) {
+        const zone = target.closest('[data-doubletap-zone]');
+        if (zone) {
+          const slide = zone.closest('.reel-slide');
+          if (slide) {
+            // Trigger heart burst
+            const heartBurst = slide.querySelector('.heart-burst');
+            if (heartBurst) {
+              heartBurst.classList.remove('animate');
+              void heartBurst.offsetWidth; // trigger reflow
+              heartBurst.classList.add('animate');
+            }
+            
+            // Trigger like logic if right rail exists
+            const likeBtn = document.getElementById('like-btn');
+            if (likeBtn) {
+              likeBtn.click();
+            }
+          }
+        }
+      }
+    });
+
+    // Also support touch double tap
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+      const target = e.target;
+      if (target && target.closest) {
+        const zone = target.closest('[data-doubletap-zone]');
+        if (zone) {
+          const currentTime = new Date().getTime();
+          const tapLength = currentTime - lastTap;
+          if (tapLength < 500 && tapLength > 0) {
+            e.preventDefault();
+            const slide = zone.closest('.reel-slide');
+            if (slide) {
+              const heartBurst = slide.querySelector('.heart-burst');
+              if (heartBurst) {
+                heartBurst.classList.remove('animate');
+                void heartBurst.offsetWidth; // trigger reflow
+                heartBurst.classList.add('animate');
+              }
+              const likeBtn = document.getElementById('like-btn');
+              if (likeBtn) {
+                likeBtn.click();
+              }
+            }
+          }
+          lastTap = currentTime;
+        }
+      }
+    }, { passive: false });
+  }
+</script>
