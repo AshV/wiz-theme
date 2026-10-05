@@ -904,7 +904,6 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
           pCtx.fillText(text, 0, 0);
 
           // Crisp foreground
-          pCtx.filter       = 'none';
           pCtx.shadowColor  = 'transparent';
           pCtx.shadowBlur   = 0;
           pCtx.shadowOffsetY = 0;
@@ -1243,8 +1242,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
                 vCtx.shadowOffsetY = 5;
                 vCtx.fillText(text, 0, 0);
 
-                // Sharp foreground pass (no blur on letter edges)
-                vCtx.filter = 'none';
+                // Sharp foreground pass (no drop shadow on letter edges)
                 vCtx.shadowColor = 'transparent';
                 vCtx.shadowBlur = 0;
                 vCtx.shadowOffsetY = 0;
