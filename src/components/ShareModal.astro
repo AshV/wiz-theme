@@ -940,6 +940,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
           window.firebaseStats.recordShare(currentQuoteId, 'download');
         }
         closeModal();
+      };
     }
 
     // 1b. Primary: Native Share Video (MediaRecorder API)
