@@ -250,6 +250,7 @@
 
     // ── 16 Diverse, Elegant Line Art Animation Engines ──
     const ANIM_TYPES = [
+      'ethereal_ribbons',
       'sacred_mandala',
       'contour_waves',
       'constellation_lattice',
@@ -336,19 +337,23 @@
     }
     
     // ── Particle Engine ──
-    let particles: { x: number, y: number, vx: number, vy: number, size: number, alpha: number }[] = [];
+    let particles: { x: number, y: number, vx: number, vy: number, size: number, alpha: number, color: string, blur: number }[] = [];
     
     function initParticles() {
       particles = [];
-      const numParticles = 40;
+      const numParticles = 65;
       for (let i = 0; i < numParticles; i++) {
+        const colorList = currentPalette ? currentPalette.colors : [[255,255,255]];
+        const color = colorList[Math.floor(Math.random() * colorList.length)] || [255, 255, 255];
         particles.push({
           x: Math.random() * width,
           y: Math.random() * height,
           vx: (Math.random() - 0.5) * 0.3,
-          vy: Math.random() * -0.5 - 0.1,
-          size: Math.random() * 1.5 + 0.5,
-          alpha: Math.random() * 0.5 + 0.1
+          vy: Math.random() * -0.6 - 0.1,
+          size: Math.random() * 3.5 + 1.5,
+          alpha: Math.random() * 0.6 + 0.15,
+          color: `rgba(${color[0]}, ${color[1]}, ${color[2]}, `,
+          blur: Math.random() * 5 + 1
         });
       }
     }
@@ -360,25 +365,28 @@
       if (!pCtx) return;
       
       pCtx.clearRect(0, 0, width, height);
-      pCtx.fillStyle = '#ffffff';
       
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
         
-        if (p.y < -10) p.y = height + 10;
-        if (p.x < -10) p.x = width + 10;
-        if (p.x > width + 10) p.x = -10;
+        if (p.y < -20) p.y = height + 20;
+        if (p.x < -20) p.x = width + 20;
+        if (p.x > width + 20) p.x = -20;
         
-        const flicker = Math.sin(time * 2 + i) * 0.2;
-        pCtx.globalAlpha = Math.max(0, Math.min(1, p.alpha + flicker));
+        const flicker = Math.sin(time * 1.5 + i) * 0.25;
+        const currentAlpha = Math.max(0, Math.min(1, p.alpha + flicker));
         
         pCtx.beginPath();
-        pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        const radGrad = pCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size + p.blur);
+        radGrad.addColorStop(0, p.color + currentAlpha + ')');
+        radGrad.addColorStop(0.4, p.color + (currentAlpha * 0.5) + ')');
+        radGrad.addColorStop(1, p.color + '0)');
+        pCtx.fillStyle = radGrad;
+        pCtx.arc(p.x, p.y, p.size + p.blur, 0, Math.PI * 2);
         pCtx.fill();
       }
-      pCtx.globalAlpha = 1.0;
     }
 
     // ── Helper: Create a smooth multi-stop linear gradient across line art ──
@@ -1135,6 +1143,22 @@
       ctx.fillRect(0, 0, width, height);
     }
 
+    function drawEtherealRibbons() {
+      ctx.lineWidth = 1.2 * dpr;
+      for (let i = 0; i < 7; i++) {
+        ctx.beginPath();
+        for (let x = 0; x <= width; x += 15) {
+          const y = height / 2 + 
+                    Math.sin(x * 0.005 + time + i * 0.3) * (150 + i * 20) * Math.sin(time * 0.5) +
+                    Math.cos(x * 0.01 - time * 0.8 + i) * 100;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = createStrokeGradient(0, height/2, width, height/2, 0.4);
+        ctx.stroke();
+      }
+    }
+
     // ── Main Render Loop (60fps Hardware Accelerated) ──
     function draw() {
       if (!isVisible) {
@@ -1157,7 +1181,9 @@
         drawLivingGradientMesh();
 
         // 2. Render Pure Elegant Line Art (12 engines)
-        if (currentAnim === 'sacred_mandala') {
+        if (currentAnim === 'ethereal_ribbons') {
+          drawEtherealRibbons();
+        } else if (currentAnim === 'sacred_mandala') {
           drawSacredMandala();
         } else if (currentAnim === 'contour_waves') {
           drawContourWaves();

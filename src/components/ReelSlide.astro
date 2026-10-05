@@ -137,6 +137,35 @@ if (len < 55) {
     .heart-burst.animate {
       animation: heartBurst 1s ease-out forwards;
     }
+    @keyframes slowSpotlight {
+      0% { transform: translate(-10%, -10%) scale(1); opacity: 0.15; }
+      50% { transform: translate(10%, 10%) scale(1.15); opacity: 0.45; }
+      100% { transform: translate(-10%, -10%) scale(1); opacity: 0.15; }
+    }
+    .text-spotlight {
+      background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 65%);
+      animation: slowSpotlight 8s ease-in-out infinite;
+    }
+    .quote-content-container {
+      transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    /* Add a subtle glare to the text when tilted */
+    .quote-content-container::after {
+      content: '';
+      position: absolute;
+      inset: -50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.05) 100%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      mix-blend-mode: overlay;
+      transform: translateZ(20px);
+    }
+    .quote-content-container:hover::after {
+      opacity: 1;
+    }
   </style>
   <!-- Double-tap detection zone across entire slide -->
   <div
@@ -174,9 +203,12 @@ if (len < 55) {
     class="relative z-20 flex-1 flex flex-col items-center justify-center pointer-events-none text-center w-full my-auto"
     style="padding-right: clamp(1.75rem, 6vw, 4.5rem); padding-left: clamp(1.75rem, 6vw, 4.5rem);"
   >
-    <div class={`${maxContainerClass} w-full flex flex-col items-center justify-center quote-content-container`}>
+    <div class={`${maxContainerClass} w-full flex flex-col items-center justify-center quote-content-container relative`}>
+      <!-- Dynamic Spotlight Text Glow -->
+      <div class="absolute inset-0 text-spotlight pointer-events-none -z-10 rounded-full blur-[40px]"></div>
+
       <!-- Artistic Decorative Quote Mark -->
-      <div class="text-4xl sm:text-5xl md:text-6xl leading-none text-white/30 font-serif select-none mb-3 font-display">
+      <div class="text-4xl sm:text-5xl md:text-6xl leading-none text-white/30 font-serif select-none mb-3 font-display" style="transform: translateZ(30px);">
         {t.slide.quoteMarkOpen}
       </div>
 
@@ -283,6 +315,31 @@ if (len < 55) {
     // Observe resize of the document for reliable updates
     const resizeObserver = new ResizeObserver(() => updateShareVisibility());
     resizeObserver.observe(document.body);
+
+    // 3D Tilt Effect for active slide quote container
+    const handleTilt = (e) => {
+      const activeSlide = document.querySelector('.reel-slide.is-active');
+      if (activeSlide) {
+        const container = activeSlide.querySelector('.quote-content-container');
+        if (container) {
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          const x = (clientX / window.innerWidth) - 0.5;
+          const y = (clientY / window.innerHeight) - 0.5;
+          // max tilt of 12 degrees
+          container.style.transform = `perspective(1000px) rotateY(${x * 24}deg) rotateX(${-y * 24}deg) translateZ(10px)`;
+        }
+      }
+    };
+    const resetTilt = () => {
+      document.querySelectorAll('.quote-content-container').forEach(c => {
+        c.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) translateZ(0)';
+      });
+    };
+    document.addEventListener('mousemove', handleTilt, { passive: true });
+    document.addEventListener('touchmove', handleTilt, { passive: true });
+    document.addEventListener('mouseleave', resetTilt);
+    document.addEventListener('touchend', resetTilt);
 
     document.addEventListener('click', (e) => {
       const target = e.target;
