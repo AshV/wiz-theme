@@ -43,7 +43,7 @@ const config = resolveThemeConfig({
   ...propConfig,
 });
 
-const BASE = config.base;
+const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
 const t = config.translations;
 
 const {

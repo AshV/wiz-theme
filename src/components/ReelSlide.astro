@@ -65,7 +65,7 @@ const config = resolveThemeConfig({
   translations: translations,
 });
 
-const BASE = config.base;
+const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
 const t = config.translations;
 const media = getMediaForQuote(id, mood);
 const audioSrc = getAudioForMood(mood, BASE);

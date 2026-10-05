@@ -70,7 +70,7 @@ const config = resolveThemeConfig({
   translations: translations,
 });
 
-const BASE = config.base;
+const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
 const t = config.translations;
 const displayFeedTitle = feedTitle || config.siteTitle || t.site.title;
 const displayFeedSubtitle = feedSubtitle || propSubtitle;
