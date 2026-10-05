@@ -437,7 +437,9 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
     const authorHeight = 48;
     const sourceWorkHeight = sourceWork ? 38 : 0;
     const sourceWorkGap = sourceWork ? 18 : 0;
-    const totalBlockHeight = quoteMarkHeight + quoteMarkGap + totalQuoteTextHeight + authorGap + authorHeight + sourceWorkGap + sourceWorkHeight;
+    const moodPillHeight = mood ? 44 : 0;
+    const moodPillGap = mood ? 36 : 0;
+    const totalBlockHeight = quoteMarkHeight + quoteMarkGap + totalQuoteTextHeight + authorGap + authorHeight + sourceWorkGap + sourceWorkHeight + moodPillGap + moodPillHeight;
 
     // Center quote block comfortably in 9:16 viewport
     let blockStartY = (height - totalBlockHeight) / 2;
@@ -573,7 +575,52 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
       ctx.restore();
     }
 
-    // ── 7. Footer Domain Watermark with Direct Quote URL ──
+    // ── 7. Mood Pill — frosted glass badge below author/source ──
+    if (mood) {
+      const lastAttributionY = sourceWork
+        ? (quoteStartY + totalQuoteTextHeight + authorGap + authorHeight / 2 + sourceWorkGap + sourceWorkHeight)
+        : (quoteStartY + totalQuoteTextHeight + authorGap + authorHeight / 2);
+      const pillCenterY = lastAttributionY + moodPillGap + moodPillHeight / 2;
+
+      const moodLabel = mood.charAt(0).toUpperCase() + mood.slice(1);
+      ctx.save();
+      ctx.font = `600 22px ${sansFont}`;
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
+      const labelWidth = ctx.measureText(moodLabel.toUpperCase()).width;
+      const pillPadX = 32;
+      const pillW = labelWidth + pillPadX * 2;
+      const pillH = moodPillHeight;
+      const pillX = (width - pillW) / 2;
+      const pillY = pillCenterY - pillH / 2;
+      const pillR = pillH / 2;
+
+      // Frosted glass background
+      ctx.fillStyle = 'rgba(' + accentRgb.join(',') + ', 0.14)';
+      ctx.strokeStyle = 'rgba(' + accentRgb.join(',') + ', 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      drawRoundRect(ctx, pillX, pillY, pillW, pillH, pillR);
+      ctx.fill();
+      ctx.stroke();
+
+      // Accent glow behind pill
+      const pillGlow = ctx.createRadialGradient(width / 2, pillCenterY, 0, width / 2, pillCenterY, pillW * 0.7);
+      pillGlow.addColorStop(0, 'rgba(' + accentRgb.join(',') + ', 0.18)');
+      pillGlow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = pillGlow;
+      ctx.fillRect(pillX - 40, pillY - 20, pillW + 80, pillH + 40);
+
+      // Label text
+      ctx.fillStyle = 'rgba(' + accentRgb.join(',') + ', 0.95)';
+      ctx.shadowColor = 'rgba(' + accentRgb.join(',') + ', 0.50)';
+      ctx.shadowBlur = 10;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(moodLabel.toUpperCase(), width / 2, pillCenterY + 1);
+      ctx.restore();
+    }
+
+    // ── 8. Footer Domain Watermark with Direct Quote URL ──
     ctx.save();
     ctx.fillStyle = 'rgba(255, 255, 255, 0.60)';
     ctx.font = `500 20px ${sansFont}`;
