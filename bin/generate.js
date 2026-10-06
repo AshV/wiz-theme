@@ -18,6 +18,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function run() {
+  const rawArgs = process.argv.slice(2);
+  if (rawArgs[0] === 'admin') {
+    process.argv.splice(2, 1);
+    await import('./admin.js');
+    return;
+  }
+
   let puppeteer;
   try {
     puppeteer = (await import('puppeteer')).default;
