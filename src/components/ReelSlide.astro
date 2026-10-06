@@ -28,7 +28,6 @@ interface Props {
   isStreamContinuation?: boolean;
   isTopicMatch?: boolean;
   sourceWork?: string;
-  story?: string;
   explanation?: string;
   practicalInsight?: string;
   reflectionPrompt?: string;
@@ -50,7 +49,6 @@ const {
   isStreamContinuation = false,
   isTopicMatch = true,
   sourceWork,
-  story,
   explanation,
   practicalInsight,
   reflectionPrompt,
@@ -71,7 +69,7 @@ const media = getMediaForQuote(id, mood);
 const audioSrc = getAudioForMood(mood, BASE);
 const moodInfo = getLocalizedMoodMeta(mood, config.language);
 const quoteSlug = slugifyQuote(content);
-const quoteExplanation = explanation || story || '';
+const quoteExplanation = explanation || '';
 
 // Length-adaptive typography sizing: utilizes screen space dynamically
 const len = content.length;

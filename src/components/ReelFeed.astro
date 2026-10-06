@@ -30,7 +30,6 @@ interface QuoteData {
   mood: 'reflective' | 'motivational' | 'serene' | 'bold' | 'melancholic' | 'joyful' | 'philosophical' | 'romantic';
   tags: string[];
   sourceWork?: string;
-  story?: string;
   explanation?: string;
   practicalInsight?: string;
   reflectionPrompt?: string;
@@ -142,7 +141,6 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
       isStreamContinuation={Boolean(effectiveMatchedCount && i === effectiveMatchedCount)}
       isTopicMatch={Boolean(effectiveMatchedCount ? i < effectiveMatchedCount : true)}
       sourceWork={q.sourceWork}
-      story={q.story}
       explanation={q.explanation}
       practicalInsight={q.practicalInsight}
       reflectionPrompt={q.reflectionPrompt}
@@ -396,7 +394,7 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
       clone.dataset.audioSrc = media.audio;
       clone.dataset.topicMatch = 'true';
       clone.dataset.sourceWork = quote.sourceWork || '';
-      clone.dataset.explanation = quote.explanation || quote.story || '';
+      clone.dataset.explanation = quote.explanation || '';
       clone.dataset.practicalInsight = quote.practicalInsight || '';
       clone.dataset.reflectionPrompt = quote.reflectionPrompt || '';
 
@@ -457,7 +455,7 @@ const firstMoodInfo = firstQuote ? getLocalizedMoodMeta(firstQuote.mood, config.
 
       // Delve Pill Button
       let delveBtn = clone.querySelector('.delve-pill-btn');
-      const quoteExplanation = quote.explanation || quote.story || '';
+      const quoteExplanation = quote.explanation || '';
       const delveLabel = tSlide.delve || 'Delve';
       const delveTitle = tSlide.delveTitle || 'Delve into the meaning, philosophy, and practical insight of this quote';
       if (quoteExplanation) {

@@ -263,10 +263,10 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
       const modal = document.getElementById('quote-delve-modal');
       if (!modal) return;
 
-      let { content, author, authorSlug, sourceWork, explanation, story, practicalInsight, reflectionPrompt, id } = data || {};
+      let { content, author, authorSlug, sourceWork, explanation, practicalInsight, reflectionPrompt, id } = data || {};
 
       // Fallback to active slide data if missing
-      if (!explanation && !story && !sourceWork) {
+      if (!explanation && !sourceWork) {
         const activeSlide = document.querySelector('.reel-slide.is-active') || document.querySelector('.reel-slide');
         if (activeSlide) {
           id = id || activeSlide.dataset.quoteId;
@@ -274,13 +274,13 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
           author = author || activeSlide.dataset.author;
           authorSlug = authorSlug || activeSlide.dataset.authorSlug;
           sourceWork = sourceWork || activeSlide.dataset.sourceWork;
-          explanation = explanation || activeSlide.dataset.explanation || activeSlide.dataset.story;
+          explanation = explanation || activeSlide.dataset.explanation;
           practicalInsight = practicalInsight || activeSlide.dataset.practicalInsight;
           reflectionPrompt = reflectionPrompt || activeSlide.dataset.reflectionPrompt;
         }
       }
 
-      const textToExplain = explanation || story || '';
+      const textToExplain = explanation || '';
       activeDelveAuthorSlug = authorSlug || '';
       activeDelveQuoteId = id || '';
 
@@ -438,7 +438,7 @@ const BASE = config.base || import.meta.env.BASE_URL.replace(/\/$/, '');
               author: slide.dataset.author,
               authorSlug: slide.dataset.authorSlug,
               sourceWork: slide.dataset.sourceWork,
-              explanation: slide.dataset.explanation || slide.dataset.story,
+              explanation: slide.dataset.explanation,
               practicalInsight: slide.dataset.practicalInsight,
               reflectionPrompt: slide.dataset.reflectionPrompt,
             });
