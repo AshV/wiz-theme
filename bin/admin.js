@@ -20,10 +20,12 @@ const __dirname = path.dirname(__filename);
 const args = process.argv.slice(2);
 let PORT = 4242;
 let customDataDir = null;
+let customConsumerId = null;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--port' && args[i + 1]) { PORT = parseInt(args[i + 1]); i++; }
   if (args[i] === '--data' && args[i + 1]) { customDataDir = args[i + 1]; i++; }
+  if ((args[i] === '--consumer' || args[i] === '--site') && args[i + 1]) { customConsumerId = args[i + 1]; i++; }
 }
 
 // ─── Resolve data root (contains quotes/ and authors/ subdirs) ───────────────
@@ -54,11 +56,31 @@ if (!fs.existsSync(AUTHORS_DIR)) fs.mkdirSync(AUTHORS_DIR, { recursive: true });
 
 const ADMIN_UI = path.join(__dirname, 'admin-ui.html');
 
+function detectConsumerId() {
+  if (customConsumerId) return customConsumerId.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '_');
+  if (process.env.PUBLIC_FIREBASE_CONSUMER_ID) return process.env.PUBLIC_FIREBASE_CONSUMER_ID.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '_');
+  if (process.env.PUBLIC_SITE_ID) return process.env.PUBLIC_SITE_ID.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '_');
+  try {
+    const pkgPath = path.join(CWD, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+      if (pkg.name) {
+        const clean = pkg.name.replace(/^@[^/]+\//, '').replace(/[^a-z0-9_-]/gi, '_').toLowerCase();
+        if (clean && clean !== 'wiz-theme') return clean;
+      }
+    }
+  } catch {}
+  return 'wisdom';
+}
+
+const CONSUMER_ID = detectConsumerId();
+
 console.log(`\n🧠 Wiz Theme Admin`);
-console.log(`📁 Data root : ${DATA_ROOT}`);
-console.log(`   ├ quotes : ${QUOTES_DIR}`);
-console.log(`   └ authors: ${AUTHORS_DIR}`);
-console.log(`🌐 Dashboard: http://localhost:${PORT}\n`);
+console.log(`📁 Data root  : ${DATA_ROOT}`);
+console.log(`   ├ quotes  : ${QUOTES_DIR}`);
+console.log(`   └ authors : ${AUTHORS_DIR}`);
+console.log(`🏷️ Consumer ID: ${CONSUMER_ID}`);
+console.log(`🌐 Dashboard  : http://localhost:${PORT}\n`);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function readAll(dir) {
@@ -120,12 +142,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ── Serve admin UI ──────────────────────────────────────────────────────────
-  if (method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
+  if ((method === 'GET' || method === 'HEAD') && (pathname === '/' || pathname === '/index.html')) {
     if (!fs.existsSync(ADMIN_UI)) {
       res.writeHead(404);
       return res.end('Admin UI not found. Ensure admin-ui.html is in the bin/ directory.');
     }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    if (method === 'HEAD') return res.end();
     return res.end(fs.readFileSync(ADMIN_UI, 'utf8'));
   }
 
@@ -291,7 +314,7 @@ const server = http.createServer(async (req, res) => {
     const categories = [...new Set(quotes.map(q => q.category).filter(Boolean))].sort();
     const moods = [...new Set(quotes.map(q => q.mood).filter(Boolean))].sort();
     const authorNames = authors.map(a => ({ name: a.name, slug: a.slug }));
-    return json(res, { tags, categories, moods, authors: authorNames, dataRoot: DATA_ROOT });
+    return json(res, { tags, categories, moods, authors: authorNames, dataRoot: DATA_ROOT, consumerId: CONSUMER_ID });
   }
 
   res.writeHead(404);

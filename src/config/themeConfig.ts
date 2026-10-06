@@ -18,6 +18,8 @@ export interface WizThemeConfig {
   brandingText?: string;
   logoUrl?: string;
   faviconUrl?: string;
+  consumerId?: string;
+  siteId?: string;
   typography?: Partial<TypographyConfig>;
   translations?: DeepPartial<Translations>;
 }
@@ -37,6 +39,7 @@ export interface ResolvedThemeConfig {
   brandingText: string;
   logoUrl: string;
   faviconUrl: string;
+  consumerId: string;
   typography: TypographyConfig;
   translations: Translations;
 }
@@ -89,6 +92,22 @@ export function resolveThemeConfig(
   const siteUrl = merged.siteUrl || '';
   const base = merged.base !== undefined ? merged.base : '';
 
+  const rawConsumer =
+    merged.consumerId ||
+    merged.siteId ||
+    (typeof import.meta !== 'undefined' && (
+      import.meta.env?.PUBLIC_FIREBASE_CONSUMER_ID ||
+      import.meta.env?.PUBLIC_SITE_ID ||
+      import.meta.env?.PUBLIC_CONSUMER_ID
+    )) ||
+    (merged.siteName || merged.siteTitle || 'wisdom');
+
+  const consumerId = String(rawConsumer)
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_-]/g, '') || 'wisdom';
+
   return {
     language,
     locale,
@@ -104,6 +123,7 @@ export function resolveThemeConfig(
     brandingText,
     logoUrl,
     faviconUrl,
+    consumerId,
     typography,
     translations,
   };

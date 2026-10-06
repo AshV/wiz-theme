@@ -28,6 +28,39 @@ const FIREBASE_CONFIG = {
   appId: import.meta.env.PUBLIC_FIREBASE_APP_ID || '',
 };
 
+let currentConsumerId: string =
+  (typeof import.meta !== 'undefined' && (
+    import.meta.env.PUBLIC_FIREBASE_CONSUMER_ID ||
+    import.meta.env.PUBLIC_SITE_ID ||
+    import.meta.env.PUBLIC_CONSUMER_ID
+  )) || 'wisdom';
+
+export function setConsumerId(id: string): void {
+  if (id && typeof id === 'string') {
+    currentConsumerId = id.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+  }
+}
+
+export function getConsumerId(): string {
+  if (typeof document !== 'undefined' && currentConsumerId === 'wisdom') {
+    const domCid = document.documentElement.dataset.consumerId;
+    if (domCid) {
+      currentConsumerId = domCid.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+    }
+  }
+  return currentConsumerId;
+}
+
+/**
+ * Returns database path scoped under top-level consumer identifier.
+ * e.g. "wisdom/quotes/q001/views"
+ */
+export function getDbPath(subPath: string): string {
+  const cleanSub = subPath.replace(/^\/+/, '');
+  const cid = getConsumerId();
+  return cid ? `${cid}/${cleanSub}` : cleanSub;
+}
+
 let dbInstance: Database | null = null;
 
 export function isFirebaseConfigured(): boolean {
@@ -51,8 +84,18 @@ function getDb(): Database | null {
 }
 
 // ── Local Storage Vote Cache (Tracks whether THIS browser liked/disliked) ──
-const VOTES_STORAGE_KEY = 'wisdom_user_votes';
-const SEEN_VIEWS_KEY = 'wisdom_seen_views_session';
+function getVotesKey(): string {
+  const cid = getConsumerId();
+  return cid ? `wiz_user_votes_${cid}` : 'wisdom_user_votes';
+}
+function getSeenViewsKey(): string {
+  const cid = getConsumerId();
+  return cid ? `wiz_seen_views_${cid}` : 'wisdom_seen_views_session';
+}
+function getSeenAuthorsKey(): string {
+  const cid = getConsumerId();
+  return cid ? `wiz_seen_authors_${cid}` : 'wisdom_seen_authors_session';
+}
 
 export type VoteType = 'like' | 'dislike' | null;
 
@@ -77,8 +120,13 @@ export interface DislikeFeedbackPayload {
  */
 export function getLocalVote(quoteId: string): VoteType {
   try {
-    const stored = JSON.parse(localStorage.getItem(VOTES_STORAGE_KEY) || '{}');
-    return stored[quoteId] || null;
+    const key = getVotesKey();
+    let stored = JSON.parse(localStorage.getItem(key) || 'null');
+    // Fallback to legacy unnamespaced key if not found under new key
+    if (!stored && key !== 'wisdom_user_votes') {
+      stored = JSON.parse(localStorage.getItem('wisdom_user_votes') || '{}');
+    }
+    return stored ? stored[quoteId] || null : null;
   } catch {
     return null;
   }
@@ -89,13 +137,14 @@ export function getLocalVote(quoteId: string): VoteType {
  */
 function setLocalVote(quoteId: string, vote: VoteType) {
   try {
-    const stored = JSON.parse(localStorage.getItem(VOTES_STORAGE_KEY) || '{}');
+    const key = getVotesKey();
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
     if (vote) {
       stored[quoteId] = vote;
     } else {
       delete stored[quoteId];
     }
-    localStorage.setItem(VOTES_STORAGE_KEY, JSON.stringify(stored));
+    localStorage.setItem(key, JSON.stringify(stored));
   } catch {}
 }
 
@@ -107,17 +156,18 @@ export async function recordQuoteView(quoteId: string): Promise<void> {
 
   // Deduplicate within current session
   try {
-    const seen: string[] = JSON.parse(sessionStorage.getItem(SEEN_VIEWS_KEY) || '[]');
+    const key = getSeenViewsKey();
+    const seen: string[] = JSON.parse(sessionStorage.getItem(key) || '[]');
     if (seen.includes(quoteId)) return;
     seen.push(quoteId);
-    sessionStorage.setItem(SEEN_VIEWS_KEY, JSON.stringify(seen));
+    sessionStorage.setItem(key, JSON.stringify(seen));
   } catch {}
 
   const db = getDb();
   if (!db) return;
 
   try {
-    const viewsRef = ref(db, `quotes/${quoteId}/views`);
+    const viewsRef = ref(db, getDbPath(`quotes/${quoteId}/views`));
     await runTransaction(viewsRef, (current) => (current || 0) + 1);
   } catch (err) {
     console.debug('[Wisdom Firebase] Failed to increment view:', err);
@@ -141,12 +191,12 @@ export async function recordQuoteShare(
 
   try {
     // 1. Increment total shares
-    const sharesRef = ref(db, `quotes/${quoteId}/shares`);
+    const sharesRef = ref(db, getDbPath(`quotes/${quoteId}/shares`));
     await runTransaction(sharesRef, (current) => (current || 0) + 1);
 
     // 2. Increment specific share type
     if (shareType) {
-      const typeRef = ref(db, `quotes/${quoteId}/share_types/${shareType}`);
+      const typeRef = ref(db, getDbPath(`quotes/${quoteId}/share_types/${shareType}`));
       await runTransaction(typeRef, (current) => (current || 0) + 1);
     }
   } catch (err) {
@@ -157,17 +207,16 @@ export async function recordQuoteShare(
 /**
  * Record an author dossier view (deduplicated per browser session).
  */
-const SEEN_AUTHORS_KEY = 'wisdom_seen_authors_session';
-
 export async function recordAuthorDossierView(authorSlug: string, authorName?: string): Promise<void> {
   if (!authorSlug) return;
 
   // Deduplicate author views per session
   try {
-    const seen: string[] = JSON.parse(sessionStorage.getItem(SEEN_AUTHORS_KEY) || '[]');
+    const key = getSeenAuthorsKey();
+    const seen: string[] = JSON.parse(sessionStorage.getItem(key) || '[]');
     if (seen.includes(authorSlug)) return;
     seen.push(authorSlug);
-    sessionStorage.setItem(SEEN_AUTHORS_KEY, JSON.stringify(seen));
+    sessionStorage.setItem(key, JSON.stringify(seen));
   } catch {}
 
   const db = getDb();
@@ -177,15 +226,15 @@ export async function recordAuthorDossierView(authorSlug: string, authorName?: s
   }
 
   try {
-    const authorViewsRef = ref(db, `authors/${authorSlug}/dossierViews`);
+    const authorViewsRef = ref(db, getDbPath(`authors/${authorSlug}/dossierViews`));
     await runTransaction(authorViewsRef, (current) => (current || 0) + 1);
 
     if (authorName) {
-      const nameRef = ref(db, `authors/${authorSlug}/name`);
+      const nameRef = ref(db, getDbPath(`authors/${authorSlug}/name`));
       await set(nameRef, authorName);
     }
 
-    const updatedRef = ref(db, `authors/${authorSlug}/updatedAt`);
+    const updatedRef = ref(db, getDbPath(`authors/${authorSlug}/updatedAt`));
     await set(updatedRef, Date.now());
   } catch (err) {
     console.debug('[Wisdom Firebase] Failed to record author dossier view:', err);
@@ -210,17 +259,17 @@ export async function toggleQuoteLike(quoteId: string): Promise<{ isLiked: boole
   if (db) {
     try {
       // 1. Update Likes count
-      const likesRef = ref(db, `quotes/${quoteId}/likes`);
+      const likesRef = ref(db, getDbPath(`quotes/${quoteId}/likes`));
       await runTransaction(likesRef, (current) => Math.max(0, (current || 0) + (isCurrentlyLiked ? -1 : 1)));
 
       // 2. If previously disliked, remove that dislike count
       if (isCurrentlyDisliked) {
-        const dislikesRef = ref(db, `quotes/${quoteId}/dislikes`);
+        const dislikesRef = ref(db, getDbPath(`quotes/${quoteId}/dislikes`));
         await runTransaction(dislikesRef, (current) => Math.max(0, (current || 0) - 1));
       }
 
       // Update timestamp
-      const updatedRef = ref(db, `quotes/${quoteId}/updatedAt`);
+      const updatedRef = ref(db, getDbPath(`quotes/${quoteId}/updatedAt`));
       await set(updatedRef, Date.now());
     } catch (err) {
       console.warn('[Wisdom Firebase] Like transaction failed:', err);
@@ -248,17 +297,17 @@ export async function toggleQuoteDislike(quoteId: string): Promise<{ isDisliked:
   if (db) {
     try {
       // 1. Update Dislikes count
-      const dislikesRef = ref(db, `quotes/${quoteId}/dislikes`);
+      const dislikesRef = ref(db, getDbPath(`quotes/${quoteId}/dislikes`));
       await runTransaction(dislikesRef, (current) => Math.max(0, (current || 0) + (isCurrentlyDisliked ? -1 : 1)));
 
       // 2. If previously liked, remove that like count
       if (isCurrentlyLiked) {
-        const likesRef = ref(db, `quotes/${quoteId}/likes`);
+        const likesRef = ref(db, getDbPath(`quotes/${quoteId}/likes`));
         await runTransaction(likesRef, (current) => Math.max(0, (current || 0) - 1));
       }
 
       // Update timestamp
-      const updatedRef = ref(db, `quotes/${quoteId}/updatedAt`);
+      const updatedRef = ref(db, getDbPath(`quotes/${quoteId}/updatedAt`));
       await set(updatedRef, Date.now());
     } catch (err) {
       console.warn('[Wisdom Firebase] Dislike transaction failed:', err);
@@ -283,13 +332,13 @@ export async function submitDislikeReason(payload: DislikeFeedbackPayload): Prom
   }
 
   try {
-    // 1. Increment reason counter under quotes/{quoteId}/dislike_reasons/{reason}
+    // 1. Increment reason counter under {consumerId}/quotes/{quoteId}/dislike_reasons/{reason}
     const cleanReason = reason.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    const reasonRef = ref(db, `quotes/${quoteId}/dislike_reasons/${cleanReason}`);
+    const reasonRef = ref(db, getDbPath(`quotes/${quoteId}/dislike_reasons/${cleanReason}`));
     await runTransaction(reasonRef, (current) => (current || 0) + 1);
 
-    // 2. Append detailed feedback note under dislike_feedback/{quoteId}
-    const feedbackListRef = ref(db, `dislike_feedback/${quoteId}`);
+    // 2. Append detailed feedback note under {consumerId}/dislike_feedback/{quoteId}
+    const feedbackListRef = ref(db, getDbPath(`dislike_feedback/${quoteId}`));
     const newFeedbackRef = push(feedbackListRef);
     await set(newFeedbackRef, {
       reason: cleanReason,
@@ -312,7 +361,7 @@ export async function fetchQuoteStats(quoteId: string): Promise<QuoteStats | nul
   if (!db || !quoteId) return null;
 
   try {
-    const snapshot = await get(child(ref(db), `quotes/${quoteId}`));
+    const snapshot = await get(child(ref(db), getDbPath(`quotes/${quoteId}`)));
     if (snapshot.exists()) {
       const data = snapshot.val();
       return {

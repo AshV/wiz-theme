@@ -52,6 +52,7 @@ export * from './utils/slug';
 export * from './utils/chunkConfig';
 export * from './utils/dailyQuote';
 export * from './utils/authorUtils';
+export * from './utils/firebaseStats';
 export * from './data/mediaRegistry';
 export * from './data/exploreCatalog';
 export * from './data/authorProfiles';

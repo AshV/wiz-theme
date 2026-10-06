@@ -29,6 +29,8 @@ interface Props {
   brandingText?: string;
   logoUrl?: string;
   faviconUrl?: string;
+  consumerId?: string;
+  siteId?: string;
   translations?: DeepPartial<Translations>;
   typography?: Partial<TypographyConfig>;
 }
@@ -48,6 +50,7 @@ const themeConfig = resolveThemeConfig({
   brandingText: Astro.props.brandingText,
   logoUrl: Astro.props.logoUrl,
   faviconUrl: Astro.props.faviconUrl,
+  consumerId: Astro.props.consumerId || Astro.props.siteId,
   translations: Astro.props.translations,
   typography: Astro.props.typography,
 });
@@ -118,7 +121,7 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
 } : null;
 ---
 <!doctype html>
-<html lang={themeConfig.language} dir={themeConfig.dir}>
+<html lang={themeConfig.language} dir={themeConfig.dir} data-consumer-id={themeConfig.consumerId}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
@@ -1024,7 +1027,14 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
         submitDislikeReason,
         fetchQuoteStats,
         isFirebaseConfigured,
+        setConsumerId,
+        getConsumerId,
       } from '../utils/firebaseStats';
+
+      const domCid = document.documentElement.dataset.consumerId;
+      if (domCid) {
+        setConsumerId(domCid);
+      }
 
       (window as any).firebaseStats = {
         recordView: recordQuoteView,
@@ -1035,6 +1045,8 @@ const breadcrumbsSchema = breadcrumbs.length > 0 ? {
         submitDislikeReason,
         fetchStats: fetchQuoteStats,
         isConfigured: isFirebaseConfigured,
+        setConsumerId,
+        getConsumerId,
       };
     </script>
   </body>

@@ -391,8 +391,127 @@
     background: rgba(124,111,255,.12); border: 1px solid rgba(124,111,255,.2);
     border-radius: 20px; padding: 2px 9px;
   }
-  .author-card-actions { display: flex; gap: 5px; margin-left: auto; opacity: 0; transition: opacity .15s; }
   .author-card:hover .author-card-actions { opacity: 1; }
+
+  /* ─── Audit & Analytics ───────────────────────────────────────────────────── */
+  #view-audit { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+  #view-audit.active { display: flex; }
+  .audit-toolbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .audit-status {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-mid);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .audit-pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-dim); flex-shrink: 0; transition: background .3s;
+  }
+  .audit-pulse-dot.connected { background: var(--success); box-shadow: 0 0 10px rgba(0,212,170,.6); }
+  .audit-pulse-dot.error { background: var(--danger); }
+  .audit-pulse-dot.loading { background: var(--accent-4); animation: pulse 1s infinite alternate; }
+  @keyframes pulse { from { opacity: .4; } to { opacity: 1; } }
+  .audit-consumer-tag {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border-radius: 999px;
+    background: var(--bg-raised); border: 1px solid var(--border); color: var(--accent);
+    cursor: pointer; transition: all .2s; margin-left: 6px;
+  }
+  .audit-consumer-tag:hover { border-color: var(--accent); transform: scale(1.02); }
+  .audit-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .audit-select {
+    padding: 6px 10px; border-radius: 8px; font-size: 12px;
+    background: var(--bg-raised); border: 1px solid var(--border);
+    color: var(--text); cursor: pointer;
+  }
+  .audit-select:focus { outline: none; border-color: var(--accent); }
+  .audit-scroll-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* Metrics Grid */
+  .audit-metrics-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;
+  }
+  .audit-stat-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+    transition: all .2s;
+  }
+  .audit-stat-card:hover { border-color: var(--border-hi); transform: translateY(-1px); }
+  .as-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim); font-weight: 600; }
+  .as-val { font-size: 24px; font-weight: 700; color: var(--text); font-family: 'JetBrains Mono', monospace; line-height: 1.2; }
+  .as-sub { font-size: 11px; color: var(--text-dim); }
+
+  /* Subtabs Row */
+  .audit-subtabs-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .audit-subtabs {
+    display: flex; gap: 4px; overflow-x: auto; max-width: 100%;
+  }
+  .audit-subtab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-mid); cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .audit-subtab:hover { background: var(--bg-raised); color: var(--text); }
+  .audit-subtab.active {
+    background: rgba(124,111,255,.14); border-color: var(--accent); color: var(--accent); font-weight: 600;
+  }
+  [data-theme="light"] .audit-subtab.active { background: rgba(93,78,255,.1); }
+  .subtab-badge {
+    padding: 1px 6px; border-radius: 10px; font-size: 10px;
+    background: var(--bg-raised); color: var(--text-dim); font-family: 'JetBrains Mono', monospace;
+  }
+  .audit-subtab.active .subtab-badge {
+    background: rgba(124,111,255,.25); color: var(--accent);
+  }
+  .audit-search-wrap {
+    display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px;
+    background: var(--bg-input); border: 1px solid var(--border); flex: 1; max-width: 320px;
+  }
+  .audit-search-wrap input {
+    border: none; background: none; color: var(--text); font-size: 12px; width: 100%; outline: none;
+  }
+  .audit-search-wrap input::placeholder { color: var(--text-dim); }
+
+  /* Audit Cards */
+  .audit-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
+    transition: all .2s; margin-bottom: 10px;
+  }
+  .audit-card:hover { border-color: var(--border-hi); }
+  .audit-card-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .audit-qid-pill {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+    padding: 2px 7px; border-radius: 6px; background: rgba(124,111,255,.12);
+    border: 1px solid rgba(124,111,255,.25); color: var(--accent);
+  }
+  .audit-card-author { font-size: 13px; font-weight: 600; color: var(--text); }
+  .audit-quote-content {
+    font-size: 14px; line-height: 1.5; color: var(--text); font-style: italic;
+    border-left: 2px solid var(--border-hi); padding-left: 12px; margin: 2px 0;
+  }
+  .audit-metrics-strip {
+    display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-dim); flex-wrap: wrap;
+  }
+  .audit-metrics-strip strong { color: var(--text); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .audit-feedback-box {
+    margin-top: 4px; padding: 10px 12px; border-radius: var(--r);
+    background: var(--bg-raised); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px;
+  }
+  .audit-card-actions { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .badge-reason {
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 12px;
+    display: inline-flex; align-items: center; gap: 3px; text-transform: uppercase;
+  }
+  .badge-reason-rose { background: rgba(255,79,107,.12); color: var(--danger); border: 1px solid rgba(255,79,107,.3); }
+  .badge-reason-amber { background: rgba(255,179,71,.12); color: var(--accent-4); border: 1px solid rgba(255,179,71,.3); }
+  .badge-reason-cyan { background: rgba(0,212,170,.12); color: var(--accent-3); border: 1px solid rgba(0,212,170,.3); }
+  .badge-reason-violet { background: rgba(124,111,255,.12); color: var(--accent); border: 1px solid rgba(124,111,255,.3); }
 
   /* ─── Modal ───────────────────────────────────────────────────────────────── */
   .modal-overlay {
@@ -588,6 +707,9 @@
     <div class="nav-tab" id="tab-authors" data-view="authors">
       👤 Authors <span class="tab-count" id="tab-count-authors">0</span>
     </div>
+    <div class="nav-tab" id="tab-audit" data-view="audit">
+      📊 Audit & Analytics <span class="tab-count" id="tab-count-audit">0</span>
+    </div>
   </div>
 
   <div class="topbar-right">
@@ -748,6 +870,109 @@
           <div class="empty-icon">👤</div>
           <div style="font-size:14px;font-weight:600">No authors yet</div>
           <div style="font-size:13px">Create a new author to get started.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AUDIT & ANALYTICS VIEW ────────────────────────────────────────────── -->
+    <div class="view" id="view-audit">
+      <!-- Audit Toolbar -->
+      <div class="audit-toolbar">
+        <div class="audit-status" id="audit-db-status">
+          <span class="audit-pulse-dot loading" id="audit-pulse-dot"></span>
+          <span id="audit-db-label">Connecting to Firebase...</span>
+          <span class="audit-consumer-tag" id="audit-consumer-tag" title="Top-level consumer identifier in Firebase RTDB (Click to edit)" onclick="openFbConfigModal()">
+            <span style="opacity:.6">consumer:</span> <strong id="audit-consumer-label">wisdom</strong>
+          </span>
+        </div>
+        <div class="audit-controls">
+          <select class="audit-select" id="audit-refresh-interval" title="Auto-refresh interval">
+            <option value="0">Auto-refresh: Off</option>
+            <option value="15">Auto-refresh: 15s</option>
+            <option value="30">Auto-refresh: 30s</option>
+            <option value="60">Auto-refresh: 60s</option>
+            <option value="300">Auto-refresh: 5m</option>
+          </select>
+          <button type="button" class="btn btn-ghost" id="btn-audit-refresh" title="Reload live data from Firebase">
+            <span id="audit-refresh-icon">↻</span> Refresh
+          </button>
+          <button type="button" class="btn btn-ghost" id="btn-audit-config" title="Configure Database URL">
+            ⚙️ Settings
+          </button>
+        </div>
+      </div>
+
+      <div class="audit-scroll-body">
+        <!-- Metric Cards Grid -->
+        <div class="audit-metrics-grid">
+          <div class="audit-stat-card">
+            <div class="as-label">Total Impressions</div>
+            <div class="as-val" id="astat-views">—</div>
+            <div class="as-sub" id="astat-views-sub">Across all reels</div>
+          </div>
+          <div class="audit-stat-card">
+            <div class="as-label">Total Likes</div>
+            <div class="as-val" style="color:var(--accent-2)" id="astat-likes">—</div>
+            <div class="as-sub" id="astat-likes-sub">Like ratio: —</div>
+          </div>
+          <div class="audit-stat-card">
+            <div class="as-label">Total Dislikes</div>
+            <div class="as-val" style="color:var(--danger)" id="astat-dislikes">—</div>
+            <div class="as-sub" id="astat-dislikes-sub">0 quotes flagged</div>
+          </div>
+          <div class="audit-stat-card">
+            <div class="as-label">Total Shares</div>
+            <div class="as-val" style="color:var(--accent-3)" id="astat-shares">—</div>
+            <div class="as-sub" id="astat-shares-sub">Images, video & links</div>
+          </div>
+          <div class="audit-stat-card">
+            <div class="as-label">Author Dossiers</div>
+            <div class="as-val" style="color:var(--accent)" id="astat-authors">—</div>
+            <div class="as-sub" id="astat-authors-sub">Profile views</div>
+          </div>
+          <div class="audit-stat-card">
+            <div class="as-label">Quality Score</div>
+            <div class="as-val" style="color:var(--accent-3)" id="astat-score">—</div>
+            <div class="as-sub">Approval rating</div>
+          </div>
+        </div>
+
+        <!-- Sub-Tabs Row & Search -->
+        <div class="audit-subtabs-row">
+          <div class="audit-subtabs">
+            <button type="button" class="audit-subtab active" data-atab="disliked">
+              🚩 Flagged & Disliked <span class="subtab-badge" id="abadge-disliked">0</span>
+            </button>
+            <button type="button" class="audit-subtab" data-atab="liked">
+              ❤️ Most Liked <span class="subtab-badge" id="abadge-liked">0</span>
+            </button>
+            <button type="button" class="audit-subtab" data-atab="shared">
+              🌟 Top Shared <span class="subtab-badge" id="abadge-shared">0</span>
+            </button>
+            <button type="button" class="audit-subtab" data-atab="views">
+              👁️ Most Viewed <span class="subtab-badge" id="abadge-views">0</span>
+            </button>
+            <button type="button" class="audit-subtab" data-atab="authors">
+              👤 Author Dossiers <span class="subtab-badge" id="abadge-authors">0</span>
+            </button>
+            <button type="button" class="audit-subtab" data-atab="notes">
+              💬 User Feedback <span class="subtab-badge" id="abadge-notes">0</span>
+            </button>
+          </div>
+          <div class="audit-search-wrap">
+            <span style="font-size:12px;opacity:.6">🔍</span>
+            <input type="text" id="audit-search-input" placeholder="Search by ID, quote text, author, reason..." autocomplete="off"/>
+          </div>
+        </div>
+
+        <!-- Audit Items Container -->
+        <div id="audit-content-container">
+          <div id="audit-loading" class="empty-state show">
+            <div class="empty-icon" style="animation:spin 1s linear infinite">↻</div>
+            <div style="font-size:14px;font-weight:600">Connecting to Firebase Realtime Database...</div>
+            <div style="font-size:12px;color:var(--text-dim)">Fetching live analytics and quality metrics</div>
+          </div>
+          <div id="audit-items-view" style="display:none"></div>
         </div>
       </div>
     </div>
@@ -1005,6 +1230,31 @@
       </div>
     </div>
   </div>
+<!-- ── Firebase Settings Modal ──────────────────────────────────────── -->
+<div class="modal-overlay" id="fb-config-overlay">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Firebase Database Settings</div>
+      <button class="modal-close" onclick="closeFbConfigModal()">✕</button>
+    </div>
+    <div class="modal-body" style="gap:14px">
+      <div class="field">
+        <label>Realtime Database (RTDB) URL</label>
+        <input type="text" class="form-input" id="fb-db-url-input" placeholder="https://PROJECT-default-rtdb.REGION.firebasedatabase.app"/>
+        <div class="field-hint">The database endpoint logging views, likes, dislikes, shares, and reader feedback.</div>
+      </div>
+      <div class="field">
+        <label>Top-Level Consumer Identifier (Site Namespace)</label>
+        <input type="text" class="form-input" id="fb-consumer-id-input" placeholder="e.g. wisdom, stoic_hub, or leave blank for root"/>
+        <div class="field-hint">Top-level key in Firebase RTDB isolating multiple websites using the same database (e.g. <code>/{consumerId}/quotes</code>).</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-fb-reset">Reset to Default</button>
+      <button class="btn btn-ghost" style="margin-left:auto" onclick="closeFbConfigModal()">Cancel</button>
+      <button class="btn btn-primary" id="btn-fb-save">Save & Connect</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Toast ──────────────────────────────────────────────────────────────── -->
@@ -1093,12 +1343,18 @@ async function init() {
 async function refresh() {
   await Promise.all([loadQuotes(), loadAuthors(), loadMeta()]);
   renderSidebar(); renderQuotes(); renderAuthors();
+  if (currentView === 'audit') renderAuditView();
   updateStats();
 }
 async function loadQuotes() { const r = await fetch('/api/quotes'); allQuotes = await r.json(); }
 async function loadAuthors() { const r = await fetch('/api/authors'); allAuthors = await r.json(); }
 async function loadMeta() {
   const r = await fetch('/api/meta'); meta = await r.json();
+  if (meta.consumerId && localStorage.getItem('wiz_audit_consumer_id') === null) {
+    currentConsumerId = meta.consumerId;
+  }
+  const consumerLabel = document.getElementById('audit-consumer-label');
+  if (consumerLabel) consumerLabel.textContent = currentConsumerId || 'root';
   // populate datalist
   const dl = document.getElementById('cat-dl');
   dl.innerHTML = (meta.categories || []).map(c => `<option value="${c}">`).join('');
@@ -1118,9 +1374,20 @@ function switchView(view) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === `view-${view}`));
   const newBtn = document.getElementById('btn-new');
-  newBtn.textContent = view === 'quotes' ? '＋ New Quote' : '＋ New Author';
+  if (view === 'quotes') {
+    newBtn.style.display = '';
+    newBtn.textContent = '＋ New Quote';
+  } else if (view === 'authors') {
+    newBtn.style.display = '';
+    newBtn.textContent = '＋ New Author';
+  } else {
+    newBtn.style.display = 'none';
+  }
   // sidebar only relevant for quotes
   document.getElementById('sidebar').style.display = view === 'quotes' ? '' : 'none';
+  if (view === 'audit') {
+    if (!Object.keys(auditQuotesData).length) loadAuditData();
+  }
 }
 
 function handleNewBtn() {
@@ -1713,6 +1980,479 @@ function toast(msg, type = '') {
   toastTimer = setTimeout(() => { el.className = ''; }, 3000);
 }
 
+// ─── Firebase Audit & Analytics ──────────────────────────────────────────────
+const DEFAULT_FB_DB_URL = 'https://element-2e225-default-rtdb.asia-southeast1.firebasedatabase.app';
+let currentFbDbUrl = localStorage.getItem('wiz_audit_db_url') || DEFAULT_FB_DB_URL;
+let currentConsumerId = localStorage.getItem('wiz_audit_consumer_id') ?? 'wisdom';
+let auditQuotesData = {};
+let auditAuthorsData = {};
+let auditFeedbackData = {};
+let auditActiveSubtab = 'disliked';
+let auditSearchQuery = '';
+let auditAutoRefreshTimer = null;
+let isAuditLoading = false;
+
+function cleanFbUrl(url) {
+  return (url || '').trim().replace(/\/+$/, '');
+}
+
+async function loadAuditData(silent = false) {
+  if (isAuditLoading) return;
+  isAuditLoading = true;
+  const baseUrl = cleanFbUrl(currentFbDbUrl);
+  const cid = (currentConsumerId || '').trim();
+  const prefix = cid ? `${encodeURIComponent(cid)}/` : '';
+  const statusLabel = document.getElementById('audit-db-label');
+  const dot = document.getElementById('audit-pulse-dot');
+  const refreshIcon = document.getElementById('audit-refresh-icon');
+  const consumerLabel = document.getElementById('audit-consumer-label');
+
+  if (consumerLabel) consumerLabel.textContent = cid || 'root';
+  if (refreshIcon) refreshIcon.style.animation = 'spin .8s linear infinite';
+  if (dot) dot.className = 'audit-pulse-dot loading';
+  if (statusLabel) {
+    try {
+      statusLabel.textContent = `Connecting to ${new URL(baseUrl).hostname}...`;
+    } catch {
+      statusLabel.textContent = 'Connecting to Firebase...';
+    }
+  }
+  if (!silent) {
+    const loadingEl = document.getElementById('audit-loading');
+    const itemsEl = document.getElementById('audit-items-view');
+    if (loadingEl && itemsEl) {
+      loadingEl.style.display = 'flex';
+      itemsEl.style.display = 'none';
+    }
+  }
+
+  try {
+    const [quotesRes, authorsRes, feedbackRes] = await Promise.allSettled([
+      fetch(`${baseUrl}/${prefix}quotes.json`),
+      fetch(`${baseUrl}/${prefix}authors.json`),
+      fetch(`${baseUrl}/${prefix}dislike_feedback.json`)
+    ]);
+
+    let quoteFetchFailed = false;
+    let quoteStatus = 0;
+    if (quotesRes.status === 'fulfilled') {
+      quoteStatus = quotesRes.value.status;
+      if (quotesRes.value.ok) {
+        auditQuotesData = (await quotesRes.value.json()) || {};
+      } else {
+        quoteFetchFailed = true;
+        auditQuotesData = {};
+      }
+    } else {
+      quoteFetchFailed = true;
+      auditQuotesData = {};
+    }
+
+    auditAuthorsData = (authorsRes.status === 'fulfilled' && authorsRes.value.ok) ? (await authorsRes.value.json()) || {} : {};
+    auditFeedbackData = (feedbackRes.status === 'fulfilled' && feedbackRes.value.ok) ? (await feedbackRes.value.json()) || {} : {};
+
+    if (quoteFetchFailed) {
+      if (dot) dot.className = 'audit-pulse-dot error';
+      if (statusLabel) {
+        statusLabel.textContent = quoteStatus === 401
+          ? `Permission denied on /${prefix}quotes.json (Check Firebase Rules)`
+          : `Failed to fetch /${prefix}quotes.json (${quoteStatus})`;
+      }
+    } else {
+      if (dot) dot.className = 'audit-pulse-dot connected';
+      if (statusLabel) {
+        try {
+          const host = new URL(baseUrl).hostname;
+          statusLabel.textContent = `Connected: ${host} (${new Date().toLocaleTimeString()})`;
+        } catch {
+          statusLabel.textContent = `Connected (${new Date().toLocaleTimeString()})`;
+        }
+      }
+    }
+
+    updateAuditMetrics();
+    renderAuditView();
+  } catch (err) {
+    if (dot) dot.className = 'audit-pulse-dot error';
+    if (statusLabel) statusLabel.textContent = `Connection error: ${err.message}`;
+    console.warn('Firebase audit fetch error:', err);
+  } finally {
+    isAuditLoading = false;
+    if (refreshIcon) refreshIcon.style.animation = '';
+    const loadingEl = document.getElementById('audit-loading');
+    const itemsEl = document.getElementById('audit-items-view');
+    if (loadingEl && itemsEl) {
+      loadingEl.style.display = 'none';
+      itemsEl.style.display = 'block';
+    }
+  }
+}
+
+function updateAuditMetrics() {
+  const qIds = Object.keys(auditQuotesData);
+  let totalViews = 0;
+  let totalLikes = 0;
+  let totalDislikes = 0;
+  let totalShares = 0;
+  let flaggedCount = 0;
+
+  qIds.forEach(id => {
+    const q = auditQuotesData[id];
+    if (!q || typeof q !== 'object') return;
+    totalViews += (q.views || 0);
+    totalLikes += (q.likes || 0);
+    totalDislikes += (q.dislikes || 0);
+    totalShares += (q.shares || 0);
+    if ((q.dislikes || 0) > 0) flaggedCount++;
+  });
+
+  let totalAuthorViews = 0;
+  const authorSlugs = Object.keys(auditAuthorsData);
+  authorSlugs.forEach(s => {
+    totalAuthorViews += (auditAuthorsData[s]?.dossierViews || 0);
+  });
+
+  let totalNotesCount = 0;
+  Object.keys(auditFeedbackData).forEach(qid => {
+    const entries = auditFeedbackData[qid];
+    if (entries && typeof entries === 'object') {
+      totalNotesCount += Object.keys(entries).length;
+    }
+  });
+
+  const totalVotes = totalLikes + totalDislikes;
+  const approvalRate = totalVotes > 0 ? ((totalLikes / totalVotes) * 100).toFixed(1) + '%' : '100%';
+  const likeRatio = totalViews > 0 ? ((totalLikes / totalViews) * 100).toFixed(1) + '%' : '—';
+
+  const sv = document.getElementById('astat-views'); if (sv) sv.textContent = totalViews.toLocaleString();
+  const sl = document.getElementById('astat-likes'); if (sl) sl.textContent = totalLikes.toLocaleString();
+  const slSub = document.getElementById('astat-likes-sub'); if (slSub) slSub.textContent = `Like ratio: ${likeRatio}`;
+  const sd = document.getElementById('astat-dislikes'); if (sd) sd.textContent = totalDislikes.toLocaleString();
+  const sdSub = document.getElementById('astat-dislikes-sub'); if (sdSub) sdSub.textContent = `${flaggedCount} quotes flagged`;
+  const ss = document.getElementById('astat-shares'); if (ss) ss.textContent = totalShares.toLocaleString();
+  const sa = document.getElementById('astat-authors'); if (sa) sa.textContent = totalAuthorViews.toLocaleString();
+  const saSub = document.getElementById('astat-authors-sub'); if (saSub) saSub.textContent = `${authorSlugs.length} author profiles`;
+  const sc = document.getElementById('astat-score'); if (sc) sc.textContent = approvalRate;
+
+  const bd = document.getElementById('abadge-disliked'); if (bd) bd.textContent = flaggedCount;
+  const bl = document.getElementById('abadge-liked'); if (bl) bl.textContent = qIds.filter(id => (auditQuotesData[id]?.likes || 0) > 0).length;
+  const bs = document.getElementById('abadge-shared'); if (bs) bs.textContent = qIds.filter(id => (auditQuotesData[id]?.shares || 0) > 0).length;
+  const bv = document.getElementById('abadge-views'); if (bv) bv.textContent = qIds.length;
+  const ba = document.getElementById('abadge-authors'); if (ba) ba.textContent = authorSlugs.length;
+  const bn = document.getElementById('abadge-notes'); if (bn) bn.textContent = totalNotesCount;
+  const tabAuditCount = document.getElementById('tab-count-audit'); if (tabAuditCount) tabAuditCount.textContent = flaggedCount;
+}
+
+function renderAuditView() {
+  const container = document.getElementById('audit-items-view');
+  if (!container) return;
+  const qIds = Object.keys(auditQuotesData);
+  const query = auditSearchQuery.toLowerCase().trim();
+
+  function resolveQuote(id) {
+    const local = allQuotes.find(q => q.id === id);
+    const remote = auditQuotesData[id] || {};
+    return {
+      id,
+      content: local?.content || `Quote [${id}]`,
+      author: local?.author || 'Unknown Author',
+      authorSlug: local?.authorSlug || '',
+      category: local?.category || '',
+      ...remote
+    };
+  }
+
+  function matchesSearch(q) {
+    if (!query) return true;
+    const reasonsStr = JSON.stringify(q.dislike_reasons || {});
+    return `${q.id} ${q.author || ''} ${q.content || ''} ${reasonsStr}`.toLowerCase().includes(query);
+  }
+
+  if (auditActiveSubtab === 'disliked') {
+    const items = qIds
+      .map(resolveQuote)
+      .filter(q => (q.dislikes || 0) > 0)
+      .filter(matchesSearch)
+      .sort((a, b) => (b.dislikes || 0) - (a.dislikes || 0));
+    renderAuditQuoteList(container, items, 'disliked');
+  } else if (auditActiveSubtab === 'liked') {
+    const items = qIds
+      .map(resolveQuote)
+      .filter(q => (q.likes || 0) > 0)
+      .filter(matchesSearch)
+      .sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    renderAuditQuoteList(container, items, 'liked');
+  } else if (auditActiveSubtab === 'shared') {
+    const items = qIds
+      .map(resolveQuote)
+      .filter(q => (q.shares || 0) > 0)
+      .filter(matchesSearch)
+      .sort((a, b) => (b.shares || 0) - (a.shares || 0));
+    renderAuditQuoteList(container, items, 'shared');
+  } else if (auditActiveSubtab === 'views') {
+    const items = qIds
+      .map(resolveQuote)
+      .filter(matchesSearch)
+      .sort((a, b) => (b.views || 0) - (a.views || 0));
+    renderAuditQuoteList(container, items, 'views');
+  } else if (auditActiveSubtab === 'authors') {
+    renderAuditAuthorsList(container, query);
+  } else if (auditActiveSubtab === 'notes') {
+    renderAuditNotesList(container, query);
+  }
+}
+
+function renderAuditQuoteList(container, items, type) {
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state show">
+        <div class="empty-icon">${type === 'disliked' ? '✨' : '🔍'}</div>
+        <div style="font-size:14px;font-weight:600">${type === 'disliked' ? 'No flagged or disliked quotes!' : 'No quotes match your criteria.'}</div>
+        <div style="font-size:12px;color:var(--text-dim)">${type === 'disliked' ? 'All tracked quotes enjoy positive audience ratings.' : 'Try adjusting your search query.'}</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = items.map(q => {
+    const totalVotes = (q.likes || 0) + (q.dislikes || 0);
+    const dislikePct = totalVotes > 0 ? ((q.dislikes / totalVotes) * 100).toFixed(0) + '%' : '0%';
+    const reasons = q.dislike_reasons || {};
+    const reasonBadges = Object.keys(reasons).map(r => {
+      const count = reasons[r];
+      let cls = 'badge-reason-amber';
+      let icon = '🚩';
+      if (r === 'wrong_author') { icon = '👤'; cls = 'badge-reason-rose'; }
+      if (r === 'typo') { icon = '✍️'; cls = 'badge-reason-cyan'; }
+      if (r === 'offensive') { icon = '🚫'; cls = 'badge-reason-rose'; }
+      if (r === 'inaccurate') { icon = '📜'; cls = 'badge-reason-violet'; }
+      return `<span class="badge-reason ${cls}">${icon} ${esc(r)}: ${count}</span>`;
+    }).join(' ');
+
+    const shareTypes = q.share_types || {};
+    const shareStr = Object.keys(shareTypes).map(t => `${t}: ${shareTypes[t]}`).join(' · ');
+
+    const quoteNotes = auditFeedbackData[q.id]
+      ? Object.values(auditFeedbackData[q.id]).filter(n => n && n.note)
+      : [];
+
+    return `
+      <div class="audit-card">
+        <div class="audit-card-top">
+          <span class="audit-qid-pill">${esc(q.id)}</span>
+          <span class="audit-card-author">${esc(q.author)}</span>
+          ${q.category ? `<span class="badge" style="font-size:10px">${esc(q.category)}</span>` : ''}
+          ${reasonBadges}
+        </div>
+
+        <div class="audit-quote-content">
+          “${esc(q.content)}”
+        </div>
+
+        <div class="audit-metrics-strip">
+          <span>👁️ <strong>${(q.views || 0).toLocaleString()}</strong> views</span>
+          <span>❤️ <strong style="color:var(--accent-2)">${(q.likes || 0).toLocaleString()}</strong> likes</span>
+          <span>👎 <strong style="color:var(--danger)">${(q.dislikes || 0).toLocaleString()}</strong> dislikes <small style="opacity:.6">(${dislikePct})</small></span>
+          <span>🔗 <strong style="color:var(--accent-3)">${(q.shares || 0).toLocaleString()}</strong> shares</span>
+          ${shareStr ? `<span style="font-size:11px;opacity:.6">(${esc(shareStr)})</span>` : ''}
+        </div>
+
+        ${quoteNotes.length > 0 ? `
+          <div class="audit-feedback-box">
+            <span style="font-size:11px;font-weight:600;color:var(--danger)">💬 User Feedback Comments (${quoteNotes.length}):</span>
+            ${quoteNotes.slice(0, 3).map(n => `
+              <div style="font-size:12px;color:var(--text);padding-left:8px;border-left:2px solid var(--danger)">
+                <span style="font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace">[${esc(n.reason || 'note')}]</span> “${esc(n.note)}”
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+
+        <div class="audit-card-actions">
+          <button type="button" class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="openQuoteModal('${esc(q.id)}')">
+            ✏️ Edit Quote
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAuditAuthorsList(container, query) {
+  const slugs = Object.keys(auditAuthorsData);
+  const items = slugs
+    .map(slug => ({
+      slug,
+      name: allAuthors.find(a => a.slug === slug)?.name || auditAuthorsData[slug]?.name || slug,
+      dossierViews: auditAuthorsData[slug]?.dossierViews || 0,
+      ...auditAuthorsData[slug]
+    }))
+    .filter(a => !query || `${a.name} ${a.slug}`.toLowerCase().includes(query))
+    .sort((a, b) => (b.dossierViews || 0) - (a.dossierViews || 0));
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state show">
+        <div class="empty-icon">👤</div>
+        <div style="font-size:14px;font-weight:600">No author dossier views tracked yet.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:60px">Rank</th>
+            <th>Author</th>
+            <th>Slug</th>
+            <th>Dossier Views</th>
+            <th style="width:120px;text-align:right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map((a, idx) => `
+            <tr>
+              <td class="td-mono" style="font-weight:700;color:var(--accent-4)">#${idx + 1}</td>
+              <td style="font-weight:600">${esc(a.name)}</td>
+              <td class="td-mono">${esc(a.slug)}</td>
+              <td><span style="font-weight:700;color:var(--accent)">📖 ${(a.dossierViews || 0).toLocaleString()}</span></td>
+              <td style="text-align:right">
+                <button type="button" class="btn btn-ghost" style="padding:3px 9px;font-size:11px" onclick="openAuthorModal('${esc(a.slug)}')">
+                  ✏️ Edit Author
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderAuditNotesList(container, query) {
+  const allNotes = [];
+  Object.keys(auditFeedbackData).forEach(qid => {
+    const entries = auditFeedbackData[qid] || {};
+    Object.keys(entries).forEach(fid => {
+      const entry = entries[fid];
+      if (entry && entry.note) {
+        const local = allQuotes.find(q => q.id === qid);
+        allNotes.push({
+          quoteId: qid,
+          feedbackId: fid,
+          author: local?.author || 'Unknown Author',
+          content: local?.content || '',
+          ...entry
+        });
+      }
+    });
+  });
+
+  const filtered = allNotes
+    .filter(n => !query || `${n.quoteId} ${n.reason || ''} ${n.note || ''} ${n.author || ''}`.toLowerCase().includes(query))
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state show">
+        <div class="empty-icon">💬</div>
+        <div style="font-size:14px;font-weight:600">No user feedback comments recorded yet.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(n => {
+    const dateStr = n.timestamp ? new Date(n.timestamp).toLocaleString() : 'Recent';
+    return `
+      <div class="audit-card">
+        <div class="audit-card-top">
+          <span class="audit-qid-pill">${esc(n.quoteId)}</span>
+          <span class="badge-reason badge-reason-rose">${esc(n.reason || 'note')}</span>
+          <span style="font-size:11px;color:var(--text-dim);margin-left:auto">${esc(dateStr)}</span>
+        </div>
+        <div style="font-size:14px;color:var(--text);font-weight:500;padding-left:12px;border-left:2px solid var(--danger);margin:4px 0">
+          “${esc(n.note)}”
+        </div>
+        <div style="font-size:12px;color:var(--text-dim)">
+          Author: <strong style="color:var(--text)">${esc(n.author)}</strong>
+          ${n.content ? ` · <em>“${esc(n.content.slice(0, 80))}…”</em>` : ''}
+        </div>
+        <div class="audit-card-actions">
+          <button type="button" class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="openQuoteModal('${esc(n.quoteId)}')">
+            ✏️ Edit Quote
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openFbConfigModal() {
+  const urlInput = document.getElementById('fb-db-url-input');
+  if (urlInput) urlInput.value = currentFbDbUrl;
+  const cidInput = document.getElementById('fb-consumer-id-input');
+  if (cidInput) cidInput.value = currentConsumerId;
+  document.getElementById('fb-config-overlay').classList.add('open');
+}
+
+function closeFbConfigModal() {
+  document.getElementById('fb-config-overlay').classList.remove('open');
+}
+
+function saveFbConfig() {
+  const urlInput = document.getElementById('fb-db-url-input');
+  const cidInput = document.getElementById('fb-consumer-id-input');
+  if (!urlInput) return;
+  const val = urlInput.value.trim();
+  if (val) {
+    currentFbDbUrl = cleanFbUrl(val);
+    try { localStorage.setItem('wiz_audit_db_url', currentFbDbUrl); } catch(e) {}
+  }
+  if (cidInput) {
+    currentConsumerId = cidInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    try { localStorage.setItem('wiz_audit_consumer_id', currentConsumerId); } catch(e) {}
+    const consumerLabel = document.getElementById('audit-consumer-label');
+    if (consumerLabel) consumerLabel.textContent = currentConsumerId || 'root';
+  }
+  closeFbConfigModal();
+  toast('Firebase settings updated ✓', 'success');
+  loadAuditData();
+}
+
+function resetFbConfig() {
+  currentFbDbUrl = DEFAULT_FB_DB_URL;
+  currentConsumerId = meta.consumerId || 'wisdom';
+  try {
+    localStorage.removeItem('wiz_audit_db_url');
+    localStorage.removeItem('wiz_audit_consumer_id');
+  } catch(e) {}
+  const urlInput = document.getElementById('fb-db-url-input');
+  if (urlInput) urlInput.value = DEFAULT_FB_DB_URL;
+  const cidInput = document.getElementById('fb-consumer-id-input');
+  if (cidInput) cidInput.value = currentConsumerId;
+  const consumerLabel = document.getElementById('audit-consumer-label');
+  if (consumerLabel) consumerLabel.textContent = currentConsumerId || 'root';
+  closeFbConfigModal();
+  toast('Reset to default Firebase RTDB settings ✓', 'success');
+  loadAuditData();
+}
+
+function setupAuditAutoRefresh() {
+  if (auditAutoRefreshTimer) clearInterval(auditAutoRefreshTimer);
+  const sel = document.getElementById('audit-refresh-interval');
+  if (!sel) return;
+  const sec = parseInt(sel.value, 10);
+  if (sec > 0) {
+    auditAutoRefreshTimer = setInterval(() => {
+      if (currentView === 'audit') loadAuditData(true);
+    }, sec * 1000);
+  }
+}
+
 // ─── Event binding ────────────────────────────────────────────────────────────
 function bindEvents() {
   // Nav tabs
@@ -1811,6 +2551,37 @@ function bindEvents() {
   document.getElementById('bulk-tag-overlay').addEventListener('click', e => {
     if (e.target === document.getElementById('bulk-tag-overlay')) closeBulkTag();
   });
+  document.getElementById('fb-config-overlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('fb-config-overlay')) closeFbConfigModal();
+  });
+
+  // Audit Sub-tabs
+  document.querySelectorAll('.audit-subtab').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.audit-subtab').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      auditActiveSubtab = b.dataset.atab || 'disliked';
+      renderAuditView();
+    });
+  });
+
+  // Audit Search
+  const auditSearchInput = document.getElementById('audit-search-input');
+  if (auditSearchInput) {
+    auditSearchInput.addEventListener('input', e => {
+      auditSearchQuery = e.target.value;
+      renderAuditView();
+    });
+  }
+
+  // Audit Refresh & Controls
+  document.getElementById('btn-audit-refresh')?.addEventListener('click', () => loadAuditData(false));
+  document.getElementById('btn-audit-config')?.addEventListener('click', openFbConfigModal);
+  document.getElementById('audit-refresh-interval')?.addEventListener('change', setupAuditAutoRefresh);
+
+  // Firebase Config Modal Actions
+  document.getElementById('btn-fb-save')?.addEventListener('click', saveFbConfig);
+  document.getElementById('btn-fb-reset')?.addEventListener('click', resetFbConfig);
 
   // Keyboard shortcuts
   document.addEventListener('keydown', e => {
@@ -1821,13 +2592,22 @@ function bindEvents() {
         document.getElementById('confirm-overlay').classList.remove('open');
       } else if (document.getElementById('bulk-tag-overlay').classList.contains('open')) {
         closeBulkTag();
+      } else if (document.getElementById('fb-config-overlay')?.classList.contains('open')) {
+        closeFbConfigModal();
       } else if (document.getElementById('author-modal-overlay').classList.contains('open')) {
         closeAuthorModal();
       } else if (document.getElementById('quote-modal-overlay').classList.contains('open')) {
         closeQuoteModal();
       }
     }
-    if ((e.metaKey||e.ctrlKey) && e.key === 'k') { e.preventDefault(); document.getElementById('search-input').focus(); }
+    if ((e.metaKey||e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      if (currentView === 'audit') {
+        document.getElementById('audit-search-input')?.focus();
+      } else {
+        document.getElementById('search-input')?.focus();
+      }
+    }
     if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') {
       if (document.getElementById('author-modal-overlay').classList.contains('open')) {
         e.preventDefault();
