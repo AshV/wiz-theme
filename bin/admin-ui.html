@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Wiz Admin — Content Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script>
+  (function() {
+    var saved = localStorage.getItem('wiz_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+  })();
+</script>
+<style>
+  /* ─── Tokens: Default & Dark (Midnight Cyber) ───────────────────────────── */
+  :root, [data-theme="dark"] {
+    --bg:           #0a0b0e;
+    --bg-card:      #12141a;
+    --bg-raised:    #1a1d27;
+    --bg-input:     #0f111a;
+    --border:       #252836;
+    --border-hi:    #3d4160;
+    --text:         #e8eaf2;
+    --text-dim:     #6b7094;
+    --text-mid:     #9399b8;
+    --accent:       #7c6fff;
+    --accent-2:     #ff6b9d;
+    --accent-3:     #00d4aa;
+    --accent-4:     #ffb347;
+    --danger:       #ff4f6b;
+    --success:      #00d4aa;
+    --r:            10px;
+    --r-lg:         16px;
+    --glow:         0 0 28px rgba(124,111,255,.18);
+    --shadow:       0 4px 28px rgba(0,0,0,.5);
+    --row-hover:    rgba(255,255,255,.027);
+    --row-selected: rgba(124,111,255,.08);
+    --modal-bg:     rgba(0,0,0,.72);
+  }
+
+  /* ─── Light (Studio Editorial) ─────────────────────────────────────────── */
+  [data-theme="light"] {
+    --bg:           #f5f7fc;
+    --bg-card:      #ffffff;
+    --bg-raised:    #edf0f8;
+    --bg-input:     #ffffff;
+    --border:       #d8dee9;
+    --border-hi:    #b8c2d8;
+    --text:         #16192b;
+    --text-dim:     #707897;
+    --text-mid:     #4a5274;
+    --accent:       #5d4eff;
+    --accent-2:     #e53888;
+    --accent-3:     #059669;
+    --accent-4:     #d97706;
+    --danger:       #e11d48;
+    --success:      #059669;
+    --r:            10px;
+    --r-lg:         16px;
+    --glow:         0 0 24px rgba(93,78,255,.12);
+    --shadow:       0 4px 24px rgba(15,23,42,.08);
+    --row-hover:    rgba(93,78,255,.035);
+    --row-selected: rgba(93,78,255,.09);
+    --modal-bg:     rgba(15,23,42,.55);
+  }
+
+  /* ─── Nordic Slate (Deep Obsidian Blue) ────────────────────────────────── */
+  [data-theme="slate"] {
+    --bg:           #0b1320;
+    --bg-card:      #131e31;
+    --bg-raised:    #1f2e46;
+    --bg-input:     #0e1728;
+    --border:       #273752;
+    --border-hi:    #3b5278;
+    --text:         #f1f5f9;
+    --text-dim:     #8497b5;
+    --text-mid:     #b6c5dc;
+    --accent:       #38bdf8;
+    --accent-2:     #f472b6;
+    --accent-3:     #34d399;
+    --accent-4:     #fbbf24;
+    --danger:       #f87171;
+    --success:      #34d399;
+    --r:            10px;
+    --r-lg:         16px;
+    --glow:         0 0 28px rgba(56,189,248,.18);
+    --shadow:       0 4px 28px rgba(0,0,0,.6);
+    --row-hover:    rgba(56,189,248,.04);
+    --row-selected: rgba(56,189,248,.09);
+    --modal-bg:     rgba(0,0,0,.75);
+  }
+
+  /* ─── OLED Pure Black ──────────────────────────────────────────────────── */
+  [data-theme="oled"] {
+    --bg:           #000000;
+    --bg-card:      #080808;
+    --bg-raised:    #141414;
+    --bg-input:     #000000;
+    --border:       #1c1c1c;
+    --border-hi:    #333333;
+    --text:         #ffffff;
+    --text-dim:     #666666;
+    --text-mid:     #aaaaaa;
+    --accent:       #a855f7;
+    --accent-2:     #ec4899;
+    --accent-3:     #10b981;
+    --accent-4:     #f59e0b;
+    --danger:       #ef4444;
+    --success:      #10b981;
+    --r:            10px;
+    --r-lg:         16px;
+    --glow:         0 0 28px rgba(168,85,247,.22);
+    --shadow:       0 4px 28px rgba(0,0,0,.9);
+    --row-hover:    rgba(255,255,255,.035);
+    --row-selected: rgba(168,85,247,.12);
+    --modal-bg:     rgba(0,0,0,.85);
+  }
+
+  /* ─── Reset ──────────────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+  input, textarea, select { font-family: inherit; }
+  ::selection { background: rgba(124,111,255,.35); }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+  /* ─── Top Bar ─────────────────────────────────────────────────────────────── */
+  #topbar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 20px; height: 56px;
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 16px; letter-spacing: -.3px; }
+  .logo-icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .logo-sep { color: var(--border-hi); margin: 0 2px; }
+
+  /* Nav tabs */
+  .nav-tabs { display: flex; gap: 2px; margin-left: 16px; }
+  .nav-tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-dim); transition: all .15s; cursor: pointer;
+  }
+  .nav-tab:hover { background: var(--bg-raised); color: var(--text); }
+  .nav-tab.active { background: rgba(124,111,255,.15); color: var(--accent); }
+  .nav-tab .tab-count {
+    font-size: 10px; padding: 1px 5px; border-radius: 10px;
+    background: var(--bg-raised); color: var(--text-dim);
+  }
+  .nav-tab.active .tab-count { background: rgba(124,111,255,.25); color: var(--accent); }
+
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  #stats-pill {
+    display: flex; gap: 12px; align-items: center;
+    background: var(--bg-raised); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 13px; font-size: 11px; color: var(--text-dim);
+  }
+  #stats-pill strong { color: var(--text); }
+
+  /* ─── Theme Switcher ──────────────────────────────────────────────────────── */
+  .theme-menu-wrap { position: relative; }
+  .theme-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 11px; border-radius: 8px;
+    background: var(--bg-raised); border: 1px solid var(--border);
+    color: var(--text-mid); font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all .15s;
+  }
+  .theme-btn:hover { border-color: var(--border-hi); color: var(--text); }
+  .theme-btn #theme-icon { font-size: 13px; line-height: 1; }
+  .theme-caret { font-size: 9px; opacity: .5; margin-left: 1px; }
+  .theme-dropdown {
+    position: absolute; right: 0; top: calc(100% + 6px);
+    width: 175px; background: var(--bg-card);
+    border: 1px solid var(--border-hi); border-radius: var(--r);
+    box-shadow: var(--shadow), var(--glow);
+    padding: 5px; display: none; z-index: 250;
+  }
+  .theme-dropdown.open { display: block; animation: themeDropIn .15s ease-out; }
+  @keyframes themeDropIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .theme-opt {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 10px; border-radius: 6px; font-size: 12px; font-weight: 500;
+    color: var(--text-mid); cursor: pointer; transition: all .12s;
+  }
+  .theme-opt:hover { background: var(--bg-raised); color: var(--text); }
+  .theme-opt.active { background: rgba(124,111,255,.14); color: var(--accent); font-weight: 600; }
+  [data-theme="light"] .theme-opt.active { background: rgba(93,78,255,.1); }
+  [data-theme="slate"] .theme-opt.active { background: rgba(56,189,248,.14); }
+  [data-theme="oled"] .theme-opt.active  { background: rgba(168,85,247,.16); }
+  .theme-swatch {
+    width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0;
+  }
+  .theme-check {
+    margin-left: auto; font-size: 11px; opacity: 0;
+  }
+  .theme-opt.active .theme-check { opacity: 1; }
+
+  /* ─── Buttons ─────────────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; transition: all .15s; white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 2px 12px rgba(124,111,255,.3); }
+  .btn-primary:hover { background: #8a7fff; box-shadow: 0 4px 20px rgba(124,111,255,.5); transform: translateY(-1px); }
+  .btn-ghost { background: var(--bg-raised); border: 1px solid var(--border); color: var(--text-mid); }
+  .btn-ghost:hover { border-color: var(--border-hi); color: var(--text); }
+  .btn-danger { background: rgba(255,79,107,.1); border: 1px solid rgba(255,79,107,.3); color: var(--danger); }
+  .btn-danger:hover { background: rgba(255,79,107,.2); }
+  .btn-icon { padding: 7px; border-radius: 8px; }
+  .btn:disabled { opacity: .38; cursor: not-allowed; transform: none !important; }
+
+  /* ─── Layout ──────────────────────────────────────────────────────────────── */
+  #app { display: flex; flex: 1; overflow: hidden; }
+
+  /* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+  #sidebar {
+    width: 248px; flex-shrink: 0;
+    background: var(--bg-card); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow-y: auto; padding: 14px 10px; gap: 18px;
+  }
+  .section-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-dim); padding: 0 8px 5px;
+  }
+  .search-wrap { position: relative; }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 13px; pointer-events: none; }
+  #search-input {
+    width: 100%; padding: 8px 10px 8px 30px;
+    background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: var(--r); color: var(--text); font-size: 13px; transition: border-color .2s;
+  }
+  #search-input:focus { outline: none; border-color: var(--accent); }
+  #search-input::placeholder { color: var(--text-dim); }
+
+  .chip-list { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 4px; }
+  .chip {
+    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border);
+    background: var(--bg-raised); color: var(--text-mid); transition: all .15s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chip.active { background: rgba(124,111,255,.15); border-color: var(--accent); color: var(--accent); }
+
+  .author-list { display: flex; flex-direction: column; gap: 1px; max-height: 150px; overflow-y: auto; }
+  .author-item {
+    padding: 5px 10px; border-radius: 7px; font-size: 12px; cursor: pointer;
+    color: var(--text-mid); transition: all .15s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .author-item:hover { background: var(--bg-raised); color: var(--text); }
+  .author-item.active { background: rgba(124,111,255,.12); color: var(--accent); }
+
+  #clear-filters {
+    font-size: 11px; color: var(--text-dim); padding: 4px 8px; border-radius: 6px;
+    transition: all .15s; display: flex; align-items: center; gap: 4px;
+  }
+  #clear-filters:hover { color: var(--danger); background: rgba(255,79,107,.08); }
+
+  /* ─── Main ────────────────────────────────────────────────────────────────── */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+  /* ─── Views ──────────────────────────────────────────────────────────────── */
+  .view { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .view.active { display: flex; }
+
+  /* ─── Bulk bar ─────────────────────────────────────────────────────────────── */
+  #bulk-bar {
+    display: none; align-items: center; gap: 10px;
+    padding: 9px 18px; background: rgba(124,111,255,.09);
+    border-bottom: 1px solid rgba(124,111,255,.22);
+    font-size: 13px; flex-shrink: 0;
+  }
+  #bulk-bar.show { display: flex; }
+  #bulk-count { font-weight: 600; color: var(--accent); }
+
+  /* ─── Toolbar ─────────────────────────────────────────────────────────────── */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0; background: var(--bg-card);
+  }
+  .result-count { font-size: 12px; color: var(--text-dim); }
+  .result-count strong { color: var(--text); }
+  .toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .sort-select {
+    padding: 6px 10px; border-radius: 7px; font-size: 12px;
+    background: var(--bg-raised); border: 1px solid var(--border);
+    color: var(--text); cursor: pointer;
+  }
+  .sort-select:focus { outline: none; border-color: var(--accent); }
+  .cb { width: 15px; height: 15px; border-radius: 4px; accent-color: var(--accent); cursor: pointer; }
+
+  /* ─── Table ───────────────────────────────────────────────────────────────── */
+  #table-wrap { flex: 1; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg-raised); color: var(--text-dim);
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px;
+    padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border);
+    user-select: none; white-space: nowrap;
+  }
+  thead th.sortable { cursor: pointer; }
+  thead th.sortable:hover { color: var(--text); }
+  thead th .sa::after { content: '↕'; margin-left: 3px; opacity: .35; font-size: 9px; }
+  thead th.sort-asc .sa::after { content: '↑'; opacity: 1; }
+  thead th.sort-desc .sa::after { content: '↓'; opacity: 1; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:hover { background: var(--row-hover, rgba(255,255,255,.027)); }
+  tbody tr.selected { background: var(--row-selected, rgba(124,111,255,.07)); }
+  td { padding: 10px 13px; font-size: 13px; vertical-align: middle; }
+  .td-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+  .quote-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.45; max-width: 360px; }
+
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    background: rgba(124,111,255,.11); color: var(--accent); border: 1px solid rgba(124,111,255,.22);
+  }
+  .badge-mood { background: rgba(255,107,157,.08); color: var(--accent-2); border-color: rgba(255,107,157,.22); }
+  .badge-tag  { background: rgba(0,212,170,.07); color: var(--accent-3); border-color: rgba(0,212,170,.18); font-size: 10px; padding: 1px 7px; }
+  .badge-nat  { background: rgba(255,179,71,.07); color: var(--accent-4); border-color: rgba(255,179,71,.2); }
+  .tags-cell { display: flex; flex-wrap: wrap; gap: 3px; max-width: 190px; }
+
+  /* Author cell in quotes table */
+  .author-cell { display: flex; flex-direction: column; }
+  .author-name { font-weight: 500; white-space: nowrap; }
+  .author-slug-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); margin-top: 1px; }
+
+  /* Row actions */
+  .row-actions { display: flex; gap: 5px; opacity: 0; transition: opacity .15s; }
+  tbody tr:hover .row-actions { opacity: 1; }
+  .row-btn {
+    width: 27px; height: 27px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; transition: all .15s;
+    background: var(--bg-raised); border: 1px solid var(--border); color: var(--text-dim);
+  }
+  .row-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(124,111,255,.09); }
+  .row-btn.del:hover { border-color: var(--danger); color: var(--danger); background: rgba(255,79,107,.09); }
+
+  /* Empty */
+  .empty-state {
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; padding: 80px 20px; color: var(--text-dim); text-align: center;
+  }
+  .empty-state.show { display: flex; }
+  .empty-icon { font-size: 44px; opacity: .35; }
+
+  /* ─── Authors grid ────────────────────────────────────────────────────────── */
+  #authors-wrap { flex: 1; overflow: auto; padding: 20px; }
+  .authors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .author-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 18px; cursor: pointer;
+    transition: all .2s; position: relative;
+  }
+  .author-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(124,111,255,.2), var(--glow); transform: translateY(-2px); }
+  .author-card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .author-avatar {
+    width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(124,111,255,.3), rgba(255,107,157,.2));
+    display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--accent);
+  }
+  .author-card-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .author-card-full { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .author-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+  .author-bio-preview {
+    font-size: 12px; color: var(--text-dim); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .author-card-footer { display: flex; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .quote-count-pill {
+    font-size: 11px; font-weight: 600; color: var(--accent);
+    background: rgba(124,111,255,.12); border: 1px solid rgba(124,111,255,.2);
+    border-radius: 20px; padding: 2px 9px;
+  }
+  .author-card-actions { display: flex; gap: 5px; margin-left: auto; opacity: 0; transition: opacity .15s; }
+  .author-card:hover .author-card-actions { opacity: 1; }
+
+  /* ─── Modal ───────────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: var(--modal-bg, rgba(0,0,0,.72));
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; opacity: 0; pointer-events: none; transition: opacity .2s;
+    backdrop-filter: blur(5px);
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    max-width: calc(100vw - 40px); max-height: calc(100vh - 60px);
+    overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: var(--shadow), var(--glow);
+    transform: translateY(10px) scale(.98); transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-header {
+    display: flex; align-items: center; padding: 16px 20px;
+    border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 8px;
+  }
+  .modal-title { font-size: 15px; font-weight: 600; }
+  .modal-id { font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+  .modal-close {
+    margin-left: auto; width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    background: var(--bg-raised); border: 1px solid var(--border); color: var(--text-dim);
+    transition: all .15s;
+  }
+  .modal-close:hover { color: var(--danger); border-color: var(--danger); background: rgba(255,79,107,.1); }
+  .modal-body { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 13px; }
+  .modal-footer {
+    display: flex; align-items: center; gap: 8px; padding: 13px 20px;
+    border-top: 1px solid var(--border); flex-shrink: 0;
+  }
+
+  /* ─── Form ────────────────────────────────────────────────────────────────── */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+  .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 13px; }
+  label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
+  .form-input, .form-textarea, .form-select {
+    padding: 8px 11px; border-radius: var(--r);
+    background: var(--bg-input); border: 1px solid var(--border);
+    color: var(--text); font-size: 13px; transition: border-color .2s; resize: vertical;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,111,255,.1);
+  }
+  .form-input[readonly] { color: var(--text-dim); cursor: not-allowed; }
+  .form-textarea { min-height: 76px; }
+  .form-select option { background: var(--bg-card); }
+
+  /* Author picker row */
+  .author-picker-row {
+    display: flex; align-items: flex-end; gap: 8px;
+  }
+  .author-picker-row .field { flex: 1; }
+  .author-actions-col { display: flex; gap: 6px; padding-bottom: 1px; }
+
+  /* Author card in modal (readonly display) */
+  .author-display {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: var(--r);
+    background: rgba(124,111,255,.06); border: 1px solid rgba(124,111,255,.18);
+  }
+  .author-display .ad-avatar {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: linear-gradient(135deg, rgba(124,111,255,.35), rgba(255,107,157,.2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; color: var(--accent); flex-shrink: 0;
+  }
+  .author-display .ad-info { flex: 1; }
+  .author-display .ad-name { font-size: 13px; font-weight: 600; }
+  .author-display .ad-slug { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); margin-top: 1px; }
+  .author-display .ad-meta { font-size: 11px; color: var(--text-mid); margin-top: 2px; }
+
+  /* Tag editor */
+  .tag-editor {
+    display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+    padding: 7px 9px; border-radius: var(--r);
+    background: var(--bg-input); border: 1px solid var(--border);
+    min-height: 38px; cursor: text; transition: border-color .2s;
+  }
+  .tag-editor:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,111,255,.1); }
+  .tag-pill {
+    display: flex; align-items: center; gap: 4px;
+    padding: 2px 7px 2px 9px; border-radius: 20px;
+    background: rgba(0,212,170,.09); border: 1px solid rgba(0,212,170,.22);
+    color: var(--accent-3); font-size: 11px; font-weight: 500;
+  }
+  .tag-pill .rt { font-size: 13px; line-height: 1; opacity: .55; cursor: pointer; transition: opacity .15s; }
+  .tag-pill .rt:hover { opacity: 1; color: var(--danger); }
+  .tag-input {
+    border: none; background: none; color: var(--text); font-size: 13px;
+    font-family: inherit; flex: 1; min-width: 80px; outline: none;
+  }
+  .field-hint { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+
+  /* Toggle */
+  .toggle-row { display: flex; align-items: center; gap: 10px; }
+  .toggle { position: relative; display: inline-block; width: 34px; height: 18px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; border-radius: 18px; background: var(--border-hi); cursor: pointer; transition: .2s; }
+  .slider::before { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; bottom: 3px; border-radius: 50%; background: white; transition: .2s; }
+  input:checked + .slider { background: var(--accent); }
+  input:checked + .slider::before { transform: translateX(16px); }
+  .toggle-label { font-size: 13px; color: var(--text-mid); }
+
+  /* ─── Author select dropdown ──────────────────────────────────────────────── */
+  .author-select-wrap { position: relative; }
+  .author-select-input {
+    width: 100%; padding: 8px 32px 8px 11px;
+    background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: var(--r); color: var(--text); font-size: 13px; cursor: pointer;
+    transition: border-color .2s;
+  }
+  .author-select-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,111,255,.1); }
+  .author-select-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; font-size: 11px; }
+  .author-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 200;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r); box-shadow: var(--shadow);
+    max-height: 220px; overflow-y: auto; display: none;
+  }
+  .author-dropdown.open { display: block; }
+  .author-opt {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 11px; cursor: pointer; transition: background .12s;
+  }
+  .author-opt:hover { background: var(--bg-raised); }
+  .author-opt.selected { background: rgba(124,111,255,.1); }
+  .author-opt .ao-avatar {
+    width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(124,111,255,.3), rgba(255,107,157,.15));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--accent);
+  }
+  .author-opt .ao-name { font-size: 13px; font-weight: 500; }
+  .author-opt .ao-meta { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+  .author-opt-new {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 11px; cursor: pointer; color: var(--accent);
+    font-size: 12px; border-top: 1px solid var(--border);
+    transition: background .12s;
+  }
+  .author-opt-new:hover { background: rgba(124,111,255,.08); }
+
+  /* ─── Bulk Tag Modal ─────────────────────────────────────────────────────── */
+  #bulk-tag-modal { width: 420px; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+  #bulk-tag-modal .modal-title { font-size: 15px; font-weight: 600; }
+
+  /* ─── Toast ───────────────────────────────────────────────────────────────── */
+  #toast {
+    position: fixed; bottom: 22px; right: 22px; z-index: 2000;
+    padding: 11px 16px; border-radius: 10px;
+    background: var(--bg-raised); border: 1px solid var(--border);
+    color: var(--text); font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow);
+    transform: translateY(14px); opacity: 0; transition: all .22s; pointer-events: none;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: rgba(0,212,170,.4); color: var(--success); }
+  #toast.error { border-color: rgba(255,79,107,.4); color: var(--danger); }
+
+  /* ─── Confirm ─────────────────────────────────────────────────────────────── */
+  #confirm-dialog { width: 360px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .confirm-title { font-size: 15px; font-weight: 600; }
+  .confirm-msg { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
+  .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* ─── Divider ─────────────────────────────────────────────────────────────── */
+  .form-section {
+    font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase;
+    letter-spacing: .7px; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Top Bar ─────────────────────────────────────────────────────────────── -->
+<header id="topbar">
+  <div class="logo">
+    <div class="logo-icon">🧠</div>
+    Wiz Admin
+  </div>
+
+  <div class="nav-tabs">
+    <div class="nav-tab active" id="tab-quotes" data-view="quotes">
+      📝 Quotes <span class="tab-count" id="tab-count-quotes">0</span>
+    </div>
+    <div class="nav-tab" id="tab-authors" data-view="authors">
+      👤 Authors <span class="tab-count" id="tab-count-authors">0</span>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <div id="stats-pill">
+      <span>Quotes <strong id="stat-quotes">—</strong></span>
+      <span>Authors <strong id="stat-authors">—</strong></span>
+      <span>Tags <strong id="stat-tags">—</strong></span>
+    </div>
+
+    <!-- Theme Switcher -->
+    <div class="theme-menu-wrap" id="theme-menu-wrap">
+      <button type="button" class="theme-btn" id="theme-btn" title="Switch color theme" aria-label="Switch theme">
+        <span id="theme-icon">🌙</span>
+        <span id="theme-label">Midnight</span>
+        <span class="theme-caret">▾</span>
+      </button>
+      <div class="theme-dropdown" id="theme-dropdown">
+        <div class="theme-opt active" data-theme-val="dark">
+          <span class="theme-swatch" style="background:linear-gradient(135deg, #0a0b0e, #7c6fff)"></span>
+          <span class="theme-name">Midnight</span>
+          <span class="theme-check">✓</span>
+        </div>
+        <div class="theme-opt" data-theme-val="light">
+          <span class="theme-swatch" style="background:linear-gradient(135deg, #ffffff, #5d4eff);box-shadow:inset 0 0 0 1px #d8dee9"></span>
+          <span class="theme-name">Light</span>
+          <span class="theme-check">✓</span>
+        </div>
+        <div class="theme-opt" data-theme-val="slate">
+          <span class="theme-swatch" style="background:linear-gradient(135deg, #0b1320, #38bdf8)"></span>
+          <span class="theme-name">Slate</span>
+          <span class="theme-check">✓</span>
+        </div>
+        <div class="theme-opt" data-theme-val="oled">
+          <span class="theme-swatch" style="background:linear-gradient(135deg, #000000, #a855f7);box-shadow:inset 0 0 0 1px #222"></span>
+          <span class="theme-name">OLED</span>
+          <span class="theme-check">✓</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-new" onclick="handleNewBtn()">＋ New Quote</button>
+  </div>
+</header>
+
+<!-- ── App ─────────────────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- ── Sidebar ───────────────────────────────────────────────────────────── -->
+  <aside id="sidebar">
+    <div>
+      <div class="section-label">Search</div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="search-input" type="text" placeholder="Text, author, tag… (⌘K)"/>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Category</div>
+      <div class="chip-list" id="category-chips"></div>
+    </div>
+    <div>
+      <div class="section-label">Mood</div>
+      <div class="chip-list" id="mood-chips"></div>
+    </div>
+    <div>
+      <div class="section-label">Tags</div>
+      <div class="chip-list" id="tag-chips"></div>
+    </div>
+    <div>
+      <div class="section-label">Author</div>
+      <div class="author-list" id="author-filter-list"></div>
+    </div>
+    <div>
+      <div class="section-label">Source</div>
+      <div class="chip-list">
+        <div class="chip" id="chip-original" data-filter="paraphrase" data-val="false">Original</div>
+        <div class="chip" id="chip-paraphrase" data-filter="paraphrase" data-val="true">Paraphrased</div>
+      </div>
+    </div>
+    <button id="clear-filters">✕ Clear filters</button>
+  </aside>
+
+  <!-- ── Main ──────────────────────────────────────────────────────────────── -->
+  <main id="main">
+
+    <!-- ── QUOTES VIEW ──────────────────────────────────────────────────────── -->
+    <div class="view active" id="view-quotes">
+
+      <!-- Bulk bar -->
+      <div id="bulk-bar">
+        <span id="bulk-count">0</span> selected
+        <button class="btn btn-ghost" id="btn-bulk-tag">🏷 Bulk Tag</button>
+        <button class="btn btn-danger" id="btn-bulk-delete">🗑 Delete</button>
+        <button class="btn btn-ghost" style="margin-left:auto" id="btn-deselect">Deselect all</button>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <input type="checkbox" class="cb" id="select-all-cb"/>
+        <span class="result-count"><strong id="q-count">0</strong> quotes</span>
+        <div class="toolbar-right">
+          <select class="sort-select" id="q-sort">
+            <option value="id-asc">ID ↑</option>
+            <option value="id-desc">ID ↓</option>
+            <option value="author-asc">Author A–Z</option>
+            <option value="author-desc">Author Z–A</option>
+            <option value="category-asc">Category A–Z</option>
+            <option value="duration-asc">Duration ↑</option>
+            <option value="duration-desc">Duration ↓</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div id="table-wrap">
+        <table id="quotes-table">
+          <thead>
+            <tr>
+              <th style="width:34px"></th>
+              <th class="sortable" data-col="id">ID<span class="sa"></span></th>
+              <th class="sortable" data-col="content">Quote<span class="sa"></span></th>
+              <th class="sortable" data-col="author">Author<span class="sa"></span></th>
+              <th class="sortable" data-col="category">Category<span class="sa"></span></th>
+              <th class="sortable" data-col="mood">Mood<span class="sa"></span></th>
+              <th>Tags</th>
+              <th class="sortable" data-col="duration">Dur<span class="sa"></span></th>
+              <th style="width:78px"></th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+        <div class="empty-state" id="q-empty">
+          <div class="empty-icon">🔍</div>
+          <div style="font-size:14px;font-weight:600">No quotes match</div>
+          <div style="font-size:13px">Adjust filters or clear them.</div>
+          <button class="btn btn-ghost" onclick="clearAll()">Clear filters</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AUTHORS VIEW ─────────────────────────────────────────────────────── -->
+    <div class="view" id="view-authors">
+      <div class="toolbar">
+        <span class="result-count"><strong id="a-count">0</strong> authors</span>
+        <div class="toolbar-right">
+          <select class="sort-select" id="a-sort">
+            <option value="name-asc">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+            <option value="quoteCount-desc">Most quotes</option>
+            <option value="quoteCount-asc">Fewest quotes</option>
+            <option value="era-asc">Era</option>
+          </select>
+        </div>
+      </div>
+      <div id="authors-wrap">
+        <div class="authors-grid" id="authors-grid"></div>
+        <div class="empty-state" id="a-empty">
+          <div class="empty-icon">👤</div>
+          <div style="font-size:14px;font-weight:600">No authors yet</div>
+          <div style="font-size:13px">Create a new author to get started.</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- QUOTE MODAL                                                               -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="quote-modal-overlay">
+  <div class="modal" style="width:680px">
+    <div class="modal-header">
+      <div class="modal-title" id="qm-title">New Quote</div>
+      <div class="modal-id" id="qm-id"></div>
+      <button class="modal-close" onclick="closeQuoteModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="field-row">
+        <div class="field">
+          <label>Quote ID</label>
+          <input type="text" class="form-input" id="f-id" placeholder="auto-generated"/>
+        </div>
+        <div class="field">
+          <label>Duration (sec)</label>
+          <input type="number" class="form-input" id="f-duration" value="8" min="1" max="60"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Quote Content *</label>
+        <textarea class="form-textarea" id="f-content" rows="3" placeholder="The quote text…"></textarea>
+      </div>
+
+      <!-- ── Author Picker ─────────────────────────────────────────────────── -->
+      <div class="form-section">Author</div>
+
+      <div class="author-picker-row" id="author-picker-row">
+        <div class="field" style="margin-bottom:0">
+          <label>Assign Author *</label>
+          <div class="author-select-wrap">
+            <input type="text" class="author-select-input" id="author-search-input" placeholder="Search or select author…" autocomplete="off"/>
+            <span class="author-select-arrow">▾</span>
+            <div class="author-dropdown" id="author-dropdown"></div>
+          </div>
+        </div>
+        <div class="author-actions-col">
+          <button type="button" class="btn btn-ghost" id="btn-new-author-from-quote" title="Create new author" onclick="createAuthorFromQuote()">＋ New Author</button>
+        </div>
+      </div>
+
+      <!-- Selected author display card (read-only in quote form, with Edit details & Change) -->
+      <div class="author-display" id="author-display" style="display:none">
+        <div class="ad-avatar" id="ad-avatar">?</div>
+        <div class="ad-info">
+          <div class="ad-name" id="ad-name">—</div>
+          <div class="ad-slug" id="ad-slug">—</div>
+          <div class="ad-meta" id="ad-meta">—</div>
+        </div>
+        <div class="author-display-actions" style="display:flex;gap:6px;flex-shrink:0">
+          <button type="button" class="btn btn-ghost" id="btn-edit-author" title="Edit author profile details" onclick="editSelectedAuthor()">✏️ Edit Author Details</button>
+          <button type="button" class="btn btn-ghost" style="padding:5px 10px;font-size:12px;color:var(--text-dim)" title="Change assigned author" onclick="clearSelectedAuthor()">✕ Change</button>
+        </div>
+      </div>
+
+      <!-- ── Quote Details ──────────────────────────────────────────────────── -->
+      <div class="form-section">Details</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Category</label>
+          <input type="text" class="form-input" id="f-category" list="cat-dl" placeholder="Wisdom, Creativity…"/>
+          <datalist id="cat-dl"></datalist>
+        </div>
+        <div class="field">
+          <label>Category Slug</label>
+          <input type="text" class="form-input" id="f-category-slug" placeholder="auto from category"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Mood</label>
+        <select class="form-select" id="f-mood">
+          <option value="">— none —</option>
+          <option value="reflective">Reflective</option>
+          <option value="melancholic">Melancholic</option>
+          <option value="uplifting">Uplifting</option>
+          <option value="motivational">Motivational</option>
+          <option value="stoic">Stoic</option>
+          <option value="playful">Playful</option>
+          <option value="contemplative">Contemplative</option>
+          <option value="inspiring">Inspiring</option>
+          <option value="serene">Serene</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Tags</label>
+        <div class="tag-editor" id="tag-editor-modal">
+          <input type="text" class="tag-input" id="tag-input-modal" placeholder="Type tag + Enter"/>
+        </div>
+        <div class="field-hint">Press Enter or comma to add</div>
+      </div>
+
+      <div class="field">
+        <label>Source Work</label>
+        <input type="text" class="form-input" id="f-source-work"/>
+      </div>
+
+      <div class="field">
+        <label>Sourced From (URL)</label>
+        <input type="text" class="form-input" id="f-sourced-from"/>
+      </div>
+
+      <div class="field">
+        <label>Original Quote (if paraphrased)</label>
+        <input type="text" class="form-input" id="f-original-quote"/>
+      </div>
+
+      <div class="form-section">Editorial</div>
+
+      <div class="field">
+        <label>Reflection Prompt</label>
+        <textarea class="form-textarea" id="f-reflection-prompt" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>Explanation</label>
+        <textarea class="form-textarea" id="f-explanation" rows="4"></textarea>
+      </div>
+      <div class="field">
+        <label>Practical Insight</label>
+        <textarea class="form-textarea" id="f-practical-insight" rows="2"></textarea>
+      </div>
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="f-is-paraphrased"/><span class="slider"></span></label>
+        <span class="toggle-label">Is paraphrased</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-qm-dup">⧉ Duplicate</button>
+      <button class="btn btn-danger" id="btn-qm-del" style="display:none">🗑 Delete</button>
+      <button class="btn btn-ghost" style="margin-left:auto" onclick="closeQuoteModal()">Cancel</button>
+      <button class="btn btn-primary" id="btn-qm-save">Save Quote</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- AUTHOR MODAL                                                              -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="author-modal-overlay">
+  <div class="modal" style="width:580px">
+    <div class="modal-header">
+      <div class="modal-title" id="am-title">New Author</div>
+      <div class="modal-id" id="am-id"></div>
+      <button class="modal-close" onclick="closeAuthorModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="field-row">
+        <div class="field">
+          <label>Display Name *</label>
+          <input type="text" class="form-input" id="af-name" placeholder="Rumi, Marcus Aurelius…"/>
+        </div>
+        <div class="field">
+          <label>Slug (ID)</label>
+          <input type="text" class="form-input" id="af-slug" placeholder="auto from name"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Full / Birth Name</label>
+        <input type="text" class="form-input" id="af-full-name" placeholder="Full formal name…"/>
+      </div>
+
+      <div class="field-row-3">
+        <div class="field">
+          <label>Born</label>
+          <input type="text" class="form-input" id="af-born" placeholder="Year or date"/>
+        </div>
+        <div class="field">
+          <label>Died</label>
+          <input type="text" class="form-input" id="af-died" placeholder="Year or date"/>
+        </div>
+        <div class="field">
+          <label>Era</label>
+          <input type="text" class="form-input" id="af-era" placeholder="13th century…"/>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Nationality</label>
+          <input type="text" class="form-input" id="af-nationality" placeholder="Persian, American…"/>
+        </div>
+        <div class="field">
+          <label>Website / Source</label>
+          <input type="text" class="form-input" id="af-website" placeholder="https://…"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Photo URL</label>
+        <input type="text" class="form-input" id="af-image-url" placeholder="https://…"/>
+      </div>
+
+      <div class="field">
+        <label>Bio</label>
+        <textarea class="form-textarea" id="af-bio" rows="5"></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="btn-am-del" style="display:none">🗑 Delete Author</button>
+      <button class="btn btn-ghost" style="margin-left:auto" id="btn-am-cancel" onclick="closeAuthorModal()">Cancel</button>
+      <button class="btn btn-primary" id="btn-am-save">Save Author</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- BULK TAG MODAL                                                            -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="bulk-tag-overlay">
+  <div class="modal">
+    <div id="bulk-tag-modal">
+      <div class="modal-title">Bulk Tag</div>
+      <div style="font-size:12px;color:var(--text-dim)" id="bulk-tag-scope"></div>
+      <div class="field">
+        <label>Add Tags</label>
+        <div class="tag-editor" id="bulk-add-editor"><input type="text" class="tag-input" id="bulk-add-input" placeholder="Type tag + Enter"/></div>
+      </div>
+      <div class="field">
+        <label>Remove Tags</label>
+        <div class="tag-editor" id="bulk-rm-editor"><input type="text" class="tag-input" id="bulk-rm-input" placeholder="Type tag + Enter"/></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeBulkTag()">Cancel</button>
+        <button class="btn btn-primary" id="btn-bulk-apply">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm ────────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="modal">
+    <div id="confirm-dialog">
+      <div class="confirm-title" id="confirm-title">Are you sure?</div>
+      <div class="confirm-msg" id="confirm-msg"></div>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" onclick="document.getElementById('confirm-overlay').classList.remove('open')">Cancel</button>
+        <button class="btn btn-danger" id="confirm-yes">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ──────────────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let allQuotes = [];
+let allAuthors = [];
+let meta = { tags: [], categories: [], moods: [], authors: [] };
+let filters = { search: '', categories: [], moods: [], tags: [], authors: [], paraphrase: null };
+let qSortKey = 'id', qSortDir = 'asc';
+let aSortKey = 'name', aSortDir = 'asc';
+let selectedIds = new Set();
+let editingQuoteId = null;  // null = new
+let editingAuthorSlug = null;
+let currentTags = [];
+let bulkAddTags = [], bulkRemoveTags = [];
+let selectedAuthorSlug = null; // in quote modal
+let currentView = 'quotes';
+// Flag: when editing author was opened from quote modal
+let authorModalReturnToQuote = false;
+
+// ─── Theme Switcher ──────────────────────────────────────────────────────────
+const THEMES = {
+  dark:  { name: 'Midnight', icon: '🌙' },
+  light: { name: 'Light',    icon: '☀️' },
+  slate: { name: 'Slate',    icon: '🌌' },
+  oled:  { name: 'OLED',     icon: '🖤' }
+};
+
+function setTheme(themeKey) {
+  if (!THEMES[themeKey]) themeKey = 'dark';
+  document.documentElement.setAttribute('data-theme', themeKey);
+  try { localStorage.setItem('wiz_theme', themeKey); } catch (e) {}
+
+  const t = THEMES[themeKey];
+  const iconEl = document.getElementById('theme-icon');
+  const labelEl = document.getElementById('theme-label');
+  if (iconEl) iconEl.textContent = t.icon;
+  if (labelEl) labelEl.textContent = t.name;
+
+  document.querySelectorAll('.theme-opt').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.themeVal === themeKey);
+  });
+}
+
+function initTheme() {
+  let saved = 'dark';
+  try { saved = localStorage.getItem('wiz_theme') || 'dark'; } catch (e) {}
+  setTheme(saved);
+
+  const btn = document.getElementById('theme-btn');
+  const dropdown = document.getElementById('theme-dropdown');
+  if (!btn || !dropdown) return;
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  });
+
+  document.querySelectorAll('.theme-opt').forEach(opt => {
+    opt.addEventListener('click', e => {
+      e.stopPropagation();
+      const val = opt.dataset.themeVal;
+      setTheme(val);
+      dropdown.classList.remove('open');
+      toast(`Theme set to ${THEMES[val]?.name || val} ✓`, 'success');
+    });
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#theme-menu-wrap')) {
+      dropdown.classList.remove('open');
+    }
+  });
+}
+
+// ─── Boot ────────────────────────────────────────────────────────────────────
+async function init() {
+  initTheme();
+  await refresh();
+  bindEvents();
+}
+
+async function refresh() {
+  await Promise.all([loadQuotes(), loadAuthors(), loadMeta()]);
+  renderSidebar(); renderQuotes(); renderAuthors();
+  updateStats();
+}
+async function loadQuotes() { const r = await fetch('/api/quotes'); allQuotes = await r.json(); }
+async function loadAuthors() { const r = await fetch('/api/authors'); allAuthors = await r.json(); }
+async function loadMeta() {
+  const r = await fetch('/api/meta'); meta = await r.json();
+  // populate datalist
+  const dl = document.getElementById('cat-dl');
+  dl.innerHTML = (meta.categories || []).map(c => `<option value="${c}">`).join('');
+}
+
+function updateStats() {
+  document.getElementById('stat-quotes').textContent = allQuotes.length;
+  document.getElementById('stat-authors').textContent = allAuthors.length;
+  document.getElementById('stat-tags').textContent = (meta.tags || []).length;
+  document.getElementById('tab-count-quotes').textContent = allQuotes.length;
+  document.getElementById('tab-count-authors').textContent = allAuthors.length;
+}
+
+// ─── View switching ───────────────────────────────────────────────────────────
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === `view-${view}`));
+  const newBtn = document.getElementById('btn-new');
+  newBtn.textContent = view === 'quotes' ? '＋ New Quote' : '＋ New Author';
+  // sidebar only relevant for quotes
+  document.getElementById('sidebar').style.display = view === 'quotes' ? '' : 'none';
+}
+
+function handleNewBtn() {
+  if (currentView === 'quotes') openQuoteModal(null);
+  else openAuthorModal(null);
+}
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  renderChips('category-chips', meta.categories || [], 'categories');
+  renderChips('mood-chips', meta.moods || [], 'moods');
+  renderChips('tag-chips', meta.tags || [], 'tags');
+  renderAuthorFilter();
+  document.getElementById('chip-original').classList.toggle('active', filters.paraphrase === false);
+  document.getElementById('chip-paraphrase').classList.toggle('active', filters.paraphrase === true);
+}
+function renderChips(id, items, key) {
+  const el = document.getElementById(id);
+  el.innerHTML = items.map(v => {
+    const a = filters[key].includes(v) ? 'active' : '';
+    return `<div class="chip ${a}" data-filter="${key}" data-val="${v}">${v}</div>`;
+  }).join('');
+  el.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => toggleFilter(key, c.dataset.val)));
+}
+function renderAuthorFilter() {
+  const el = document.getElementById('author-filter-list');
+  el.innerHTML = (meta.authors || []).map(a => {
+    const active = filters.authors.includes(a.name) ? 'active' : '';
+    return `<div class="author-item ${active}" data-name="${a.name}">${a.name}</div>`;
+  }).join('');
+  el.querySelectorAll('.author-item').forEach(i => i.addEventListener('click', () => toggleFilter('authors', i.dataset.name)));
+}
+function toggleFilter(key, val) {
+  if (key === 'paraphrase') {
+    const parsed = val === 'true';
+    filters.paraphrase = filters.paraphrase === parsed ? null : parsed;
+  } else {
+    const arr = filters[key];
+    const idx = arr.indexOf(val);
+    if (idx >= 0) arr.splice(idx, 1); else arr.push(val);
+  }
+  renderSidebar(); renderQuotes();
+}
+function clearAll() {
+  filters = { search: '', categories: [], moods: [], tags: [], authors: [], paraphrase: null };
+  document.getElementById('search-input').value = '';
+  renderSidebar(); renderQuotes();
+}
+
+// ─── Quote table ──────────────────────────────────────────────────────────────
+function getFilteredQuotes() {
+  let q = [...allQuotes];
+  const s = filters.search.toLowerCase().trim();
+  if (s) q = q.filter(x => [x.content, x.author, x.id, x.category, x.mood, ...(x.tags || [])].some(v => v?.toLowerCase().includes(s)));
+  if (filters.categories.length) q = q.filter(x => filters.categories.includes(x.category));
+  if (filters.moods.length)      q = q.filter(x => filters.moods.includes(x.mood));
+  if (filters.tags.length)       q = q.filter(x => filters.tags.every(t => (x.tags || []).includes(t)));
+  if (filters.authors.length)    q = q.filter(x => filters.authors.includes(x.author));
+  if (filters.paraphrase !== null) q = q.filter(x => !!x.isParaphrased === filters.paraphrase);
+  q.sort((a, b) => {
+    let va = a[qSortKey] ?? '', vb = b[qSortKey] ?? '';
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (va < vb) return qSortDir === 'asc' ? -1 : 1;
+    if (va > vb) return qSortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  return q;
+}
+function renderQuotes() {
+  const rows = getFilteredQuotes();
+  const tbody = document.getElementById('table-body');
+  const empty = document.getElementById('q-empty');
+  document.getElementById('q-count').textContent = rows.length;
+  if (!rows.length) { tbody.innerHTML = ''; empty.classList.add('show'); return; }
+  empty.classList.remove('show');
+  tbody.innerHTML = rows.map(q => {
+    const sel = selectedIds.has(q.id) ? 'selected' : '';
+    const tags = (q.tags || []).slice(0, 4).map(t => `<span class="badge badge-tag">${esc(t)}</span>`).join('');
+    const more = q.tags?.length > 4 ? `<span style="font-size:10px;color:var(--text-dim)">+${q.tags.length-4}</span>` : '';
+    return `<tr class="${sel}" data-id="${q.id}">
+      <td><input type="checkbox" class="cb row-cb" data-id="${q.id}" ${sel?'checked':''}></td>
+      <td class="td-mono">${q.id}</td>
+      <td><div class="quote-preview">${esc(q.content||'')}</div></td>
+      <td><div class="author-cell">
+        <span class="author-name">${esc(q.author||'')}</span>
+        <span class="author-slug-label">${q.authorSlug||''}</span>
+      </div></td>
+      <td>${q.category?`<span class="badge">${esc(q.category)}</span>`:''}</td>
+      <td>${q.mood?`<span class="badge badge-mood">${esc(q.mood)}</span>`:''}</td>
+      <td><div class="tags-cell">${tags}${more}</div></td>
+      <td class="td-mono">${q.duration??''}s</td>
+      <td><div class="row-actions">
+        <button class="row-btn" data-action="edit" data-id="${q.id}" title="Edit">✏️</button>
+        <button class="row-btn del" data-action="delete" data-id="${q.id}" title="Delete">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('.row-cb').forEach(cb => cb.addEventListener('change', () => toggleSelect(cb.dataset.id, cb.checked)));
+  tbody.querySelectorAll('[data-action="edit"]').forEach(b => b.addEventListener('click', () => openQuoteModal(b.dataset.id)));
+  tbody.querySelectorAll('[data-action="delete"]').forEach(b => b.addEventListener('click', () => confirmDelete([b.dataset.id])));
+  updateBulkBar(); updateSelectAll();
+}
+
+function toggleSelect(id, checked) {
+  if (checked) selectedIds.add(id); else selectedIds.delete(id);
+  const row = document.querySelector(`tr[data-id="${id}"]`);
+  if (row) row.classList.toggle('selected', checked);
+  updateBulkBar(); updateSelectAll();
+}
+function updateBulkBar() {
+  document.getElementById('bulk-count').textContent = selectedIds.size;
+  document.getElementById('bulk-bar').classList.toggle('show', selectedIds.size > 0);
+}
+function updateSelectAll() {
+  const cb = document.getElementById('select-all-cb');
+  const rows = getFilteredQuotes();
+  const all = rows.length > 0 && rows.every(r => selectedIds.has(r.id));
+  cb.checked = all;
+  cb.indeterminate = !all && selectedIds.size > 0;
+}
+
+// ─── Authors grid ──────────────────────────────────────────────────────────────
+function getSortedAuthors() {
+  let a = [...allAuthors];
+  a.sort((x, y) => {
+    let vx = x[aSortKey] ?? '', vy = y[aSortKey] ?? '';
+    if (typeof vx === 'string') vx = vx.toLowerCase();
+    if (typeof vy === 'string') vy = vy.toLowerCase();
+    if (vx < vy) return aSortDir === 'asc' ? -1 : 1;
+    if (vx > vy) return aSortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  return a;
+}
+function renderAuthors() {
+  const authors = getSortedAuthors();
+  const grid = document.getElementById('authors-grid');
+  const empty = document.getElementById('a-empty');
+  document.getElementById('a-count').textContent = authors.length;
+  if (!authors.length) { grid.innerHTML = ''; empty.classList.add('show'); return; }
+  empty.classList.remove('show');
+  grid.innerHTML = authors.map(a => {
+    const initials = (a.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('');
+    const metaParts = [a.nationality, a.era].filter(Boolean).join(' · ');
+    return `<div class="author-card" data-slug="${a.slug}">
+      <div class="author-card-header">
+        <div class="author-avatar">${initials}</div>
+        <div>
+          <div class="author-card-name">${esc(a.name)}</div>
+          <div class="author-card-full">${esc(a.fullName || '')}</div>
+        </div>
+      </div>
+      <div class="author-meta">
+        ${a.nationality ? `<span class="badge badge-nat">${esc(a.nationality)}</span>` : ''}
+        ${a.era ? `<span class="badge" style="background:rgba(0,212,170,.07);color:var(--accent-3);border-color:rgba(0,212,170,.18)">${esc(a.era)}</span>` : ''}
+      </div>
+      ${a.bio ? `<div class="author-bio-preview">${esc(a.bio)}</div>` : ''}
+      <div class="author-card-footer">
+        <span class="quote-count-pill">${a.quoteCount || 0} quote${a.quoteCount === 1 ? '' : 's'}</span>
+        <div class="author-card-actions">
+          <button class="row-btn" data-action="edit-author" data-slug="${a.slug}" title="Edit">✏️</button>
+          <button class="row-btn del" data-action="del-author" data-slug="${a.slug}" title="Delete">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('[data-action="edit-author"]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); openAuthorModal(b.dataset.slug); }));
+  grid.querySelectorAll('[data-action="del-author"]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); confirmDeleteAuthor(b.dataset.slug); }));
+  grid.querySelectorAll('.author-card').forEach(c => c.addEventListener('click', () => openAuthorModal(c.dataset.slug)));
+}
+
+// ─── Quote Modal ──────────────────────────────────────────────────────────────
+function openQuoteModal(id = null) {
+  editingQuoteId = id;
+  currentTags = [];
+  selectedAuthorSlug = null;
+  clearAuthorDisplay();
+  clearQuoteForm();
+
+  if (id) {
+    const q = allQuotes.find(x => x.id === id);
+    if (!q) return;
+    document.getElementById('qm-title').textContent = 'Edit Quote';
+    document.getElementById('qm-id').textContent = id;
+    document.getElementById('btn-qm-del').style.display = 'flex';
+    fillQuoteForm(q);
+    currentTags = [...(q.tags || [])];
+    // pre-select author
+    if (q.authorSlug) {
+      selectedAuthorSlug = q.authorSlug;
+      const author = allAuthors.find(a => a.slug === q.authorSlug);
+      if (author) showAuthorDisplay(author);
+      else showAuthorDisplay({ name: q.author || q.authorSlug, slug: q.authorSlug });
+    } else if (q.author) {
+      const match = allAuthors.find(a => a.name.toLowerCase() === q.author.toLowerCase());
+      if (match) {
+        selectedAuthorSlug = match.slug;
+        showAuthorDisplay(match);
+      } else {
+        const slug = toSlug(q.author);
+        selectedAuthorSlug = slug;
+        showAuthorDisplay({ name: q.author, slug });
+      }
+    }
+  } else {
+    document.getElementById('qm-title').textContent = 'New Quote';
+    document.getElementById('qm-id').textContent = '';
+    document.getElementById('btn-qm-del').style.display = 'none';
+  }
+  renderTagPills(document.getElementById('tag-editor-modal'), currentTags, 'tag-input-modal');
+  document.getElementById('quote-modal-overlay').classList.add('open');
+}
+function closeQuoteModal() {
+  document.getElementById('quote-modal-overlay').classList.remove('open');
+  editingQuoteId = null;
+}
+function clearQuoteForm() {
+  ['f-id','f-content','f-category','f-category-slug','f-source-work','f-sourced-from',
+   'f-original-quote','f-reflection-prompt','f-explanation','f-practical-insight'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-duration').value = 8;
+  document.getElementById('f-mood').value = '';
+  document.getElementById('f-is-paraphrased').checked = false;
+  document.getElementById('author-search-input').value = '';
+  document.getElementById('author-dropdown').classList.remove('open');
+}
+function fillQuoteForm(q) {
+  document.getElementById('f-id').value = q.id || '';
+  document.getElementById('f-content').value = q.content || '';
+  document.getElementById('f-category').value = q.category || '';
+  document.getElementById('f-category-slug').value = q.categorySlug || '';
+  document.getElementById('f-mood').value = q.mood || '';
+  document.getElementById('f-duration').value = q.duration ?? 8;
+  document.getElementById('f-source-work').value = q.sourceWork || '';
+  document.getElementById('f-sourced-from').value = q.sourcedFrom || '';
+  document.getElementById('f-original-quote').value = q.originalQuote || '';
+  document.getElementById('f-reflection-prompt').value = q.reflectionPrompt || '';
+  document.getElementById('f-explanation').value = q.explanation || '';
+  document.getElementById('f-practical-insight').value = q.practicalInsight || '';
+  document.getElementById('f-is-paraphrased').checked = !!q.isParaphrased;
+  // author slug auto-on category
+  const catSlug = document.getElementById('f-category-slug');
+  catSlug.dataset.manual = catSlug.value ? '1' : '';
+}
+function collectQuoteForm() {
+  const category = document.getElementById('f-category').value.trim();
+  const author = allAuthors.find(a => a.slug === selectedAuthorSlug);
+  return {
+    id: document.getElementById('f-id').value.trim() || undefined,
+    content: document.getElementById('f-content').value.trim(),
+    author: author?.name || '',
+    authorSlug: selectedAuthorSlug || '',
+    category,
+    categorySlug: document.getElementById('f-category-slug').value.trim() || toSlug(category),
+    mood: document.getElementById('f-mood').value || undefined,
+    tags: [...currentTags],
+    duration: parseInt(document.getElementById('f-duration').value) || 8,
+    sourceWork: document.getElementById('f-source-work').value.trim() || undefined,
+    sourcedFrom: document.getElementById('f-sourced-from').value.trim() || undefined,
+    originalQuote: document.getElementById('f-original-quote').value.trim() || undefined,
+    reflectionPrompt: document.getElementById('f-reflection-prompt').value.trim() || undefined,
+    explanation: document.getElementById('f-explanation').value.trim() || undefined,
+    practicalInsight: document.getElementById('f-practical-insight').value.trim() || undefined,
+    isParaphrased: document.getElementById('f-is-paraphrased').checked,
+  };
+}
+
+async function saveQuote() {
+  const data = collectQuoteForm();
+  if (!data.content) { toast('Quote content is required', 'error'); return; }
+  if (!data.authorSlug) { toast('Please select an author', 'error'); return; }
+  try {
+    const res = editingQuoteId
+      ? await fetch(`/api/quotes/${editingQuoteId}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) })
+      : await fetch('/api/quotes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (!res.ok) throw new Error(await res.text());
+    closeQuoteModal();
+    await refresh();
+    toast(editingQuoteId ? 'Quote updated ✓' : 'Quote created ✓', 'success');
+  } catch (e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function duplicateQuote() {
+  const data = collectQuoteForm();
+  data.id = undefined;
+  closeQuoteModal();
+  try {
+    const res = await fetch('/api/quotes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (!res.ok) throw new Error(await res.text());
+    const created = await res.json();
+    await refresh();
+    toast(`Duplicated as ${created.id}`, 'success');
+    openQuoteModal(created.id);
+  } catch (e) { toast('Duplicate failed: ' + e.message, 'error'); }
+}
+
+// ─── Author Picker (in Quote Modal) ───────────────────────────────────────────
+function showAuthorDisplay(author) {
+  const initials = (author.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('');
+  document.getElementById('ad-avatar').textContent = initials;
+  document.getElementById('ad-name').textContent = author.name;
+  document.getElementById('ad-slug').textContent = author.slug || '';
+  const meta = [author.nationality, author.era, author.born ? `b. ${author.born}` : ''].filter(Boolean).join(' · ');
+  document.getElementById('ad-meta').textContent = meta || 'No biographical details';
+  document.getElementById('author-display').style.display = 'flex';
+  document.getElementById('author-picker-row').style.display = 'none';
+  selectedAuthorSlug = author.slug;
+}
+
+function clearAuthorDisplay() {
+  selectedAuthorSlug = null;
+  document.getElementById('author-display').style.display = 'none';
+  document.getElementById('author-picker-row').style.display = 'flex';
+  document.getElementById('author-search-input').value = '';
+  document.getElementById('author-dropdown').classList.remove('open');
+}
+
+function clearSelectedAuthor() {
+  clearAuthorDisplay();
+  const searchInput = document.getElementById('author-search-input');
+  if (searchInput) {
+    searchInput.focus();
+    renderAuthorDropdown('');
+  }
+}
+
+function renderAuthorDropdown(search) {
+  const dd = document.getElementById('author-dropdown');
+  const filtered = allAuthors.filter(a =>
+    !search || a.name.toLowerCase().includes(search.toLowerCase()) || a.slug.includes(search.toLowerCase())
+  );
+  dd.innerHTML = filtered.map(a => {
+    const initials = (a.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('');
+    const metaStr = [a.nationality, a.era].filter(Boolean).join(' · ');
+    return `<div class="author-opt ${selectedAuthorSlug===a.slug?'selected':''}" data-slug="${a.slug}">
+      <div class="ao-avatar">${initials}</div>
+      <div><div class="ao-name">${esc(a.name)}</div><div class="ao-meta">${esc(metaStr)}</div></div>
+    </div>`;
+  }).join('') + `<div class="author-opt-new" id="dd-new-author">＋ Create "${search || 'new author'}"</div>`;
+
+  dd.querySelectorAll('.author-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const author = allAuthors.find(a => a.slug === opt.dataset.slug);
+      if (author) { selectedAuthorSlug = author.slug; showAuthorDisplay(author); dd.classList.remove('open'); }
+    });
+  });
+  dd.querySelector('#dd-new-author')?.addEventListener('click', () => {
+    const prefillName = document.getElementById('author-search-input').value.trim();
+    dd.classList.remove('open');
+    createAuthorFromQuote(prefillName);
+  });
+  dd.classList.add('open');
+}
+
+function editSelectedAuthor() {
+  if (!selectedAuthorSlug) return;
+  authorModalReturnToQuote = true;
+  document.getElementById('quote-modal-overlay').classList.remove('open');
+  const existing = allAuthors.find(x => x.slug === selectedAuthorSlug);
+  if (existing) {
+    openAuthorModal(selectedAuthorSlug);
+  } else {
+    const curName = document.getElementById('ad-name')?.textContent || selectedAuthorSlug;
+    openAuthorModal(null, curName, selectedAuthorSlug);
+  }
+}
+
+function createAuthorFromQuote(prefillName = '') {
+  authorModalReturnToQuote = true;
+  document.getElementById('quote-modal-overlay').classList.remove('open');
+  openAuthorModal(null, prefillName);
+}
+
+// ─── Author Modal ─────────────────────────────────────────────────────────────
+function openAuthorModal(slug = null, prefillName = '', prefillSlug = '') {
+  editingAuthorSlug = slug;
+  clearAuthorForm();
+  if (slug) {
+    const a = allAuthors.find(x => x.slug === slug);
+    if (!a) return;
+    document.getElementById('am-title').textContent = 'Edit Author';
+    document.getElementById('am-id').textContent = slug;
+    document.getElementById('btn-am-del').style.display = 'flex';
+    fillAuthorForm(a);
+  } else {
+    document.getElementById('am-title').textContent = 'New Author';
+    document.getElementById('am-id').textContent = '';
+    document.getElementById('btn-am-del').style.display = 'none';
+    if (prefillName) document.getElementById('af-name').value = prefillName;
+    if (prefillSlug) {
+      document.getElementById('af-slug').value = prefillSlug;
+      document.getElementById('af-slug').dataset.manual = '1';
+    }
+  }
+  document.getElementById('author-modal-overlay').classList.add('open');
+}
+
+function closeAuthorModal() {
+  document.getElementById('author-modal-overlay').classList.remove('open');
+  if (authorModalReturnToQuote) {
+    authorModalReturnToQuote = false;
+    // Re-open quote modal and refresh author list
+    loadAuthors().then(() => {
+      renderAuthors();
+      updateStats();
+      // If we just saved an author (editingAuthorSlug), update quote modal selection
+      if (editingAuthorSlug) {
+        const a = allAuthors.find(x => x.slug === editingAuthorSlug);
+        if (a) {
+          selectedAuthorSlug = a.slug;
+          showAuthorDisplay(a);
+        }
+      } else if (selectedAuthorSlug) {
+        // If we cancelled or had a selectedAuthorSlug previously, refresh its display
+        const a = allAuthors.find(x => x.slug === selectedAuthorSlug);
+        if (a) showAuthorDisplay(a);
+      }
+      document.getElementById('quote-modal-overlay').classList.add('open');
+      editingAuthorSlug = null;
+    });
+  }
+}
+
+function clearAuthorForm() {
+  ['af-name','af-slug','af-full-name','af-born','af-died','af-era','af-nationality','af-website','af-image-url','af-bio'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+    if (el) el.dataset.manual = '';
+  });
+}
+
+function fillAuthorForm(a) {
+  document.getElementById('af-name').value = a.name || '';
+  document.getElementById('af-slug').value = a.slug || '';
+  document.getElementById('af-full-name').value = a.fullName || '';
+  document.getElementById('af-born').value = a.born || '';
+  document.getElementById('af-died').value = a.died || '';
+  document.getElementById('af-era').value = a.era || '';
+  document.getElementById('af-nationality').value = a.nationality || '';
+  document.getElementById('af-website').value = a.website || '';
+  document.getElementById('af-image-url').value = a.imageUrl || '';
+  document.getElementById('af-bio').value = a.bio || '';
+  document.getElementById('af-slug').dataset.manual = '1';
+}
+
+function collectAuthorForm() {
+  const name = document.getElementById('af-name').value.trim();
+  return {
+    name,
+    slug: document.getElementById('af-slug').value.trim() || toSlug(name),
+    fullName: document.getElementById('af-full-name').value.trim() || undefined,
+    born: document.getElementById('af-born').value.trim() || undefined,
+    died: document.getElementById('af-died').value.trim() || undefined,
+    era: document.getElementById('af-era').value.trim() || undefined,
+    nationality: document.getElementById('af-nationality').value.trim() || undefined,
+    website: document.getElementById('af-website').value.trim() || undefined,
+    imageUrl: document.getElementById('af-image-url').value.trim() || undefined,
+    bio: document.getElementById('af-bio').value.trim() || undefined,
+  };
+}
+
+async function saveAuthor() {
+  const data = collectAuthorForm();
+  if (!data.name) { toast('Author name is required', 'error'); return; }
+  const isEdit = !!editingAuthorSlug;
+  try {
+    const res = editingAuthorSlug
+      ? await fetch(`/api/authors/${editingAuthorSlug}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) })
+      : await fetch('/api/authors', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Save failed'); }
+    const saved = await res.json();
+    editingAuthorSlug = saved.slug; // carry slug for re-selection after close
+    toast(isEdit ? 'Author updated ✓' : 'Author created ✓', 'success');
+    await loadAuthors();
+    renderAuthors(); updateStats();
+    // Update sidebar author filters
+    await loadMeta(); renderSidebar();
+    closeAuthorModal();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function confirmDeleteAuthor(slug) {
+  const author = allAuthors.find(a => a.slug === slug);
+  document.getElementById('confirm-title').textContent = `Delete "${author?.name || slug}"?`;
+  document.getElementById('confirm-msg').textContent = `This will permanently delete the author file. (Note: Authors referenced by existing quotes cannot be deleted until quotes are reassigned).`;
+  document.getElementById('confirm-overlay').classList.add('open');
+  document.getElementById('confirm-yes').onclick = async () => {
+    document.getElementById('confirm-overlay').classList.remove('open');
+    try {
+      const res = await fetch(`/api/authors/${slug}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast('Author deleted ✓', 'success');
+        if (selectedAuthorSlug === slug) {
+          clearAuthorDisplay();
+        }
+        await refresh();
+        if (document.getElementById('author-modal-overlay').classList.contains('open')) {
+          closeAuthorModal();
+        }
+      } else {
+        const e = await res.json();
+        toast(e.error || 'Delete failed', 'error');
+      }
+    } catch (e) {
+      toast('Delete failed: ' + e.message, 'error');
+    }
+  };
+}
+
+// ─── Delete quotes ────────────────────────────────────────────────────────────
+function confirmDelete(ids) {
+  document.getElementById('confirm-title').textContent = `Delete ${ids.length} quote${ids.length>1?'s':''}?`;
+  document.getElementById('confirm-msg').textContent = `This permanently removes the JSON file(s) from disk. Cannot be undone.`;
+  document.getElementById('confirm-overlay').classList.add('open');
+  document.getElementById('confirm-yes').onclick = async () => {
+    document.getElementById('confirm-overlay').classList.remove('open');
+    for (const id of ids) await fetch(`/api/quotes/${id}`, { method: 'DELETE' });
+    selectedIds.clear();
+    await refresh(); closeQuoteModal();
+    toast(`Deleted ${ids.length} quote${ids.length>1?'s':''} ✓`, 'success');
+  };
+}
+
+// ─── Bulk tag ─────────────────────────────────────────────────────────────────
+function openBulkTag() {
+  bulkAddTags = []; bulkRemoveTags = [];
+  document.getElementById('bulk-tag-scope').textContent = `Applying to ${selectedIds.size} selected quote(s)`;
+  renderTagPills(document.getElementById('bulk-add-editor'), bulkAddTags, 'bulk-add-input');
+  renderTagPills(document.getElementById('bulk-rm-editor'), bulkRemoveTags, 'bulk-rm-input');
+  document.getElementById('bulk-tag-overlay').classList.add('open');
+}
+function closeBulkTag() { document.getElementById('bulk-tag-overlay').classList.remove('open'); }
+
+// ─── Tag editor ───────────────────────────────────────────────────────────────
+function renderTagPills(container, tags, inputId) {
+  const input = document.getElementById(inputId);
+  container.querySelectorAll('.tag-pill').forEach(p => p.remove());
+  tags.forEach((tag, i) => {
+    const pill = document.createElement('div');
+    pill.className = 'tag-pill';
+    pill.innerHTML = `${esc(tag)} <span class="rt" data-i="${i}">×</span>`;
+    pill.querySelector('.rt').addEventListener('click', () => { tags.splice(i, 1); renderTagPills(container, tags, inputId); });
+    container.insertBefore(pill, input);
+  });
+}
+function bindTagEditor(inputId, tags, containerId) {
+  const input = document.getElementById(inputId);
+  const container = document.getElementById(containerId);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = input.value.trim().replace(/,$/, '').toLowerCase();
+      if (val && !tags.includes(val)) { tags.push(val); renderTagPills(container, tags, inputId); }
+      input.value = '';
+    }
+    if (e.key === 'Backspace' && !input.value && tags.length) { tags.pop(); renderTagPills(container, tags, inputId); }
+  });
+  container.addEventListener('click', () => input.focus());
+}
+
+// ─── Sort ─────────────────────────────────────────────────────────────────────
+function bindSortHeaders() {
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (qSortKey === col) qSortDir = qSortDir === 'asc' ? 'desc' : 'asc';
+      else { qSortKey = col; qSortDir = 'asc'; }
+      document.querySelectorAll('th.sortable').forEach(t => t.classList.remove('sort-asc','sort-desc'));
+      th.classList.add(qSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+      renderQuotes();
+    });
+  });
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toSlug(s) {
+  return s.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// ─── Event binding ────────────────────────────────────────────────────────────
+function bindEvents() {
+  // Nav tabs
+  document.querySelectorAll('.nav-tab').forEach(t => t.addEventListener('click', () => switchView(t.dataset.view)));
+
+  // Search
+  document.getElementById('search-input').addEventListener('input', e => { filters.search = e.target.value; renderQuotes(); });
+
+  // Paraphrase chips
+  document.getElementById('chip-original').addEventListener('click', () => toggleFilter('paraphrase', 'false'));
+  document.getElementById('chip-paraphrase').addEventListener('click', () => toggleFilter('paraphrase', 'true'));
+
+  // Clear filters
+  document.getElementById('clear-filters').addEventListener('click', clearAll);
+
+  // Sort selects
+  document.getElementById('q-sort').addEventListener('change', e => {
+    const [k, d] = e.target.value.split('-'); qSortKey = k; qSortDir = d; renderQuotes();
+  });
+  document.getElementById('a-sort').addEventListener('change', e => {
+    const [k, d] = e.target.value.split('-'); aSortKey = k; aSortDir = d; renderAuthors();
+  });
+
+  // Sort headers
+  bindSortHeaders();
+
+  // Select all
+  document.getElementById('select-all-cb').addEventListener('change', e => {
+    const rows = getFilteredQuotes();
+    if (e.target.checked) rows.forEach(r => selectedIds.add(r.id)); else rows.forEach(r => selectedIds.delete(r.id));
+    renderQuotes();
+  });
+
+  // Bulk actions
+  document.getElementById('btn-deselect').addEventListener('click', () => { selectedIds.clear(); renderQuotes(); });
+  document.getElementById('btn-bulk-delete').addEventListener('click', () => confirmDelete([...selectedIds]));
+  document.getElementById('btn-bulk-tag').addEventListener('click', openBulkTag);
+  document.getElementById('btn-bulk-apply').addEventListener('click', async () => {
+    closeBulkTag();
+    const res = await fetch('/api/quotes/bulk-tag', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ ids: [...selectedIds], addTags: bulkAddTags, removeTags: bulkRemoveTags })
+    });
+    if (res.ok) { await refresh(); toast('Bulk tags applied ✓', 'success'); }
+    else toast('Bulk tag failed', 'error');
+  });
+
+  // Quote modal buttons
+  document.getElementById('btn-qm-save').addEventListener('click', saveQuote);
+  document.getElementById('btn-qm-dup').addEventListener('click', duplicateQuote);
+  document.getElementById('btn-qm-del').addEventListener('click', () => { if (editingQuoteId) confirmDelete([editingQuoteId]); });
+
+  // Author modal buttons
+  document.getElementById('btn-am-save').addEventListener('click', saveAuthor);
+  document.getElementById('btn-am-del').addEventListener('click', () => { if (editingAuthorSlug) confirmDeleteAuthor(editingAuthorSlug); });
+
+  // Tag editors
+  bindTagEditor('tag-input-modal', currentTags, 'tag-editor-modal');
+  bindTagEditor('bulk-add-input', bulkAddTags, 'bulk-add-editor');
+  bindTagEditor('bulk-rm-input', bulkRemoveTags, 'bulk-rm-editor');
+
+  // Author name → slug auto
+  document.getElementById('af-name').addEventListener('input', e => {
+    const sl = document.getElementById('af-slug');
+    if (!sl.dataset.manual) sl.value = toSlug(e.target.value);
+  });
+  document.getElementById('af-slug').addEventListener('input', e => {
+    e.target.dataset.manual = e.target.value ? '1' : '';
+  });
+
+  // Category → slug auto
+  document.getElementById('f-category').addEventListener('input', e => {
+    const sl = document.getElementById('f-category-slug');
+    if (!sl.dataset.manual) sl.value = toSlug(e.target.value);
+  });
+  document.getElementById('f-category-slug').addEventListener('input', e => {
+    e.target.dataset.manual = e.target.value ? '1' : '';
+  });
+
+  // Author dropdown in quote modal
+  const authorSearchInput = document.getElementById('author-search-input');
+  const dd = document.getElementById('author-dropdown');
+  authorSearchInput.addEventListener('focus', () => { renderAuthorDropdown(authorSearchInput.value); });
+  authorSearchInput.addEventListener('input', () => { renderAuthorDropdown(authorSearchInput.value); });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.author-select-wrap')) dd.classList.remove('open');
+  });
+
+  // Close modals on overlay click
+  document.getElementById('quote-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('quote-modal-overlay')) closeQuoteModal();
+  });
+  document.getElementById('author-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('author-modal-overlay')) closeAuthorModal();
+  });
+  document.getElementById('bulk-tag-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('bulk-tag-overlay')) closeBulkTag();
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('theme-dropdown')?.classList.contains('open')) {
+        document.getElementById('theme-dropdown').classList.remove('open');
+      } else if (document.getElementById('confirm-overlay').classList.contains('open')) {
+        document.getElementById('confirm-overlay').classList.remove('open');
+      } else if (document.getElementById('bulk-tag-overlay').classList.contains('open')) {
+        closeBulkTag();
+      } else if (document.getElementById('author-modal-overlay').classList.contains('open')) {
+        closeAuthorModal();
+      } else if (document.getElementById('quote-modal-overlay').classList.contains('open')) {
+        closeQuoteModal();
+      }
+    }
+    if ((e.metaKey||e.ctrlKey) && e.key === 'k') { e.preventDefault(); document.getElementById('search-input').focus(); }
+    if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') {
+      if (document.getElementById('author-modal-overlay').classList.contains('open')) {
+        e.preventDefault();
+        saveAuthor();
+      } else if (document.getElementById('quote-modal-overlay').classList.contains('open')) {
+        e.preventDefault();
+        saveQuote();
+      }
+    }
+    if ((e.metaKey||e.ctrlKey) && e.key === 'n') { e.preventDefault(); handleNewBtn(); }
+  });
+}
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+init().catch(console.error);
+</script>
+</body>
+</html>

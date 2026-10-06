@@ -5,7 +5,8 @@
   "type": "module",
   "main": "./src/index.ts",
   "bin": {
-    "wiz-theme": "./bin/generate.js"
+    "wiz-theme": "./bin/generate.js",
+    "wiz-admin": "./bin/admin.js"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -18,7 +19,8 @@
     "./config/*": "./src/config/*"
   },
   "files": [
-    "src"
+    "src",
+    "bin"
   ],
   "engines": {
     "node": ">=22.12.0"
@@ -26,7 +28,8 @@
   "scripts": {
     "dev": "astro dev --root ./playground",
     "build": "astro build --root ./playground",
-    "preview": "astro preview --root ./playground"
+    "preview": "astro preview --root ./playground",
+    "admin": "node ./bin/admin.js"
   },
   "peerDependencies": {
     "astro": "^5.0.0 || ^7.0.0",
